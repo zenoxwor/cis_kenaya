@@ -1,4 +1,4 @@
-# Kenaya CIS Admin App
+# Kenya CIS Admin App
 
 This folder contains the **separate internal admin surface** built with Next.js App Router.
 
@@ -32,7 +32,7 @@ This folder contains the **separate internal admin surface** built with Next.js 
 - Mock sign-in endpoint (development): `POST /api/auth/mock-sign-in`
 - Sign-out endpoint: `POST /api/auth/sign-out`
 - Middleware-enforced route protection on `/admin/*` using RBAC route matrix.
-- Session storage: HTTP-only cookie (`kenaya_admin_session`) with structured payload.
+- Session storage: HTTP-only cookie (`kenya_admin_session`) with structured payload.
 - Sign-in UI uses a polished username/password form with clear credential error feedback.
 
 `AUTH_MODE` controls behavior:

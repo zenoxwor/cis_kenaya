@@ -11,7 +11,7 @@ export const MOCK_AUTH_USERS: MockAuthUser[] = [
     id: "mock-super-admin",
     username: "superadmin",
     password: "admin123",
-    email: "superadmin@kenaya.local",
+    email: "superadmin@kenya.local",
     fullName: "System Administrator",
     role: ROLE.SUPER_ADMIN
   },
@@ -19,7 +19,7 @@ export const MOCK_AUTH_USERS: MockAuthUser[] = [
     id: "mock-principal",
     username: "principal",
     password: "admin123",
-    email: "principal@kenaya.local",
+    email: "principal@kenya.local",
     fullName: "School Principal",
     role: ROLE.PRINCIPAL
   },
@@ -27,7 +27,7 @@ export const MOCK_AUTH_USERS: MockAuthUser[] = [
     id: "mock-reception",
     username: "reception",
     password: "admin123",
-    email: "reception@kenaya.local",
+    email: "reception@kenya.local",
     fullName: "Admissions Officer",
     role: ROLE.RECEPTION
   },
@@ -35,7 +35,7 @@ export const MOCK_AUTH_USERS: MockAuthUser[] = [
     id: "mock-finance",
     username: "finance",
     password: "admin123",
-    email: "finance@kenaya.local",
+    email: "finance@kenya.local",
     fullName: "Finance Officer",
     role: ROLE.FINANCE
   }

@@ -26,7 +26,7 @@ export function Sidebar({ items, collapsed, onNavigate }: SidebarProps) {
         </div>
         {!collapsed && (
           <div className="ml-3">
-            <p className="text-sm font-semibold">Kenaya CIS</p>
+            <p className="text-sm font-semibold">Kenya CIS</p>
             <p className="text-xs text-slate-500">Admin Portal</p>
           </div>
         )}

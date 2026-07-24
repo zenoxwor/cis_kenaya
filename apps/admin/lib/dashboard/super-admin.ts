@@ -28,7 +28,7 @@ export const superAdminDashboardData: RoleDashboardData = {
     {
       when: "08:55",
       title: "Role assignment update",
-      detail: "Reception scope granted to admissions.officer@kenaya.local.",
+      detail: "Reception scope granted to admissions.officer@kenya.local.",
       status: "success"
     },
     {
@@ -44,9 +44,9 @@ export const superAdminDashboardData: RoleDashboardData = {
       caption: "Critical identity and privilege changes awaiting action.",
       columns: ["Request", "Requested by", "Scope", "Priority", "Age"],
       rows: [
-        ["Privileged access grant", "principal@kenaya.local", "Finance override", "High", "2h"],
-        ["Account deactivation", "hr.ops@kenaya.local", "Reception staff", "Medium", "5h"],
-        ["Policy exception", "finance@kenaya.local", "Payment reversal", "High", "1h"]
+        ["Privileged access grant", "principal@kenya.local", "Finance override", "High", "2h"],
+        ["Account deactivation", "hr.ops@kenya.local", "Reception staff", "Medium", "5h"],
+        ["Policy exception", "finance@kenya.local", "Payment reversal", "High", "1h"]
       ]
     },
     {

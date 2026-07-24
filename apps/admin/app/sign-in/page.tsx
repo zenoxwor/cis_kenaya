@@ -27,7 +27,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-4 py-10 sm:px-6">
       <section className="w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">Admin Access</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900">Sign in to Kenaya CIS Admin</h1>
+        <h1 className="mt-2 text-3xl font-bold text-slate-900">Sign in to Kenya CIS Admin</h1>
         <p className="mt-2 text-sm text-slate-600">
           Authentication mode: <span className="font-medium">{authMode}</span>
         </p>

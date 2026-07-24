@@ -3,7 +3,7 @@ import { getLayoutDirection } from "@/lib/ui/layout-direction";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Kenaya CIS Admin",
+  title: "Kenya CIS Admin",
   description: "School management and documentation admin portal foundation."
 };
 

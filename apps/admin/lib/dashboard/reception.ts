@@ -41,9 +41,9 @@ export const receptionDashboardData: RoleDashboardData = {
       caption: "Queue state for active applicant records.",
       columns: ["Application", "Student", "Step", "Document status", "Owner"],
       rows: [
-        ["APP-20260724-1020-902", "Noor Khaled", "Step 2", "PENDING", "reception@kenaya.local"],
-        ["APP-20260724-0910-441", "Lina Shadid", "Step 6", "VERIFIED", "reception@kenaya.local"],
-        ["APP-20260724-0820-318", "Karim Salem", "Step 5", "UPLOADED", "admissions.officer@kenaya.local"]
+        ["APP-20260724-1020-902", "Noor Khaled", "Step 2", "PENDING", "reception@kenya.local"],
+        ["APP-20260724-0910-441", "Lina Shadid", "Step 6", "VERIFIED", "reception@kenya.local"],
+        ["APP-20260724-0820-318", "Karim Salem", "Step 5", "UPLOADED", "admissions.officer@kenya.local"]
       ]
     },
     {

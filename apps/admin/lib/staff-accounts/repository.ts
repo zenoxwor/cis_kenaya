@@ -1,13 +1,13 @@
 import type { StaffAccountRecord } from "@/lib/staff-accounts/types";
 
-const STORAGE_KEY = "kenaya.principal.staff-accounts";
+const STORAGE_KEY = "kenya.principal.staff-accounts";
 
 const seededStaffAccounts: StaffAccountRecord[] = [
   {
     id: "staff-001",
     fullName: "Nadia Al-Hassan",
     username: "nadia.teacher",
-    email: "nadia.teacher@kenaya.local",
+    email: "nadia.teacher@kenya.local",
     role: "Teacher",
     status: "Active",
     temporaryPassword: "teacher123",
@@ -18,7 +18,7 @@ const seededStaffAccounts: StaffAccountRecord[] = [
     id: "staff-002",
     fullName: "Farid Jaber",
     username: "farid.worker",
-    email: "farid.worker@kenaya.local",
+    email: "farid.worker@kenya.local",
     role: "Worker",
     status: "Active",
     temporaryPassword: "worker123",
@@ -29,7 +29,7 @@ const seededStaffAccounts: StaffAccountRecord[] = [
     id: "staff-003",
     fullName: "Mona Youssef",
     username: "mona.staff",
-    email: "mona.staff@kenaya.local",
+    email: "mona.staff@kenya.local",
     role: "Staff",
     status: "Disabled",
     temporaryPassword: "staff123",

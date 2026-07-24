@@ -29,7 +29,7 @@ export function Topbar({ onToggleSidebar, onToggleMobileMenu }: TopbarProps) {
           ⇆
         </button>
         <div>
-          <p className="text-sm font-semibold text-slate-900">Kenaya CIS Administration</p>
+          <p className="text-sm font-semibold text-slate-900">Kenya CIS Administration</p>
           <p className="text-xs text-slate-500">Role: {ROLE_LABELS[user.role]}</p>
         </div>
       </div>

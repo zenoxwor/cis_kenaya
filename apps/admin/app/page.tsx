@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col justify-center gap-6 p-6 text-center">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-700">
-        Kenaya CIS Platform
+        Kenya CIS Platform
       </p>
       <h1 className="text-4xl font-bold text-slate-900">Admin System Foundation</h1>
       <p className="mx-auto max-w-2xl text-slate-600">

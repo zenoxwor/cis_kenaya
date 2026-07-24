@@ -1,4 +1,4 @@
-export const AUTH_COOKIE_NAME = "kenaya_admin_session";
+export const AUTH_COOKIE_NAME = "kenya_admin_session";
 
 export type AuthMode = "mock" | "external";
 

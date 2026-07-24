@@ -7,7 +7,7 @@ export interface AdmissionsWorkflowRepository {
 }
 
 export class BrowserWorkflowRepository implements AdmissionsWorkflowRepository {
-  private readonly storageKey = "kenaya.workflow.records";
+  private readonly storageKey = "kenya.workflow.records";
 
   async list() {
     if (typeof window === "undefined") {

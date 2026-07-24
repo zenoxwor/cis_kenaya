@@ -1,7 +1,7 @@
 import { APPLICATION_STATUSES } from "@/lib/registration/statuses";
 import type { RegistrationDraft } from "@/lib/registration/types";
 
-const DRAFT_PREFIX = "kenaya.registration.draft.";
+const DRAFT_PREFIX = "kenya.registration.draft.";
 
 export const REQUIRED_DOCUMENT_TYPES = [
   "Birth Certificate",
