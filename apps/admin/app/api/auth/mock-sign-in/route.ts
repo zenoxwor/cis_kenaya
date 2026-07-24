@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthMode } from "@/lib/auth/config";
-import { findMockUserByEmail } from "@/lib/auth/mock-users";
+import { findMockUserByCredentials } from "@/lib/auth/mock-users";
 import { isSafeInternalPath } from "@/lib/auth/paths";
 import { createActiveSessionCookie, createSessionCookieValue } from "@/lib/auth/session";
 
@@ -10,13 +10,17 @@ export async function POST(request: Request) {
   }
 
   const formData = await request.formData();
-  const email = String(formData.get("email") ?? "");
+  const username = String(formData.get("username") ?? "");
+  const password = String(formData.get("password") ?? "");
   const requestedNext = String(formData.get("next") ?? "/admin");
   const nextPath = isSafeInternalPath(requestedNext) ? requestedNext : "/admin";
-  const user = findMockUserByEmail(email);
+  const user = findMockUserByCredentials(username, password);
 
   if (!user) {
-    const failureUrl = new URL(`/sign-in?error=invalid_user&next=${encodeURIComponent(nextPath)}`, request.url);
+    const failureUrl = new URL(
+      `/sign-in?error=invalid_credentials&next=${encodeURIComponent(nextPath)}`,
+      request.url
+    );
     return NextResponse.redirect(failureUrl, 303);
   }
 

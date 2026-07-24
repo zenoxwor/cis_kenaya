@@ -22,6 +22,7 @@ export const DOMAIN_RESOURCES = [
   "student_document",
   "fee_invoice",
   "payment",
+  "staff_account",
   "visitor_log",
   "audit_log",
   "settings",
@@ -39,6 +40,7 @@ export const ADMIN_ROUTE_KEYS = [
   "/admin/principal",
   "/admin/principal/reports",
   "/admin/principal/analytics",
+  "/admin/principal/staff-accounts",
   "/admin/admissions",
   "/admin/reception",
   "/admin/reception/applications",
@@ -56,6 +58,7 @@ export const ADMIN_NAV_KEYS = [
   "dashboard",
   "super_admin_console",
   "principal_dashboard",
+  "principal_staff_accounts",
   "reception_dashboard",
   "registration_wizard",
   "finance_dashboard"
@@ -83,6 +86,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       student_document: ["view", "create", "edit", "approve", "export", "override"],
       fee_invoice: ["view", "create", "edit", "approve", "export", "override"],
       payment: ["view", "create", "edit", "approve", "export", "override"],
+      staff_account: ["view", "create", "edit", "approve", "export", "override"],
       visitor_log: ["view", "create", "edit", "export", "override"],
       audit_log: ["view", "export", "override"],
       settings: ["view", "edit", "approve", "override"],
@@ -95,6 +99,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/principal",
       "/admin/principal/reports",
       "/admin/principal/analytics",
+      "/admin/principal/staff-accounts",
       "/admin/admissions",
       "/admin/reception",
       "/admin/reception/applications",
@@ -103,9 +108,16 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/finance/invoices",
       "/admin/finance/reports"
     ],
-    navigationVisibility: ["dashboard", "principal_dashboard", "reception_dashboard", "finance_dashboard"],
+    navigationVisibility: [
+      "dashboard",
+      "principal_dashboard",
+      "principal_staff_accounts",
+      "reception_dashboard",
+      "finance_dashboard"
+    ],
     actions: {
       dashboard: ["view"],
+      staff_account: ["view", "create", "edit"],
       student: ["view", "approve", "export"],
       guardian: ["view", "export"],
       application: ["view", "approve", "export"],

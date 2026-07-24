@@ -33,10 +33,11 @@ This folder contains the **separate internal admin surface** built with Next.js 
 - Sign-out endpoint: `POST /api/auth/sign-out`
 - Middleware-enforced route protection on `/admin/*` using RBAC route matrix.
 - Session storage: HTTP-only cookie (`kenaya_admin_session`) with structured payload.
+- Sign-in UI uses a polished username/password form with clear credential error feedback.
 
 `AUTH_MODE` controls behavior:
 
-- `mock` (default in non-production): uses predefined development users in `lib/auth/mock-users.ts`
+- `mock` (default in non-production): username/password are validated against `lib/auth/mock-users.ts` (e.g. `superadmin` / `admin123`)
 - `external`: reserved for production identity provider integration; mock sign-in is blocked
 
 ## Registration wizard foundation
@@ -96,6 +97,16 @@ This folder contains the **separate internal admin surface** built with Next.js 
 - Settings oversight:
   - Super Admin policy/settings console: `/admin/super-admin/settings`
   - Security/session/workflow governance placeholders structured for backend persistence wiring.
+
+  ## Principal staff account management
+
+  - Principal route: `/admin/principal/staff-accounts`
+  - LocalStorage-backed mock CRUD for teacher/worker/staff admin accounts:
+    - list accounts
+    - create account (Full Name, Username, Email, Role, Temporary Password)
+    - edit name/role/status
+    - deactivate/activate account
+  - Structured for easy repository swap to database persistence later.
 
 ## Run locally
 
