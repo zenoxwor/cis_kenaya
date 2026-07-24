@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Registration — CIS Kenya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="student-registration.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="logo" href="index.html">
+        <div class="header-shield" aria-hidden="true"></div>
+        <div class="logo-text">Kenya CIS</div>
+      </a>
+      <nav class="main-nav" role="navigation" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="index.html#programs">Programs</a>
+        <a href="index.html#admissions">Admissions</a>
+        <a href="student-registration.html" class="active">Student Register</a>
+      </nav>
+      <button class="mobile-toggle" aria-label="Open menu">☰</button>
+    </div>
+  </header>
+
+  <main role="main" class="student-registration-page">
+    <div class="reg-container">
+      <!-- Progress Bar -->
+      <div class="wizard-header">
+        <div class="wizard-title">
+          <h1>Student Registration & Documentation</h1>
+          <p>Complete all steps to register your student. Your data is secure.</p>
+        </div>
+        <div class="progress-tracker">
+          <div class="progress-steps">
+            <div class="step-indicator active" data-step="1">
+              <span class="step-number">1</span>
+              <span class="step-label">Personal</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="step-indicator" data-step="2">
+              <span class="step-number">2</span>
+              <span class="step-label">Contact</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="step-indicator" data-step="3">
+              <span class="step-number">3</span>
+              <span class="step-label">Guardian</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="step-indicator" data-step="4">
+              <span class="step-number">4</span>
+              <span class="step-label">Academic</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="step-indicator" data-step="5">
+              <span class="step-number">5</span>
+              <span class="step-label">Medical</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="step-indicator" data-step="6">
+              <span class="step-number">6</span>
+              <span class="step-label">Logistics</span>
+            </div>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Container -->
+      <div class="form-wrapper">
+        <form id="studentRegistrationForm" class="wizard-form">
+          
+          <!-- STEP 1: Personal Details -->
+          <section class="form-step active" data-step="1">
+            <h2>Step 1: Personal Details</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="firstName">First Name *</label>
+                <input type="text" id="firstName" name="firstName" required placeholder="Enter first name">
+              </div>
+              <div class="form-group">
+                <label for="fatherName">Father's Name *</label>
+                <input type="text" id="fatherName" name="fatherName" required placeholder="Enter father's name">
+              </div>
+              <div class="form-group">
+                <label for="grandfatherName">Grandfather's Name</label>
+                <input type="text" id="grandfatherName" name="grandfatherName" placeholder="Enter grandfather's name">
+              </div>
+              <div class="form-group">
+                <label for="familyName">Family Name / Surname *</label>
+                <input type="text" id="familyName" name="familyName" required placeholder="Enter surname">
+              </div>
+              <div class="form-group">
+                <label for="gender">Gender *</label>
+                <select id="gender" name="gender" required>
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="dateOfBirth">Date of Birth (DD/MM/YYYY) *</label>
+                <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+              </div>
+              <div class="form-group">
+                <label for="placeOfBirth">Place of Birth (City/Country) *</label>
+                <input type="text" id="placeOfBirth" name="placeOfBirth" required placeholder="Enter city/country">
+              </div>
+              <div class="form-group">
+                <label for="nationality">Nationality *</label>
+                <input type="text" id="nationality" name="nationality" required placeholder="Enter nationality">
+              </div>
+              <div class="form-group">
+                <label for="nationalId">National ID / Resident Permit Number *</label>
+                <input type="text" id="nationalId" name="nationalId" required placeholder="Enter ID number">
+              </div>
+              <div class="form-group">
+                <label for="nativeLanguage">Native Language *</label>
+                <input type="text" id="nativeLanguage" name="nativeLanguage" required placeholder="Enter native language">
+              </div>
+              <div class="form-group">
+                <label for="religion">Religion (Optional)</label>
+                <input type="text" id="religion" name="religion" placeholder="Enter religion">
+              </div>
+              <div class="form-group full-width">
+                <label for="studentPhoto">Student Photo *</label>
+                <div class="file-upload-wrapper">
+                  <input type="file" id="studentPhoto" name="studentPhoto" accept="image/*" required>
+                  <div class="file-upload-hint">JPG, PNG, GIF (Max 5MB)</div>
+                  <div id="photoPreview" class="photo-preview"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 2: Contact & Residential Address -->
+          <section class="form-step" data-step="2">
+            <h2>Step 2: Contact & Residential Address</h2>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label for="fullAddress">Full Residential Address *</label>
+                <textarea id="fullAddress" name="fullAddress" required placeholder="Enter complete address (City, District, Street, Building No.)" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="studentPhone">Student Phone Number</label>
+                <input type="tel" id="studentPhone" name="studentPhone" placeholder="Enter phone number">
+              </div>
+              <div class="form-group">
+                <label for="studentEmail">Student Email Address *</label>
+                <input type="email" id="studentEmail" name="studentEmail" required placeholder="Enter email">
+              </div>
+              <div class="form-group full-width">
+                <label for="homeLocation">Home Location / Map Coordinates (Optional)</label>
+                <textarea id="homeLocation" name="homeLocation" placeholder="Optional: Enter GPS coordinates or location details" rows="2"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 3: Guardian & Family Details -->
+          <section class="form-step" data-step="3">
+            <h2>Step 3: Guardian & Family Details</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="guardianName">Guardian Full Name *</label>
+                <input type="text" id="guardianName" name="guardianName" required placeholder="Enter guardian's full name">
+              </div>
+              <div class="form-group">
+                <label for="guardianRelationship">Relationship to Student *</label>
+                <select id="guardianRelationship" name="guardianRelationship" required>
+                  <option value="">Select Relationship</option>
+                  <option value="father">Father</option>
+                  <option value="mother">Mother</option>
+                  <option value="uncle">Uncle</option>
+                  <option value="aunt">Aunt</option>
+                  <option value="grandfather">Grandfather</option>
+                  <option value="grandmother">Grandmother</option>
+                  <option value="guardian">Legal Guardian</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="guardianNationalId">Guardian National ID *</label>
+                <input type="text" id="guardianNationalId" name="guardianNationalId" required placeholder="Enter guardian's ID">
+              </div>
+              <div class="form-group">
+                <label for="guardianPhone">Primary Phone Number *</label>
+                <input type="tel" id="guardianPhone" name="guardianPhone" required placeholder="Enter primary phone">
+              </div>
+              <div class="form-group">
+                <label for="emergencyPhone">Emergency Alternate Phone Number *</label>
+                <input type="tel" id="emergencyPhone" name="emergencyPhone" required placeholder="Enter alternate phone">
+              </div>
+              <div class="form-group">
+                <label for="guardianEmail">Guardian Email Address *</label>
+                <input type="email" id="guardianEmail" name="guardianEmail" required placeholder="Enter email">
+              </div>
+              <div class="form-group">
+                <label for="guardianOccupation">Guardian Occupation / Employer</label>
+                <input type="text" id="guardianOccupation" name="guardianOccupation" placeholder="Enter occupation/employer">
+              </div>
+              <div class="form-group">
+                <label for="motherName">Mother's Full Name</label>
+                <input type="text" id="motherName" name="motherName" placeholder="Enter mother's name">
+              </div>
+              <div class="form-group">
+                <label for="motherPhone">Mother's Phone Number</label>
+                <input type="tel" id="motherPhone" name="motherPhone" placeholder="Enter mother's phone">
+              </div>
+              <div class="form-group">
+                <label for="parentalStatus">Parents' Marital Status</label>
+                <select id="parentalStatus" name="parentalStatus">
+                  <option value="">Select Status</option>
+                  <option value="married">Married</option>
+                  <option value="divorced">Divorced</option>
+                  <option value="separated">Separated</option>
+                  <option value="widowed">Widowed</option>
+                  <option value="single">Single</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 4: Academic Information -->
+          <section class="form-step" data-step="4">
+            <h2>Step 4: Academic Information</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="studentId">Student ID Number</label>
+                <input type="text" id="studentId" name="studentId" placeholder="Auto-generated or manual">
+              </div>
+              <div class="form-group">
+                <label for="educationLevel">Education Level *</label>
+                <select id="educationLevel" name="educationLevel" required>
+                  <option value="">Select Level</option>
+                  <option value="elementary">Elementary School</option>
+                  <option value="middle">Middle School</option>
+                  <option value="highschool">High School</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="gradeLevel">Grade Level *</label>
+                <input type="text" id="gradeLevel" name="gradeLevel" required placeholder="e.g., Grade 10">
+              </div>
+              <div class="form-group">
+                <label for="classSection">Class / Section *</label>
+                <select id="classSection" name="classSection" required>
+                  <option value="">Select Section</option>
+                  <option value="a">Section A</option>
+                  <option value="b">Section B</option>
+                  <option value="c">Section C</option>
+                  <option value="d">Section D</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="enrollmentDate">Enrollment Date *</label>
+                <input type="date" id="enrollmentDate" name="enrollmentDate" required>
+              </div>
+              <div class="form-group">
+                <label for="studentStatus">Student Status *</label>
+                <select id="studentStatus" name="studentStatus" required>
+                  <option value="">Select Status</option>
+                  <option value="new">New</option>
+                  <option value="transferred">Transferred</option>
+                  <option value="returning">Returning</option>
+                  <option value="graduated">Graduated</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="previousSchool">Previous School Name</label>
+                <input type="text" id="previousSchool" name="previousSchool" placeholder="If transferred, enter school name">
+              </div>
+              <div class="form-group">
+                <label for="graduationYear">Expected Graduation Year</label>
+                <input type="number" id="graduationYear" name="graduationYear" placeholder="e.g., 2026" min="2024" max="2035">
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 5: Medical & Health Record -->
+          <section class="form-step" data-step="5">
+            <h2>Step 5: Medical & Health Record</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="bloodType">Blood Type *</label>
+                <select id="bloodType" name="bloodType" required>
+                  <option value="">Select Blood Type</option>
+                  <option value="a+">A+</option>
+                  <option value="a-">A-</option>
+                  <option value="b+">B+</option>
+                  <option value="b-">B-</option>
+                  <option value="ab+">AB+</option>
+                  <option value="ab-">AB-</option>
+                  <option value="o+">O+</option>
+                  <option value="o-">O-</option>
+                </select>
+              </div>
+              <div class="form-group full-width">
+                <label for="chronicConditions">Chronic Conditions / Illnesses (If any)</label>
+                <textarea id="chronicConditions" name="chronicConditions" placeholder="List any chronic conditions or illnesses" rows="2"></textarea>
+              </div>
+              <div class="form-group full-width">
+                <label for="allergies">Allergies (Food, Medication, Environmental, etc.)</label>
+                <textarea id="allergies" name="allergies" placeholder="List all allergies separated by comma" rows="2"></textarea>
+              </div>
+              <div class="form-group full-width">
+                <label for="specialNeeds">Special Needs / Physical Disabilities</label>
+                <textarea id="specialNeeds" name="specialNeeds" placeholder="Describe any special needs or disabilities" rows="2"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="emergencyMedicalContact">Emergency Medical Contact</label>
+                <input type="tel" id="emergencyMedicalContact" name="emergencyMedicalContact" placeholder="Enter contact number">
+              </div>
+              <div class="form-group full-width">
+                <label for="physicianNotes">Physician Notes (If applicable)</label>
+                <textarea id="physicianNotes" name="physicianNotes" placeholder="Any notes from physician" rows="2"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 6: Logistics, Documents & Remarks -->
+          <section class="form-step" data-step="6">
+            <h2>Step 6: Logistics, Documents & Remarks</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="busTransport">School Bus Transport Subscription *</label>
+                <select id="busTransport" name="busTransport" required>
+                  <option value="">Select Option</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              <div class="form-group" id="busDetailsGroup" style="display:none;">
+                <label for="busRoute">Bus Route / Driver Name / Bus Number</label>
+                <input type="text" id="busRoute" name="busRoute" placeholder="Enter route details">
+              </div>
+              <div class="form-group">
+                <label for="mealPlan">Meal Plan Subscription *</label>
+                <select id="mealPlan" name="mealPlan" required>
+                  <option value="">Select Option</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              <div class="form-group full-width">
+                <label for="behavioralNotes">Behavioral & Conduct Notes</label>
+                <textarea id="behavioralNotes" name="behavioralNotes" placeholder="Any notes on behavior or conduct" rows="2"></textarea>
+              </div>
+              <div class="form-group full-width">
+                <label for="attendanceNotes">Attendance & Academic Grades Overview</label>
+                <textarea id="attendanceNotes" name="attendanceNotes" placeholder="Previous attendance and grades" rows="2"></textarea>
+              </div>
+              <div class="form-group full-width">
+                <label>File Uploads (Documents)</label>
+                <div class="file-uploads">
+                  <div class="file-input-group">
+                    <label for="birthCert">Birth Certificate</label>
+                    <input type="file" id="birthCert" name="birthCert" accept=".pdf,.jpg,.jpeg,.png">
+                  </div>
+                  <div class="file-input-group">
+                    <label for="idCopy">ID Copy</label>
+                    <input type="file" id="idCopy" name="idCopy" accept=".pdf,.jpg,.jpeg,.png">
+                  </div>
+                  <div class="file-input-group">
+                    <label for="transcript">Previous Transcripts</label>
+                    <input type="file" id="transcript" name="transcript" accept=".pdf,.jpg,.jpeg,.png">
+                  </div>
+                  <div class="file-input-group">
+                    <label for="medicalRec">Medical Records</label>
+                    <input type="file" id="medicalRec" name="medicalRec" accept=".pdf,.jpg,.jpeg,.png">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="button" id="prevBtn" class="btn btn-secondary" style="display:none;">← Previous</button>
+            <button type="button" id="nextBtn" class="btn btn-primary">Next →</button>
+            <button type="submit" id="submitBtn" class="btn btn-success" style="display:none;">Complete Registration</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Student Summary / Profile Modal -->
+    <div id="summaryModal" class="modal hidden">
+      <div class="modal-content modal-large">
+        <button type="button" class="modal-close" aria-label="Close">&times;</button>
+        
+        <div id="summaryContent" class="student-summary">
+          <!-- Summary will be dynamically populated -->
+        </div>
+
+        <div class="summary-actions">
+          <button type="button" id="printBtn" class="btn btn-outline">🖨️ Print Profile</button>
+          <button type="button" id="exportJsonBtn" class="btn btn-outline">📥 Export JSON</button>
+          <button type="button" id="exportPdfBtn" class="btn btn-outline">📄 Export PDF</button>
+          <button type="button" id="closeModal" class="btn btn-secondary">Close</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-shield"></div>
+        <div>Kenya CIS</div>
+      </div>
+      <p>Building tomorrow's leaders, one student at a time.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNa5G3xQXG9q4CPw5qX6tFqP6s3G7+9z6ZbZ1n6QGz6jzQ8sG1k6QFh3s9Jp9sG0pQ1V9zS9b9kP1tQ8R1X1w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="student-registration.js"></script>
+</body>
+</html>
