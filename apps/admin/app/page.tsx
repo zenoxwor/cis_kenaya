@@ -14,9 +14,9 @@ export default function Home() {
       <div>
         <Link
           className="inline-flex rounded-lg bg-slate-900 px-5 py-3 font-medium text-white hover:bg-slate-800"
-          href="/admin"
+          href="/sign-in"
         >
-          Open Admin Dashboard
+          Sign in to Admin
         </Link>
       </div>
     </main>

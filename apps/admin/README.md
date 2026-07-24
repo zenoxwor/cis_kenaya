@@ -26,6 +26,19 @@ This folder contains the **separate internal admin surface** built with Next.js 
   - StudentDocument, FeeInvoice, Payment, VisitorLog, AuditLog
   - status enums for application, document, student, and payment lifecycles
 
+## Authentication foundation
+
+- Sign-in route: `/sign-in`
+- Mock sign-in endpoint (development): `POST /api/auth/mock-sign-in`
+- Sign-out endpoint: `POST /api/auth/sign-out`
+- Middleware-enforced route protection on `/admin/*` using RBAC route matrix.
+- Session storage: HTTP-only cookie (`kenaya_admin_session`) with structured payload.
+
+`AUTH_MODE` controls behavior:
+
+- `mock` (default in non-production): uses predefined development users in `lib/auth/mock-users.ts`
+- `external`: reserved for production identity provider integration; mock sign-in is blocked
+
 ## Run locally
 
 ```bash
@@ -33,4 +46,4 @@ npm install
 npm run dev
 ```
 
-Then open `/admin`.
+Then open `/sign-in`.

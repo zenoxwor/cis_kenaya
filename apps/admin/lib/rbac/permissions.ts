@@ -36,6 +36,7 @@ export const ADMIN_ROUTE_KEYS = [
   "/admin/super-admin/users",
   "/admin/principal",
   "/admin/principal/reports",
+  "/admin/admissions",
   "/admin/reception",
   "/admin/reception/applications",
   "/admin/registration",
@@ -88,6 +89,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin",
       "/admin/principal",
       "/admin/principal/reports",
+      "/admin/admissions",
       "/admin/reception",
       "/admin/reception/applications",
       "/admin/finance",
@@ -111,6 +113,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
   [ROLE.RECEPTION]: {
     routeAccess: [
       "/admin",
+      "/admin/admissions",
       "/admin/reception",
       "/admin/reception/applications",
       "/admin/registration"
@@ -144,6 +147,10 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
 
 export function canAccessRoute(role: AppRole, route: string) {
   return ROLE_PERMISSION_MATRIX[role].routeAccess.some(allowedRoute => {
+    if (allowedRoute === "/admin") {
+      return route === "/admin" || route === "/admin/";
+    }
+
     return route === allowedRoute || route.startsWith(`${allowedRoute}/`);
   });
 }

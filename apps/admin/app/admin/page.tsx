@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth/session";
+import { requireCurrentUser } from "@/lib/auth/session";
 import { canAccessRoute } from "@/lib/rbac/permissions";
 import { ROLE, ROLE_LABELS, type AppRole } from "@/lib/rbac/roles";
 
@@ -36,7 +36,7 @@ const roleDashboards = [
 }>;
 
 export default async function AdminDashboardPage() {
-  const user = await getCurrentUser();
+  const user = await requireCurrentUser("/admin");
   const visibleCards = roleDashboards.filter(item => canAccessRoute(user.role, item.href));
 
   return (

@@ -7,7 +7,7 @@ export const ROLE = {
 
 export type AppRole = (typeof ROLE)[keyof typeof ROLE];
 
-export const APP_ROLES = Object.values(ROLE);
+export const APP_ROLES = [ROLE.SUPER_ADMIN, ROLE.PRINCIPAL, ROLE.RECEPTION, ROLE.FINANCE] as const;
 
 export const ROLE_LABELS: Record<AppRole, string> = {
   [ROLE.SUPER_ADMIN]: "Super Admin",
@@ -17,3 +17,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 };
 
 export const DEFAULT_APP_ROLE: AppRole = ROLE.SUPER_ADMIN;
+
+export function isAppRole(value: string): value is AppRole {
+  return APP_ROLES.includes(value as AppRole);
+}

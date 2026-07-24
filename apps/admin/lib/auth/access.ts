@@ -1,7 +1,6 @@
-import { getCurrentUser } from "@/lib/auth/session";
+import type { AppRole } from "@/lib/rbac/roles";
 import { getVisibleNavigation } from "@/lib/rbac/navigation";
 
-export async function getAuthorizedNavigation() {
-  const user = await getCurrentUser();
-  return getVisibleNavigation(user.role);
+export function getAuthorizedNavigation(role: AppRole) {
+  return getVisibleNavigation(role);
 }
