@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const cards = [
   { title: "School Performance", copy: "Attendance, behavior, and progression trend placeholders." },
   { title: "Approvals Queue", copy: "Pending admissions and policy approvals to review." },
@@ -20,6 +22,11 @@ export default function PrincipalPage() {
             <p className="mt-2 text-sm text-slate-600">{card.copy}</p>
           </article>
         ))}
+      </div>
+      <div className="admin-content-card">
+        <Link className="inline-flex text-sm font-semibold" href="/admin/principal/reports">
+          Open principal reports section →
+        </Link>
       </div>
     </section>
   );

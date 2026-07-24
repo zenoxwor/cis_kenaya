@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const modules = [
   "Identity and access administration",
   "Role assignment workflow",
@@ -21,6 +23,9 @@ export default function SuperAdminPage() {
             <li key={item}>• {item}</li>
           ))}
         </ul>
+        <Link className="mt-4 inline-flex text-sm font-semibold" href="/admin/super-admin/users">
+          Open user governance section →
+        </Link>
       </div>
     </section>
   );

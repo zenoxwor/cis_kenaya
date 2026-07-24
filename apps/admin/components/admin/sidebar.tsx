@@ -34,7 +34,7 @@ export function Sidebar({ items, collapsed, onNavigate }: SidebarProps) {
 
       <nav className="space-y-1 p-3">
         {items.map(item => {
-          const active = pathname === item.href;
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}

@@ -1,48 +1,52 @@
-import type { AppPermission } from "@/lib/rbac/permissions";
+import { canAccessRoute, canViewNavigation, type AdminNavKey } from "@/lib/rbac/permissions";
 import type { AppRole } from "@/lib/rbac/roles";
 
 export type NavigationItem = {
+  id: AdminNavKey;
   href: string;
   label: string;
-  roles: AppRole[];
-  permission?: AppPermission;
+  description: string;
 };
 
 export const ADMIN_NAV_ITEMS: NavigationItem[] = [
   {
+    id: "dashboard",
     href: "/admin",
     label: "Dashboard",
-    roles: ["super_admin", "principal", "reception_admissions", "finance"],
-    permission: "dashboard:read"
+    description: "Cross-role overview and quick actions."
   },
   {
+    id: "super_admin_console",
     href: "/admin/super-admin",
     label: "Super Admin Console",
-    roles: ["super_admin"],
-    permission: "users:manage"
+    description: "Identity, governance, and global controls."
   },
   {
+    id: "principal_dashboard",
     href: "/admin/principal",
     label: "Principal Dashboard",
-    roles: ["super_admin", "principal"],
-    permission: "reports:read"
+    description: "School leadership decisions and approvals."
   },
   {
-    href: "/admin/admissions",
-    label: "Admissions Queue",
-    roles: ["super_admin", "reception_admissions", "principal"],
-    permission: "registration:read"
+    id: "reception_dashboard",
+    href: "/admin/reception",
+    label: "Reception / Admissions",
+    description: "Application pipeline and registration intake."
   },
   {
+    id: "finance_dashboard",
     href: "/admin/finance",
     label: "Finance Ops",
-    roles: ["super_admin", "finance", "principal"],
-    permission: "finance:read"
+    description: "Invoices, collections, and payment operations."
   },
   {
+    id: "registration_wizard",
     href: "/admin/registration",
     label: "6-Step Registration Wizard",
-    roles: ["super_admin", "reception_admissions"],
-    permission: "registration:wizard"
+    description: "Structured student registration data capture."
   }
 ];
+
+export function getVisibleNavigation(role: AppRole) {
+  return ADMIN_NAV_ITEMS.filter(item => canViewNavigation(role, item.id) && canAccessRoute(role, item.href));
+}

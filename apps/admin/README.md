@@ -16,13 +16,15 @@ This folder contains the **separate internal admin surface** built with Next.js 
   - Principal
   - Reception / Admissions
   - Finance
-- RBAC role/permission/navigation model skeleton under `lib/rbac`.
+- RBAC matrix foundation under `lib/rbac` with:
+  - explicit role constants (`SUPER_ADMIN`, `PRINCIPAL`, `RECEPTION`, `FINANCE`)
+  - route-access map
+  - navigation-visibility map
+  - action permissions (`view/create/edit/approve/export/override`)
 - Prisma schema direction for:
-  - Single main campus
-  - User + roles
-  - 6-step registration draft progression
-  - Finance ledger
-  - Audit logs
+  - User, Role, Student, Guardian, Application, Enrollment
+  - StudentDocument, FeeInvoice, Payment, VisitorLog, AuditLog
+  - status enums for application, document, student, and payment lifecycles
 
 ## Run locally
 

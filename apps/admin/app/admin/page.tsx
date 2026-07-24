@@ -1,36 +1,43 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
-import { ROLE_LABELS } from "@/lib/rbac/roles";
+import { canAccessRoute } from "@/lib/rbac/permissions";
+import { ROLE, ROLE_LABELS, type AppRole } from "@/lib/rbac/roles";
 
 const roleDashboards = [
   {
-    role: "super_admin",
+    role: ROLE.SUPER_ADMIN,
     label: "Super Admin",
     href: "/admin/super-admin",
     description: "Platform control, identity governance, and global settings."
   },
   {
-    role: "principal",
+    role: ROLE.PRINCIPAL,
     label: "Principal",
     href: "/admin/principal",
     description: "School-level oversight, key reports, and performance views."
   },
   {
-    role: "reception_admissions",
+    role: ROLE.RECEPTION,
     label: "Reception / Admissions",
-    href: "/admin/admissions",
+    href: "/admin/reception",
     description: "Inquiry handling, applicant triage, and registration operations."
   },
   {
-    role: "finance",
+    role: ROLE.FINANCE,
     label: "Finance",
     href: "/admin/finance",
     description: "Billing workflows, financial statements, and receivables control."
   }
-] as const;
+] as const satisfies ReadonlyArray<{
+  role: AppRole;
+  label: string;
+  href: string;
+  description: string;
+}>;
 
 export default async function AdminDashboardPage() {
   const user = await getCurrentUser();
+  const visibleCards = roleDashboards.filter(item => canAccessRoute(user.role, item.href));
 
   return (
     <section className="space-y-6">
@@ -46,7 +53,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {roleDashboards.map(item => (
+        {visibleCards.map(item => (
           <article key={item.role} className="admin-content-card">
             <h2 className="text-lg font-semibold text-slate-900">{item.label}</h2>
             <p className="mt-2 text-sm text-slate-600">{item.description}</p>

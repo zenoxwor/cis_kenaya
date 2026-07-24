@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const financeWidgets = [
   "Outstanding invoices",
   "Tuition collections by cycle",
@@ -21,6 +23,14 @@ export default function FinancePage() {
             <li key={item}>• {item}</li>
           ))}
         </ul>
+        <div className="mt-4 space-y-2 text-sm">
+          <Link className="block font-semibold" href="/admin/finance/invoices">
+            Open invoice management →
+          </Link>
+          <Link className="block font-semibold" href="/admin/finance/payments">
+            Open payment operations →
+          </Link>
+        </div>
       </div>
     </section>
   );
