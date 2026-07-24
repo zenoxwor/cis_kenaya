@@ -50,35 +50,52 @@ This folder contains the **separate internal admin surface** built with Next.js 
   - PDF endpoint hook at `POST /api/registration/export/pdf` (placeholder for server PDF rendering)
 - Status alignment with schema enums (application/document/student/payment) via `lib/registration/statuses.ts`.
 
-  ## Phase-one dashboards
+## Phase-one dashboards
 
-  - Role-specific dashboard pages now implemented for:
-    - `/admin/super-admin`
-    - `/admin/principal`
-    - `/admin/reception`
-    - `/admin/finance`
-  - Each includes KPI cards, recent activity, action shortcuts, and role-tailored operational tables.
-  - Dashboard rendering is modular via `components/dashboard/role-dashboard.tsx`.
-  - Structured placeholder datasets live under `lib/dashboard/*` and are ready to be swapped with backend queries.
-  - Super Admin dashboard includes RBAC capability snapshot data using current permission matrix helpers.
+- Role-specific dashboard pages now implemented for:
+  - `/admin/super-admin`
+  - `/admin/principal`
+  - `/admin/reception`
+  - `/admin/finance`
+- Each includes KPI cards, recent activity, action shortcuts, and role-tailored operational tables.
+- Dashboard rendering is modular via `components/dashboard/role-dashboard.tsx`.
+- Structured placeholder datasets live under `lib/dashboard/*` and are ready to be swapped with backend queries.
+- Super Admin dashboard includes RBAC capability snapshot data using current permission matrix helpers.
 
-  ## Operational workflow wiring
+## Operational workflow wiring
 
-  - Reusable workflow engine and action guards:
-    - `lib/workflow/types.ts`
-    - `lib/workflow/engine.ts`
-    - `lib/workflow/repository.ts`
-    - `lib/workflow/mock-data.ts`
-  - Shared workflow board UI:
-    - `components/workflow/role-workflow-board.tsx`
-  - Role-specific operational routes now execute lifecycle actions with RBAC-aware controls:
-    - Reception intake queue: `/admin/reception/applications`
-    - Principal decisioning: `/admin/principal/reports`
-    - Finance invoice/payment hooks: `/admin/finance/invoices`, `/admin/finance/payments`
-    - Super Admin override lane: `/admin/super-admin/users`
-  - Flow coverage includes:
-    - submission -> document request/verification -> review -> approve/reject/waitlist
-    - approved application -> invoice issue -> payment settlement -> enrollment conversion
+- Reusable workflow engine and action guards:
+  - `lib/workflow/types.ts`
+  - `lib/workflow/engine.ts`
+  - `lib/workflow/repository.ts`
+  - `lib/workflow/mock-data.ts`
+- Shared workflow board UI:
+  - `components/workflow/role-workflow-board.tsx`
+- Role-specific operational routes now execute lifecycle actions with RBAC-aware controls:
+  - Reception intake queue: `/admin/reception/applications`
+  - Principal decisioning: `/admin/principal/reports`
+  - Finance invoice/payment hooks: `/admin/finance/invoices`, `/admin/finance/payments`
+  - Super Admin override lane: `/admin/super-admin/users`
+- Flow coverage includes:
+  - submission -> document request/verification -> review -> approve/reject/waitlist
+  - approved application -> invoice issue -> payment settlement -> enrollment conversion
+
+## Reporting, analytics, settings, and audit controls
+
+- Export-ready reporting surfaces:
+  - Principal analytics: `/admin/principal/analytics`
+  - Reception analytics: `/admin/reception/analytics`
+  - Finance reporting: `/admin/finance/reports`
+- Reusable report component and export hooks:
+  - `components/reporting/report-surface.tsx`
+  - JSON/CSV/Print export in-client
+  - PDF export endpoint hook: `POST /api/reports/export/pdf`
+- Audit controls:
+  - Super Admin audit console: `/admin/super-admin/audit`
+  - Mock audit data aligned with `AuditLog` model direction in `lib/audit/*`
+- Settings oversight:
+  - Super Admin policy/settings console: `/admin/super-admin/settings`
+  - Security/session/workflow governance placeholders structured for backend persistence wiring.
 
 ## Run locally
 

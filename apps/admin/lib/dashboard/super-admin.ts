@@ -13,9 +13,10 @@ export const superAdminDashboardData: RoleDashboardData = {
   ],
   shortcuts: [
     { label: "User governance", href: "/admin/super-admin/users", hint: "Manage roles and account states" },
+    { label: "Audit console", href: "/admin/super-admin/audit", hint: "Inspect governance event trail" },
+    { label: "Oversight settings", href: "/admin/super-admin/settings", hint: "Tune policy controls" },
     { label: "Principal reports", href: "/admin/principal/reports", hint: "Review school-level outcomes" },
-    { label: "Admissions board", href: "/admin/reception/applications", hint: "Escalations and approval queue" },
-    { label: "Finance invoices", href: "/admin/finance/invoices", hint: "Override and freeze billing items" }
+    { label: "Admissions board", href: "/admin/reception/applications", hint: "Escalations and approval queue" }
   ],
   recentActivity: [
     {

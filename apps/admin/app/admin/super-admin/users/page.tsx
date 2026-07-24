@@ -1,5 +1,6 @@
 import { RoleWorkflowBoard } from "@/components/workflow/role-workflow-board";
 import { ROLE } from "@/lib/rbac/roles";
+import Link from "next/link";
 
 export default function SuperAdminUsersPage() {
   return (
@@ -9,6 +10,10 @@ export default function SuperAdminUsersPage() {
         <p className="mt-2 text-slate-600">
           Access governance workspace plus workflow override controls for escalated cases.
         </p>
+        <div className="mt-3 flex flex-wrap gap-3 text-sm">
+          <Link href="/admin/super-admin/audit">Open audit console →</Link>
+          <Link href="/admin/super-admin/settings">Open oversight settings →</Link>
+        </div>
       </header>
       <RoleWorkflowBoard
         role={ROLE.SUPER_ADMIN}

@@ -10,10 +10,10 @@ export const principalDashboardData: RoleDashboardData = {
     { label: "Document verification completion", value: "88%", trend: "Target 92%", tone: "neutral" }
   ],
   shortcuts: [
-    { label: "Open reports center", href: "/admin/principal/reports", hint: "Cross-functional school analytics" },
+    { label: "Open decision workflow", href: "/admin/principal/reports", hint: "Review and approve admissions" },
+    { label: "Open analytics center", href: "/admin/principal/analytics", hint: "Cross-functional school analytics" },
     { label: "Review applications", href: "/admin/reception/applications", hint: "Approve pending candidates" },
-    { label: "Check finance exposure", href: "/admin/finance", hint: "Tuition collection and risk" },
-    { label: "View registration wizard", href: "/admin/registration", hint: "Inspect intake capture quality" }
+    { label: "Check finance exposure", href: "/admin/finance/reports", hint: "Tuition collection and risk" }
   ],
   recentActivity: [
     {

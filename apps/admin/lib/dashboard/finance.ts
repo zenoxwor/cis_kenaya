@@ -12,8 +12,8 @@ export const financeDashboardData: RoleDashboardData = {
   shortcuts: [
     { label: "Invoice management", href: "/admin/finance/invoices", hint: "Issue and update student invoices" },
     { label: "Payment operations", href: "/admin/finance/payments", hint: "Post and reconcile payments" },
-    { label: "Admissions linkage", href: "/admin/reception/applications", hint: "Verify payment prerequisites" },
-    { label: "Principal financial view", href: "/admin/principal/reports", hint: "Share leadership summaries" }
+    { label: "Finance reporting pack", href: "/admin/finance/reports", hint: "Export-ready analytics and trends" },
+    { label: "Admissions linkage", href: "/admin/reception/applications", hint: "Verify payment prerequisites" }
   ],
   recentActivity: [
     {

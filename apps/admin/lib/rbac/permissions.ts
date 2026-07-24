@@ -34,15 +34,20 @@ export const ADMIN_ROUTE_KEYS = [
   "/admin",
   "/admin/super-admin",
   "/admin/super-admin/users",
+  "/admin/super-admin/audit",
+  "/admin/super-admin/settings",
   "/admin/principal",
   "/admin/principal/reports",
+  "/admin/principal/analytics",
   "/admin/admissions",
   "/admin/reception",
   "/admin/reception/applications",
+  "/admin/reception/analytics",
   "/admin/registration",
   "/admin/finance",
   "/admin/finance/invoices",
-  "/admin/finance/payments"
+  "/admin/finance/payments",
+  "/admin/finance/reports"
 ] as const;
 
 export type AdminRouteKey = (typeof ADMIN_ROUTE_KEYS)[number];
@@ -89,11 +94,14 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin",
       "/admin/principal",
       "/admin/principal/reports",
+      "/admin/principal/analytics",
       "/admin/admissions",
       "/admin/reception",
       "/admin/reception/applications",
+      "/admin/reception/analytics",
       "/admin/finance",
-      "/admin/finance/invoices"
+      "/admin/finance/invoices",
+      "/admin/finance/reports"
     ],
     navigationVisibility: ["dashboard", "principal_dashboard", "reception_dashboard", "finance_dashboard"],
     actions: {
@@ -116,6 +124,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/admissions",
       "/admin/reception",
       "/admin/reception/applications",
+      "/admin/reception/analytics",
       "/admin/registration"
     ],
     navigationVisibility: ["dashboard", "reception_dashboard", "registration_wizard"],
@@ -131,7 +140,13 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     }
   },
   [ROLE.FINANCE]: {
-    routeAccess: ["/admin", "/admin/finance", "/admin/finance/invoices", "/admin/finance/payments"],
+    routeAccess: [
+      "/admin",
+      "/admin/finance",
+      "/admin/finance/invoices",
+      "/admin/finance/payments",
+      "/admin/finance/reports"
+    ],
     navigationVisibility: ["dashboard", "finance_dashboard"],
     actions: {
       dashboard: ["view"],

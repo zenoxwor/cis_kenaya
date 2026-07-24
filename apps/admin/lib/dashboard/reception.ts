@@ -12,8 +12,8 @@ export const receptionDashboardData: RoleDashboardData = {
   shortcuts: [
     { label: "Applications queue", href: "/admin/reception/applications", hint: "Triage and escalation board" },
     { label: "Start registration wizard", href: "/admin/registration", hint: "Create new applicant draft" },
-    { label: "Principal decisions", href: "/admin/principal", hint: "Follow up decision bottlenecks" },
-    { label: "Finance verification", href: "/admin/finance/payments", hint: "Confirm payment receipts" }
+    { label: "Reception analytics", href: "/admin/reception/analytics", hint: "Track intake performance trends" },
+    { label: "Principal decisions", href: "/admin/principal/reports", hint: "Follow up decision bottlenecks" }
   ],
   recentActivity: [
     {
