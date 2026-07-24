@@ -50,6 +50,18 @@ This folder contains the **separate internal admin surface** built with Next.js 
   - PDF endpoint hook at `POST /api/registration/export/pdf` (placeholder for server PDF rendering)
 - Status alignment with schema enums (application/document/student/payment) via `lib/registration/statuses.ts`.
 
+  ## Phase-one dashboards
+
+  - Role-specific dashboard pages now implemented for:
+    - `/admin/super-admin`
+    - `/admin/principal`
+    - `/admin/reception`
+    - `/admin/finance`
+  - Each includes KPI cards, recent activity, action shortcuts, and role-tailored operational tables.
+  - Dashboard rendering is modular via `components/dashboard/role-dashboard.tsx`.
+  - Structured placeholder datasets live under `lib/dashboard/*` and are ready to be swapped with backend queries.
+  - Super Admin dashboard includes RBAC capability snapshot data using current permission matrix helpers.
+
 ## Run locally
 
 ```bash
