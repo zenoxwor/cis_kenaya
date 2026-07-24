@@ -1,8 +1,5 @@
-const userTasks = [
-  "Create and disable administrative user accounts",
-  "Assign and review role-based privileges",
-  "Escalate overrides with explicit audit reasons"
-];
+import { RoleWorkflowBoard } from "@/components/workflow/role-workflow-board";
+import { ROLE } from "@/lib/rbac/roles";
 
 export default function SuperAdminUsersPage() {
   return (
@@ -10,16 +7,14 @@ export default function SuperAdminUsersPage() {
       <header className="admin-content-card">
         <h1 className="text-2xl font-bold text-slate-900">User & Role Governance</h1>
         <p className="mt-2 text-slate-600">
-          Access governance workspace for administrative identity and RBAC operations.
+          Access governance workspace plus workflow override controls for escalated cases.
         </p>
       </header>
-      <div className="admin-content-card">
-        <ul className="space-y-2 text-sm text-slate-700">
-          {userTasks.map(item => (
-            <li key={item}>• {item}</li>
-          ))}
-        </ul>
-      </div>
+      <RoleWorkflowBoard
+        role={ROLE.SUPER_ADMIN}
+        heading="Super Admin Workflow Overrides"
+        subtitle="Escalated application, document, and enrollment actions requiring governance authority."
+      />
     </section>
   );
 }

@@ -62,6 +62,24 @@ This folder contains the **separate internal admin surface** built with Next.js 
   - Structured placeholder datasets live under `lib/dashboard/*` and are ready to be swapped with backend queries.
   - Super Admin dashboard includes RBAC capability snapshot data using current permission matrix helpers.
 
+  ## Operational workflow wiring
+
+  - Reusable workflow engine and action guards:
+    - `lib/workflow/types.ts`
+    - `lib/workflow/engine.ts`
+    - `lib/workflow/repository.ts`
+    - `lib/workflow/mock-data.ts`
+  - Shared workflow board UI:
+    - `components/workflow/role-workflow-board.tsx`
+  - Role-specific operational routes now execute lifecycle actions with RBAC-aware controls:
+    - Reception intake queue: `/admin/reception/applications`
+    - Principal decisioning: `/admin/principal/reports`
+    - Finance invoice/payment hooks: `/admin/finance/invoices`, `/admin/finance/payments`
+    - Super Admin override lane: `/admin/super-admin/users`
+  - Flow coverage includes:
+    - submission -> document request/verification -> review -> approve/reject/waitlist
+    - approved application -> invoice issue -> payment settlement -> enrollment conversion
+
 ## Run locally
 
 ```bash
