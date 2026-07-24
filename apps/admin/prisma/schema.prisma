@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  PRINCIPAL
+  RECEPTION_ADMISSIONS
+  FINANCE
+}
+
+enum RegistrationDraftStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model Campus {
+  id        String   @id @default("main-campus")
+  code      String   @unique
+  name      String
+  timezone  String   @default("UTC")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  registrationDrafts StudentRegistrationDraft[]
+  financeLedgers     FinanceLedger[]
+}
+
+model User {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  fullName     String
+  passwordHash String?
+  role         UserRole
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  createdDrafts StudentRegistrationDraft[] @relation("CreatedByUser")
+  auditLogs     AuditLog[]
+}
+
+model StudentRegistrationDraft {
+  id                  String                  @id @default(cuid())
+  campusId            String
+  status              RegistrationDraftStatus @default(DRAFT)
+  currentStep         Int                     @default(1)
+  studentFirstName    String?
+  studentLastName     String?
+  applicantEmail      String?
+  guardianName        String?
+  guardianPhone       String?
+  payloadJson         Json?
+  submittedAt         DateTime?
+  createdByUserId     String
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  campus     Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  createdBy  User   @relation("CreatedByUser", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([campusId, status])
+  @@index([createdByUserId])
+}
+
+model FinanceLedger {
+  id                String   @id @default(cuid())
+  campusId          String
+  studentExternalId String?
+  invoiceCode       String
+  amountMinor       Int
+  currencyCode      String   @default("USD")
+  dueDate           DateTime?
+  paidAt            DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  campus Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
+
+  @@index([campusId, dueDate])
+  @@unique([campusId, invoiceCode])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  action      String
+  entityType  String
+  entityId    String
+  payloadJson Json?
+  createdAt   DateTime @default(now())
+
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([actorUserId, createdAt])
+}
