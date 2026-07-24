@@ -1,4 +1,4 @@
-/* ==========================================
+﻿/* ==========================================
    STUDENT REGISTRATION PAGE STYLES
    ========================================== */
 
@@ -780,4 +780,17 @@
   .form-wrapper {
     padding: 0;
   }
+}
+/* ==========================================
+   MOBILE OVERFLOW / HORIZONTAL SCROLL FIX
+   ========================================== */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+* {
+  box-sizing: border-box;
+}
+.student-registration-page {
+  overflow-x: hidden;
 }

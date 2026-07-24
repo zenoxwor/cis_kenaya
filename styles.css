@@ -223,7 +223,8 @@ a{color:inherit;text-decoration:none}
 /* Extra color accents and emoji animations */
 :root{--accent1:#FF6B6B;--accent2:#6BCBFF;--accent3:#8D6BFF}
 
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{overflow-x:hidden}
 
 /* nav hover color pops */
 .main-nav a:hover{background:linear-gradient(90deg,var(--accent2),var(--accent3));color:var(--white)}
@@ -276,5 +277,6 @@ html{scroll-behavior:smooth}
 /* small screens */
 @media(max-width:920px){.hero-pro-inner{grid-template-columns:1fr}.art-illustration{max-width:420px}.pro-stats{justify-content:space-between}}
 @media(max-width:480px){.hero-pro-title{font-size:1.6rem}.pro-stats{flex-direction:column;gap:10px}.badge-cta{position:static;display:inline-block;margin-top:12px}}
+
 
 
