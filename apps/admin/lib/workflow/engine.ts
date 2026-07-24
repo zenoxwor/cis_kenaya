@@ -100,7 +100,7 @@ export function getAvailableWorkflowActions(
   }
 
   if (
-    [ROLE.SUPER_ADMIN, ROLE.PRINCIPAL].includes(role) &&
+    ([ROLE.SUPER_ADMIN, ROLE.PRINCIPAL] as string[]).includes(role) &&
     record.applicationStatus === "APPROVED" &&
     record.finance.paymentStatus === "SETTLED" &&
     record.enrollmentStatus === "OFFERED"

@@ -33,7 +33,7 @@ export function RegistrationWizard({ initialDraftId }: RegistrationWizardProps) 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedDocumentType, setSelectedDocumentType] = useState(REQUIRED_DOCUMENT_TYPES[0]);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<string>(REQUIRED_DOCUMENT_TYPES[0]);
   const [notice, setNotice] = useState<WizardNotice | null>(null);
 
   useEffect(() => {
