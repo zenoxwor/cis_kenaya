@@ -39,6 +39,17 @@ This folder contains the **separate internal admin surface** built with Next.js 
 - `mock` (default in non-production): uses predefined development users in `lib/auth/mock-users.ts`
 - `external`: reserved for production identity provider integration; mock sign-in is blocked
 
+## Registration wizard foundation
+
+- Route: `/admin/registration` (supports optional `?draft=<id>`).
+- 6-step flow with per-step validation and progress UI.
+- Draft persistence abstraction in `lib/registration/draft-repository.ts` currently backed by localStorage.
+- Export hooks:
+  - JSON export (client download)
+  - Print (`window.print`)
+  - PDF endpoint hook at `POST /api/registration/export/pdf` (placeholder for server PDF rendering)
+- Status alignment with schema enums (application/document/student/payment) via `lib/registration/statuses.ts`.
+
 ## Run locally
 
 ```bash
