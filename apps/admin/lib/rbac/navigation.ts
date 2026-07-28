@@ -64,6 +64,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Send messages to parents and guardians via SMS and email."
   },
   {
+    id: "documents_center",
+    href: "/admin/documents",
+    label: "Document Center",
+    description: "Track uploads, verification lifecycle, and expiry reminders."
+  },
+  {
     id: "attendance_module",
     href: "/admin/attendance",
     label: "Attendance",

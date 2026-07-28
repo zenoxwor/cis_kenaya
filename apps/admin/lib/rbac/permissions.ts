@@ -66,6 +66,7 @@ export const ADMIN_ROUTE_KEYS = [
   "/admin/communications/templates",
   "/admin/communications/history",
   "/admin/communications/settings",
+  "/admin/documents",
   "/admin/attendance",
   "/admin/attendance/reports"
 ] as const;
@@ -82,6 +83,7 @@ export const ADMIN_NAV_KEYS = [
   "finance_dashboard",
   "exams_suite",
   "communications_center",
+  "documents_center",
   "attendance_module"
 ] as const;
 
@@ -147,6 +149,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/communications/history",
       "/admin/communications/templates",
       "/admin/communications/settings",
+      "/admin/documents",
       "/admin/attendance",
       "/admin/attendance/reports"
     ],
@@ -160,6 +163,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "finance_dashboard",
       "exams_suite",
       "communications_center",
+      "documents_center",
       "attendance_module"
     ],
     actions: {
@@ -201,6 +205,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/communications",
       "/admin/communications/compose",
       "/admin/communications/history",
+      "/admin/documents",
       "/admin/attendance",
       "/admin/attendance/reports"
     ],
@@ -210,6 +215,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "registration_wizard",
       "exams_suite",
       "communications_center",
+      "documents_center",
       "attendance_module"
     ],
     actions: {
@@ -218,7 +224,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       guardian: ["view", "create", "edit"],
       application: ["view", "create", "edit", "approve"],
       enrollment: ["view", "create", "edit"],
-      student_document: ["view", "create", "edit", "approve"],
+      student_document: ["view", "create", "edit"],
       exam_term: ["view"],
       exam_component: ["view"],
       student_mark: ["view", "create", "edit", "export"],
@@ -263,13 +269,15 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/exams",
       "/admin/exams/marks",
       "/admin/exams/reports",
+      "/admin/documents",
       "/admin/attendance",
       "/admin/attendance/reports"
     ],
-    navigationVisibility: ["dashboard", "exams_suite", "attendance_module"],
+    navigationVisibility: ["dashboard", "exams_suite", "documents_center", "attendance_module"],
     actions: {
       dashboard: ["view"],
       student: ["view"],
+      student_document: ["view"],
       exam_term: ["view"],
       exam_component: ["view"],
       student_mark: ["view", "create", "edit"],

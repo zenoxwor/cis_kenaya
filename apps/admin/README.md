@@ -124,6 +124,22 @@ This folder contains the **separate internal admin surface** built with Next.js 
   - failing students list
 - Mock auth includes a Teacher account (`teacher` / `admin123`) for marks-entry workflows.
 
+## Document center expansion
+
+- New route: `/admin/documents` with lifecycle-aware student document hub.
+- Document categories now include: admission, identity, medical, academic, consent, finance.
+- Verification statuses and transitions are enforced in the document repository:
+  - `missing -> uploaded -> verified/rejected -> expired`
+  - `rejected/expired -> uploaded` for re-submission.
+- Expiry metadata and reminder scheduling fields are tracked per document:
+  - `expiresAt`, `reminderLeadDays`, `nextReminderAt`, `lastReminderAt`
+  - missing-document reminder cadence and next-run timestamps.
+- Role workflow controls:
+  - Reception uploads/updates documents and expiry schedules
+  - Principal/Super Admin verify or reject
+  - Teacher has read-only, assigned-class scoped visibility.
+- Reminder bulk actions (mock send) are wired into Communications history via in-memory campaign/delivery logs.
+
 ## Run locally
 
 ```bash

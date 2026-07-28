@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  const result = students.map((s) => ({
+  const result = students.map((s: (typeof students)[number]) => ({
     id: s.id,
     studentCode: s.studentCode,
     firstName: s.firstName,
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
   const date = toDateOnly(dateStr);
   const markedById = session.user.id;
 
-  const upserts = records.map((r) =>
+  const upserts = records.map((r: (typeof records)[number]) =>
     db.attendanceRecord.upsert({
       where: { studentId_date: { studentId: r.studentId, date } },
       update: { status: r.status, notes: r.notes ?? null, markedById, markedAt: new Date() },
