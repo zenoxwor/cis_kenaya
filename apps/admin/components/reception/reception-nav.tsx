@@ -4,15 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const RECEPTION_LINKS = [
-  { href: "/admin/reception", label: "Dashboard" },
-  { href: "/admin/reception/check-in", label: "Staff Check-In" },
-  { href: "/admin/reception/incidents", label: "Incidents & Inquiries" },
-  { href: "/admin/reception/visitors", label: "Visitors & Gate Passes" },
-  { href: "/admin/reception/early-pickup", label: "Early Pick-Up" },
+  { href: "/admin/reception/pre-registrations", label: "Pre-Registrations" },
+  { href: "/admin/registration", label: "Registration Wizard" },
+  { href: "/admin/reception/visitors", label: "Visitor Log & Gate Pass" },
+  { href: "/admin/reception/incidents", label: "Incidents & Complaints" },
   { href: "/admin/reception/appointments", label: "Appointments" },
-  { href: "/admin/reception/lost-found", label: "Lost & Found" },
-  { href: "/admin/reception/documents", label: "Document Intake" },
-  { href: "/admin/reception/pre-registrations", label: "Pre-Registrations" }
+  { href: "/admin/documents", label: "Document Center" },
+  { href: "/admin/attendance", label: "Attendance" },
+  { href: "/admin/communications", label: "Communications Centre" }
 ] as const;
 
 export function ReceptionNav() {
