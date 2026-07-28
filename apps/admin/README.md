@@ -98,15 +98,31 @@ This folder contains the **separate internal admin surface** built with Next.js 
   - Super Admin policy/settings console: `/admin/super-admin/settings`
   - Security/session/workflow governance placeholders structured for backend persistence wiring.
 
-  ## Principal staff account management
+## Principal staff account management
 
-  - Principal route: `/admin/principal/staff-accounts`
-  - LocalStorage-backed mock CRUD for teacher/worker/staff admin accounts:
-    - list accounts
-    - create account (Full Name, Username, Email, Role, Temporary Password)
-    - edit name/role/status
-    - deactivate/activate account
-  - Structured for easy repository swap to database persistence later.
+- Principal route: `/admin/principal/staff-accounts`
+- LocalStorage-backed mock CRUD for teacher/worker/staff admin accounts:
+  - list accounts
+  - create account (Full Name, Username, Email, Role, Temporary Password)
+  - edit name/role/status
+  - deactivate/activate account
+- Structured for easy repository swap to database persistence later.
+
+## Exams and grading module
+
+- New routes:
+  - `/admin/exams` — term/component overview plus analytics snapshots
+  - `/admin/exams/marks` — class/subject/component marks-entry grid with inline validation
+  - `/admin/exams/reports` — per-student report card view with print-friendly layout
+- Mark validation enforces `0 <= rawMark <= component.maxMarks`.
+- Role gating:
+  - Teacher and Reception can enter/save/submit marks
+  - Principal and Super Admin can verify submitted marks and approve/publish report cards
+- Analytics include:
+  - class average per subject
+  - top performers per term
+  - failing students list
+- Mock auth includes a Teacher account (`teacher` / `admin123`) for marks-entry workflows.
 
 ## Run locally
 

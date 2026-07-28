@@ -38,6 +38,14 @@ export const MOCK_AUTH_USERS: MockAuthUser[] = [
     email: "finance@kenya.local",
     fullName: "Finance Officer",
     role: ROLE.FINANCE
+  },
+  {
+    id: "mock-teacher",
+    username: "teacher",
+    password: "admin123",
+    email: "teacher@kenya.local",
+    fullName: "Class Teacher",
+    role: ROLE.TEACHER
   }
 ];
 

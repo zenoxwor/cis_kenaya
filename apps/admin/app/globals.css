@@ -17,3 +17,19 @@ a {
 .admin-content-card {
   @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm;
 }
+
+@media print {
+  body {
+    @apply bg-white;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .report-card-print-sheet {
+    @apply border-none shadow-none;
+    margin: 0;
+    padding: 0;
+  }
+}

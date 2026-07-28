@@ -50,6 +50,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     href: "/admin/registration",
     label: "6-Step Registration Wizard",
     description: "Structured student registration data capture."
+  },
+  {
+    id: "exams_suite",
+    href: "/admin/exams",
+    label: "Exams & Grading",
+    description: "Kenyan term exams, marks entry, and report cards."
   }
 ];
 
