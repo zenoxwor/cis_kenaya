@@ -16,12 +16,6 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Cross-role overview and quick actions."
   },
   {
-    id: "executive_analytics",
-    href: "/admin/analytics",
-    label: "Executive Analytics",
-    description: "Unified trends across enrollment, attendance, finance, exams, and communications."
-  },
-  {
     id: "operations_resilience",
     href: "/admin/operations",
     label: "Backup & Recovery",
@@ -32,12 +26,6 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     href: "/admin/super-admin",
     label: "Super Admin Console",
     description: "Identity, governance, and global controls."
-  },
-  {
-    id: "principal_dashboard",
-    href: "/admin/principal",
-    label: "Principal Dashboard",
-    description: "School leadership decisions and approvals."
   },
   {
     id: "reception_dashboard",
