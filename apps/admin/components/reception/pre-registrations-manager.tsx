@@ -13,6 +13,20 @@ type PreRegistration = {
   status: "unverified" | "verified";
   verification_token: string;
   created_at: string;
+  documents: UploadedDocument[];
+};
+
+type UploadedDocument = {
+  documentType: string;
+  label: string;
+  fileName: string;
+  fileType: string;
+  storagePath: string;
+};
+
+type SignedDocument = UploadedDocument & {
+  signedUrl: string | null;
+  error: string | null;
 };
 
 type PreRegistrationResponse = {
@@ -26,6 +40,12 @@ type ResendResponse = {
   message?: string;
 };
 
+type DocumentsResponse = {
+  success: boolean;
+  message?: string;
+  data?: SignedDocument[];
+};
+
 const PAGE_SIZE = 10;
 
 export function PreRegistrationsManager() {
@@ -35,6 +55,11 @@ export function PreRegistrationsManager() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [documentsError, setDocumentsError] = useState<string | null>(null);
+  const [documentsName, setDocumentsName] = useState("");
+  const [signedDocuments, setSignedDocuments] = useState<SignedDocument[]>([]);
 
   async function fetchRows() {
     const response = await fetch("/api/public/preregister", { method: "GET" });
@@ -117,6 +142,35 @@ export function PreRegistrationsManager() {
     setResendingId(null);
   }
 
+  async function openDocuments(row: PreRegistration) {
+    setDocumentsModalOpen(true);
+    setDocumentsLoading(true);
+    setDocumentsError(null);
+    setDocumentsName(`${row.first_name} ${row.last_name}`);
+    setSignedDocuments([]);
+
+    const response = await fetch("/api/public/preregister", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action: "get_documents",
+        registration_id: row.id
+      })
+    });
+
+    const payload = (await response.json()) as DocumentsResponse;
+    if (!response.ok || !payload.success) {
+      setDocumentsError(payload.message ?? "Failed to load documents.");
+      setDocumentsLoading(false);
+      return;
+    }
+
+    setSignedDocuments(payload.data ?? []);
+    setDocumentsLoading(false);
+  }
+
   return (
     <section className="space-y-4">
       <header className="admin-content-card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -187,20 +241,29 @@ export function PreRegistrationsManager() {
                 </td>
                 <td className="px-3 py-2">{new Date(row.created_at).toLocaleString("en-KE")}</td>
                 <td className="px-3 py-2">
-                  {row.status === "unverified" ? (
+                  <div className="flex flex-wrap gap-2">
+                    {row.status === "unverified" && (
+                      <button
+                        type="button"
+                        className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"
+                        disabled={resendingId === row.id}
+                        onClick={() => {
+                          void resendVerificationEmail(row.id);
+                        }}
+                      >
+                        {resendingId === row.id ? "Sending..." : "Resend Verification Email"}
+                      </button>
+                    )}
                     <button
                       type="button"
-                      className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"
-                      disabled={resendingId === row.id}
+                      className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold hover:bg-slate-50"
                       onClick={() => {
-                        void resendVerificationEmail(row.id);
+                        void openDocuments(row);
                       }}
                     >
-                      {resendingId === row.id ? "Sending..." : "Resend Verification Email"}
+                      View Documents ({row.documents?.length ?? 0})
                     </button>
-                  ) : (
-                    <span className="text-xs text-slate-400">—</span>
-                  )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -231,6 +294,65 @@ export function PreRegistrationsManager() {
           </button>
         </div>
       </footer>
+
+      {documentsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/65 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Uploaded Documents</h2>
+                <p className="text-sm text-slate-600">{documentsName}</p>
+              </div>
+              <button
+                type="button"
+                className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-semibold hover:bg-slate-50"
+                onClick={() => setDocumentsModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            {documentsLoading && <p className="text-sm text-slate-600">Loading documents...</p>}
+            {documentsError && (
+              <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {documentsError}
+              </p>
+            )}
+
+            {!documentsLoading && !documentsError && signedDocuments.length === 0 && (
+              <p className="text-sm text-slate-600">No uploaded documents for this registration.</p>
+            )}
+
+            {!documentsLoading && !documentsError && signedDocuments.length > 0 && (
+              <ul className="space-y-2">
+                {signedDocuments.map(document => (
+                  <li
+                    key={document.storagePath}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 px-3 py-2"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{document.label}</p>
+                      <p className="text-xs text-slate-500">{document.fileName}</p>
+                    </div>
+                    {document.signedUrl ? (
+                      <a
+                        href={document.signedUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-lg bg-brand-500 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-700"
+                      >
+                        Download
+                      </a>
+                    ) : (
+                      <span className="text-xs text-rose-600">{document.error ?? "Unavailable"}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

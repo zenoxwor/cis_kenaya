@@ -838,5 +838,6 @@ model PreRegistration {
   curriculum        String   @default("Cambridge")
   status            String   @default("unverified")
   verificationToken String   @unique @default(cuid())
+  documents         Json?
   createdAt         DateTime @default(now())
 }

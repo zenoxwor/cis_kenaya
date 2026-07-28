@@ -336,6 +336,33 @@ textarea {
     font-size: 0.85rem;
 }
 
+.documents-upload {
+    margin: 8px 0 4px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fafaf9;
+}
+
+.documents-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 8px;
+}
+
+.file-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin: 8px 0 4px;
+}
+
+.documents-upload input[type="file"] {
+    margin-bottom: 8px;
+    font-size: 0.84rem;
+}
+
 .form-error {
     display: none;
     margin-top: 14px;

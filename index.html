@@ -69,6 +69,15 @@
                             <option>Grade 9</option>
                             <option>Grade 10</option>
                         </select>
+                        <div class="documents-upload">
+                            <p class="documents-title">Optional documents (PDF or image)</p>
+                            <label class="file-label" for="birthCertificate">Birth Certificate</label>
+                            <input type="file" id="birthCertificate" name="birthCertificate" accept=".pdf,image/*">
+                            <label class="file-label" for="nationalId">National ID</label>
+                            <input type="file" id="nationalId" name="nationalId" accept=".pdf,image/*">
+                            <label class="file-label" for="previousSchoolReport">Previous School Report</label>
+                            <input type="file" id="previousSchoolReport" name="previousSchoolReport" accept=".pdf,image/*">
+                        </div>
                         <button type="submit" class="submit-btn" id="submitBtn">
                             <span class="submit-label">Submit Request</span>
                             <span class="submit-spinner" aria-hidden="true"></span>
@@ -223,19 +232,27 @@
             clearError();
             setLoading(true);
 
-            const payload = {
-                first_name: form.firstName.value.trim(),
-                last_name: form.lastName.value.trim(),
-                email: form.email.value.trim(),
-                phone: form.phone.value.trim(),
-                grade_level: form.grade.value
-            };
+            const payload = new FormData();
+            payload.append('first_name', form.firstName.value.trim());
+            payload.append('last_name', form.lastName.value.trim());
+            payload.append('email', form.email.value.trim());
+            payload.append('phone', form.phone.value.trim());
+            payload.append('grade_level', form.grade.value);
+
+            if (form.birthCertificate.files[0]) {
+                payload.append('birthCertificate', form.birthCertificate.files[0]);
+            }
+            if (form.nationalId.files[0]) {
+                payload.append('nationalId', form.nationalId.files[0]);
+            }
+            if (form.previousSchoolReport.files[0]) {
+                payload.append('previousSchoolReport', form.previousSchoolReport.files[0]);
+            }
 
             try {
                 const response = await fetch(ADMIN_PREREGISTER_ENDPOINT, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: payload
                 });
                 const result = await response.json();
 
