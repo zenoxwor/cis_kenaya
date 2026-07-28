@@ -10,6 +10,26 @@ import {
 } from "@/lib/document-center/repository";
 import { DOCUMENT_VERIFICATION_STATUSES } from "@/lib/document-center/types";
 import { logDocumentReminderCampaign } from "@/lib/communications/repository";
+import { getSupabaseStorageClient } from "@/lib/supabase/client";
+import type { StudentDocumentRecord } from "@/lib/document-center/types";
+
+const STORAGE_BUCKET = "student-documents";
+const SIGNED_URL_EXPIRY_SECONDS = 60 * 60;
+
+async function attachSignedUrls(records: StudentDocumentRecord[]): Promise<StudentDocumentRecord[]> {
+  const supabase = getSupabaseStorageClient();
+  if (!supabase) return records;
+
+  return Promise.all(
+    records.map(async record => {
+      if (!record.storagePath) return record;
+      const { data } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .createSignedUrl(record.storagePath, SIGNED_URL_EXPIRY_SECONDS);
+      return { ...record, signedUrl: data?.signedUrl ?? null };
+    })
+  );
+}
 
 type TransitionActionBody = {
   action: "transition";
@@ -57,9 +77,10 @@ export async function GET(request: NextRequest) {
     return forbidden();
   }
 
+  const records = await attachSignedUrls(await listDocumentRecordsForUser(user));
   return NextResponse.json({
     success: true,
-    records: listDocumentRecordsForUser(user)
+    records
   });
 }
 
@@ -77,7 +98,7 @@ export async function POST(request: NextRequest) {
   if (!body.action) {
     return badRequest("action is required");
   }
-  const visibleRecords = listDocumentRecordsForUser(user);
+  const visibleRecords = await listDocumentRecordsForUser(user);
   const visibleIds = new Set(visibleRecords.map(record => record.id));
 
   if (body.action === "transition") {
@@ -105,7 +126,7 @@ export async function POST(request: NextRequest) {
       return forbidden();
     }
 
-    transitionDocumentStatus({
+    await transitionDocumentStatus({
       documentId: body.documentId,
       targetStatus: body.targetStatus,
       actor: user,
@@ -114,7 +135,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      records: listDocumentRecordsForUser(user)
+      records: await attachSignedUrls(await listDocumentRecordsForUser(user))
     });
   }
 
@@ -145,7 +166,7 @@ export async function POST(request: NextRequest) {
       return badRequest("expiresAt must be a date string or null");
     }
 
-    updateDocumentExpiry({
+    await updateDocumentExpiry({
       documentId: body.documentId,
       actor: user,
       expiresAt: body.expiresAt,
@@ -155,7 +176,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      records: listDocumentRecordsForUser(user)
+      records: await attachSignedUrls(await listDocumentRecordsForUser(user))
     });
   }
 
@@ -178,7 +199,7 @@ export async function POST(request: NextRequest) {
       return forbidden();
     }
 
-    const reminders = queueDocumentReminders({
+    const reminders = await queueDocumentReminders({
       actor: user,
       reminderType: body.reminderType,
       documentIds: requestedIds
@@ -193,7 +214,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      records: listDocumentRecordsForUser(user),
+      records: await attachSignedUrls(await listDocumentRecordsForUser(user)),
       remindersSent: reminders.length,
       campaignId: campaign?.id ?? null
     });

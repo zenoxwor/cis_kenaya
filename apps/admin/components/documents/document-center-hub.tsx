@@ -486,6 +486,16 @@ export function DocumentCenterHub({ initialRecords }: DocumentCenterHubProps) {
                       <p className="text-xs text-slate-500">Current: {formatDate(record.expiresAt)}</p>
                     </td>
                     <td className="space-y-2 px-3 py-3">
+                      {record.signedUrl && (
+                        <a
+                          className="block w-full rounded border border-sky-200 px-2 py-1 text-center text-xs text-sky-700 hover:bg-sky-50"
+                          href={record.signedUrl}
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
+                          View / Download
+                        </a>
+                      )}
                       {canUploadOrUpdate && (
                         <button
                           className="block w-full rounded border border-slate-200 px-2 py-1 text-xs hover:bg-slate-100 disabled:opacity-50"

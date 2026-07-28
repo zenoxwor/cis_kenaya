@@ -361,6 +361,15 @@ model StudentDocument {
   uploadedAt     DateTime?
   verifiedAt     DateTime?
   verifiedByUserId String?
+  rejectedAt     DateTime?
+  expiresAt      DateTime?
+  reminderLeadDays      Int      @default(30)
+  reminderEnabled       Boolean  @default(true)
+  nextReminderAt        DateTime?
+  lastReminderAt        DateTime?
+  missingReminderEveryDays Int   @default(7)
+  nextMissingReminderAt DateTime?
+  lastMissingReminderAt DateTime?
   notes          String?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -840,5 +849,6 @@ model PreRegistration {
   status            String   @default("unverified")
   verificationToken String   @unique @default(cuid())
   documents         Json?
+  studentId         String?
   createdAt         DateTime @default(now())
 }
