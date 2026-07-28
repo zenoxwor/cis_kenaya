@@ -62,49 +62,13 @@
         </div>
 
         <div class="hero-pro-right">
-          <div class="prereg-card" id="prereg">
-            <div class="prereg-header">
-              <h2>Pre-register</h2>
-              <p>Secure a spot for Academic Year 2026–2027 (Cambridge Curriculum)</p>
-            </div>
-            <form id="preregistration-form" novalidate>
-              <div class="form-row">
-                <input type="text" id="firstName" name="firstName" placeholder="First name" required>
-                <input type="text" id="lastName" name="lastName" placeholder="Last name" required>
-              </div>
-              <input type="email" id="email" name="email" placeholder="Email address" required>
-              <input type="tel" id="phone" name="phone" placeholder="Phone / WhatsApp number" required>
-              <select id="grade" name="grade" required>
-                <option value="" disabled selected>Grade level</option>
-                <option>Nursery</option>
-                <option>Kindergarten</option>
-                <option>Grade 1</option>
-                <option>Grade 2</option>
-                <option>Grade 3</option>
-                <option>Grade 4</option>
-                <option>Grade 5</option>
-                <option>Grade 6</option>
-                <option>Grade 7</option>
-                <option>Grade 8</option>
-                <option>Grade 9</option>
-                <option>Grade 10</option>
-              </select>
-              <div class="doc-upload">
-                <p class="doc-title">Optional documents (PDF or image)</p>
-                <label class="file-label" for="birthCertificate">📄 Birth Certificate</label>
-                <input type="file" id="birthCertificate" name="birthCertificate" accept=".pdf,image/*">
-                <label class="file-label" for="nationalId">🪪 National ID</label>
-                <input type="file" id="nationalId" name="nationalId" accept=".pdf,image/*">
-                <label class="file-label" for="schoolReport">📋 Previous School Report</label>
-                <input type="file" id="schoolReport" name="schoolReport" accept=".pdf,image/*">
-              </div>
-              <button type="submit" class="submit-btn" id="submitBtn">
-                <span class="submit-label">Submit Request</span>
-                <span class="submit-spinner" style="display:none">⏳</span>
-              </button>
-              <p class="form-error" id="formError" style="color:#e53e3e;font-size:.85rem;margin-top:.5rem;display:none"></p>
-              <div class="form-note">No payment required • Cambridge International Curriculum</div>
-            </form>
+          <div class="hero-admission-card">
+            <div class="admission-card-badge">Now Enrolling · 2026–2027</div>
+            <img src="assets/about-campus.svg" alt="CIS Kenya campus" class="admission-card-img">
+            <h3>Begin Your Journey</h3>
+            <p>Cambridge International Curriculum · Nursery to Grade 10. Limited seats available for the upcoming academic year.</p>
+            <a href="student-registration.html" class="btn primary admission-card-btn">Start Registration →</a>
+            <div class="admission-card-meta">No payment required at this stage</div>
           </div>
         </div>
       </div>
@@ -338,54 +302,7 @@
         requestAnimationFrame(step);
       }
     });
-    // Pre-registration form submission
-    const preregForm = document.getElementById('preregistration-form');
-    const submitBtn = document.getElementById('submitBtn');
-    const formError = document.getElementById('formError');
-    const successModal = document.getElementById('successModal');
-    const closeModalBtn = document.getElementById('closeModal');
-
-    if (preregForm) {
-      preregForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const label = submitBtn.querySelector('.submit-label');
-        const spinner = submitBtn.querySelector('.submit-spinner');
-        submitBtn.disabled = true;
-        label.style.display = 'none';
-        spinner.style.display = 'inline';
-        formError.style.display = 'none';
-
-        try {
-          const formData = new FormData(preregForm);
-          const response = await fetch('https://admin-theta-rouge-89.vercel.app/api/public/preregister', {
-            method: 'POST',
-            body: formData
-          });
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.message || 'Submission failed');
-          preregForm.reset();
-          successModal.style.display = 'flex';
-        } catch (err) {
-          formError.textContent = err.message || 'Something went wrong. Please try again.';
-          formError.style.display = 'block';
-        } finally {
-          submitBtn.disabled = false;
-          label.style.display = 'inline';
-          spinner.style.display = 'none';
-        }
-      });
-    }
-
-    if (closeModalBtn) closeModalBtn.addEventListener('click', () => successModal.style.display = 'none');
   </script>
 
-  <div id="successModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
-    <div style="background:#fff;border-radius:16px;padding:2.5rem;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2);">
-      <div style="font-size:3rem;margin-bottom:1rem;">✅</div>
-      <h3 style="font-size:1.4rem;font-weight:700;color:#1a2744;margin-bottom:.75rem;">Thank you!</h3>
-      <p style="color:#555;line-height:1.6;margin-bottom:1.5rem;">Your pre-registration has been received. Please check your email inbox to <strong>verify your email address</strong>. Our admissions team will contact you within 24–48 hours.</p>
-      <button id="closeModal" style="background:#c9a84c;color:#fff;border:none;border-radius:8px;padding:.75rem 2rem;font-size:1rem;font-weight:600;cursor:pointer;">Close</button>
-    </div>
-  </div>
 </body>
 </html>
