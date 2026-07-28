@@ -47,6 +47,12 @@ type DocumentsResponse = {
   data?: SignedDocument[];
 };
 
+type ManualVerifyResponse = {
+  success: boolean;
+  message?: string;
+  studentId?: string;
+};
+
 const PAGE_SIZE = 10;
 
 export function PreRegistrationsManager() {
@@ -56,6 +62,8 @@ export function PreRegistrationsManager() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
@@ -120,6 +128,7 @@ export function PreRegistrationsManager() {
   async function resendVerificationEmail(registrationId: string) {
     setResendingId(registrationId);
     setError(null);
+    setSuccessMessage(null);
 
     const response = await fetch("/api/public/preregister", {
       method: "POST",
@@ -141,6 +150,38 @@ export function PreRegistrationsManager() {
 
     await fetchRows();
     setResendingId(null);
+  }
+
+  async function manuallyVerifyRegistration(registrationId: string) {
+    setVerifyingId(registrationId);
+    setError(null);
+    setSuccessMessage(null);
+
+    const response = await fetch("/api/public/preregister", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        id: registrationId,
+        action: "manual_verify"
+      })
+    });
+
+    const payload = (await response.json()) as ManualVerifyResponse;
+    if (!response.ok || !payload.success || !payload.studentId) {
+      setError(payload.message ?? "Failed to manually verify registration.");
+      setVerifyingId(null);
+      return;
+    }
+
+    setRows(previous =>
+      previous.map(row =>
+        row.id === registrationId ? { ...row, status: "verified", student_id: payload.studentId ?? row.student_id } : row
+      )
+    );
+    setSuccessMessage("Student profile created");
+    setVerifyingId(null);
   }
 
   async function openDocuments(row: PreRegistration) {
@@ -196,6 +237,11 @@ export function PreRegistrationsManager() {
       {error && (
         <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
       )}
+      {successMessage && (
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {successMessage}
+        </p>
+      )}
 
       <article className="admin-content-card overflow-x-auto">
         <table className="min-w-full text-left text-sm">
@@ -246,8 +292,26 @@ export function PreRegistrationsManager() {
                     {row.status === "unverified" && (
                       <button
                         type="button"
+                        className="inline-flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100 disabled:opacity-60"
+                        disabled={verifyingId === row.id || resendingId === row.id}
+                        onClick={() => {
+                          void manuallyVerifyRegistration(row.id);
+                        }}
+                      >
+                        {verifyingId === row.id && (
+                          <span
+                            className="h-3 w-3 animate-spin rounded-full border-2 border-teal-200 border-t-teal-700"
+                            aria-hidden="true"
+                          />
+                        )}
+                        {verifyingId === row.id ? "Verifying..." : "Verify"}
+                      </button>
+                    )}
+                    {row.status === "unverified" && (
+                      <button
+                        type="button"
                         className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"
-                        disabled={resendingId === row.id}
+                        disabled={resendingId === row.id || verifyingId === row.id}
                         onClick={() => {
                           void resendVerificationEmail(row.id);
                         }}
