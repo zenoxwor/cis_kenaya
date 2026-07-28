@@ -1,0 +1,796 @@
+﻿/* ==========================================
+   STUDENT REGISTRATION PAGE STYLES
+   ========================================== */
+
+:root {
+  --step-color: #E8CD79;
+  --active-step: #C5A028;
+  --complete-step: #27AE60;
+  --error-color: #E74C3C;
+  --warning-color: #F39C12;
+  --success-color: #27AE60;
+  --input-border: #DDD;
+  --input-focus: #C5A028;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+.student-registration-page {
+  background: linear-gradient(135deg, #f5f5f5 0%, #fafaf9 100%);
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+/* ==========================================
+   WIZARD CONTAINER & HEADER
+   ========================================== */
+
+.reg-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.wizard-header {
+  background: linear-gradient(180deg, #fff 0%, #fffaf5 100%);
+  padding: 40px 40px 30px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.wizard-title h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  color: #111;
+}
+
+.wizard-title p {
+  color: #7D7D7D;
+  font-size: 1rem;
+  margin-bottom: 24px;
+}
+
+/* ==========================================
+   PROGRESS TRACKER & STEPS
+   ========================================== */
+
+.progress-tracker {
+  width: 100%;
+}
+
+.progress-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 8px;
+}
+
+.step-indicator {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.step-number {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  border: 2px solid var(--input-border);
+  color: #666;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 18px;
+}
+
+.step-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #7D7D7D;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+/* Active Step */
+.step-indicator.active .step-number {
+  background: linear-gradient(135deg, var(--active-step), var(--step-color));
+  border-color: var(--active-step);
+  color: white;
+  box-shadow: 0 4px 12px rgba(197, 160, 40, 0.3);
+}
+
+.step-indicator.active .step-label {
+  color: var(--active-step);
+  font-weight: 700;
+}
+
+/* Completed Step */
+.step-indicator.completed .step-number {
+  background: var(--complete-step);
+  border-color: var(--complete-step);
+  color: white;
+}
+
+.step-indicator.completed .step-label {
+  color: var(--complete-step);
+}
+
+.progress-line {
+  flex: 1;
+  height: 3px;
+  background: #e0e0e0;
+  margin: 0 -8px;
+  position: relative;
+  top: -20px;
+  transition: background 0.3s ease;
+}
+
+.step-indicator.completed ~ .progress-line,
+.step-indicator.active ~ .progress-line {
+  background: linear-gradient(90deg, var(--active-step), var(--step-color));
+}
+
+/* Progress Bar */
+.progress-bar-container {
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--active-step), var(--step-color));
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.2, 0.9, 0.2, 1);
+  width: 0%;
+}
+
+/* ==========================================
+   FORM WRAPPER & STEPS
+   ========================================== */
+
+.form-wrapper {
+  padding: 40px;
+}
+
+.form-step {
+  display: none;
+  animation: fadeInUp 0.4s ease;
+}
+
+.form-step.active {
+  display: block;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-step h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  margin-bottom: 28px;
+  color: #111;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* ==========================================
+   FORM GRID & GROUPS
+   ========================================== */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #111;
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 12px 14px;
+  border: 2px solid var(--input-border);
+  border-radius: 10px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #f9f9f9;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--input-focus);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(197, 160, 40, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.form-group input:invalid:not(:placeholder-shown),
+.form-group select:invalid:not(:placeholder-shown) {
+  border-color: var(--error-color);
+}
+
+.error-message {
+  color: var(--error-color);
+  font-size: 0.85rem;
+  margin-top: 6px;
+  display: none;
+}
+
+.form-group.error input,
+.form-group.error select,
+.form-group.error textarea {
+  border-color: var(--error-color);
+  background: rgba(231, 76, 60, 0.02);
+}
+
+.form-group.error .error-message {
+  display: block;
+}
+
+/* ==========================================
+   FILE UPLOADS
+   ========================================== */
+
+.file-upload-wrapper {
+  border: 2px dashed var(--input-border);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: #fafaf9;
+  cursor: pointer;
+}
+
+.file-upload-wrapper:hover {
+  border-color: var(--input-focus);
+  background: rgba(197, 160, 40, 0.02);
+}
+
+.file-upload-wrapper input[type="file"] {
+  display: none;
+}
+
+.file-upload-hint {
+  font-size: 0.85rem;
+  color: #7D7D7D;
+  margin-top: 8px;
+}
+
+.photo-preview {
+  margin-top: 16px;
+  max-height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.photo-preview img {
+  max-width: 100%;
+  max-height: 150px;
+  display: block;
+  margin: 0 auto;
+}
+
+.file-uploads {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.file-input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-input-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #111;
+}
+
+.file-input-group input[type="file"] {
+  padding: 10px;
+  border: 2px solid var(--input-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.file-input-group input[type="file"]:hover {
+  border-color: var(--input-focus);
+}
+
+/* ==========================================
+   FORM ACTIONS
+   ========================================== */
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn {
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, var(--active-step), var(--step-color));
+  color: white;
+  box-shadow: 0 4px 12px rgba(197, 160, 40, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(197, 160, 40, 0.3);
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #111;
+  border: 2px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+  background: #e8e8e8;
+}
+
+.btn-success {
+  background: linear-gradient(90deg, var(--complete-step), #229954);
+  color: white;
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--active-step);
+  color: var(--active-step);
+  font-weight: 600;
+}
+
+.btn-outline:hover {
+  background: var(--active-step);
+  color: white;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================
+   MODAL & SUMMARY
+   ========================================== */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.modal-large {
+  max-width: 900px;
+  width: 90%;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s ease;
+  z-index: 10;
+}
+
+.modal-close:hover {
+  color: #111;
+}
+
+.student-summary {
+  padding: 40px;
+  background: linear-gradient(180deg, #fff 0%, #fffaf5 100%);
+}
+
+.summary-header {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #f0f0f0;
+  align-items: start;
+}
+
+.summary-photo {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.summary-basic {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.summary-meta {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  color: #7D7D7D;
+  font-size: 0.95rem;
+}
+
+.summary-meta-item strong {
+  color: #111;
+}
+
+.summary-section {
+  margin-bottom: 28px;
+}
+
+.summary-section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--step-color);
+  color: #111;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.summary-item {
+  background: white;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+}
+
+.summary-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  color: #111;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.summary-value.empty {
+  color: #bbb;
+  font-style: italic;
+}
+
+.summary-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+}
+
+.summary-actions .btn {
+  flex: 1;
+  min-width: 160px;
+  justify-content: center;
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+
+@media (max-width: 920px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .file-uploads {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-header {
+    padding: 30px 24px 20px;
+  }
+
+  .form-wrapper {
+    padding: 30px 24px;
+  }
+
+  .progress-steps {
+    flex-wrap: wrap;
+  }
+
+  .step-label {
+    font-size: 0.75rem;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-registration-page {
+    padding: 20px 12px;
+  }
+
+  .reg-container {
+    border-radius: 12px;
+  }
+
+  .wizard-header {
+    padding: 20px 16px 16px;
+  }
+
+  .wizard-title h1 {
+    font-size: 1.5rem;
+  }
+
+  .wizard-title p {
+    font-size: 0.9rem;
+  }
+
+  .form-wrapper {
+    padding: 20px 16px;
+  }
+
+  .form-step h2 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  .form-grid {
+    gap: 16px;
+  }
+
+  .progress-steps {
+    gap: 4px;
+  }
+
+  .step-number {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .step-label {
+    font-size: 0.65rem;
+  }
+
+  .modal-content {
+    width: 95%;
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  .student-summary {
+    padding: 24px 16px;
+  }
+
+  .summary-header {
+    grid-template-columns: 80px 1fr;
+    gap: 16px;
+  }
+
+  .summary-photo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .summary-name {
+    font-size: 1.3rem;
+  }
+
+  .summary-meta {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .summary-grid {
+    gap: 12px;
+  }
+
+  .summary-item {
+    padding: 12px;
+  }
+
+  .file-input-group label,
+  .form-group label {
+    font-size: 0.9rem;
+  }
+
+  .form-actions {
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .student-registration-page {
+    background: white;
+    padding: 0;
+  }
+
+  .reg-container {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .form-actions,
+  .modal-close,
+  .summary-actions {
+    display: none;
+  }
+
+  .student-summary {
+    padding: 0;
+  }
+
+  .form-wrapper {
+    padding: 0;
+  }
+}
+/* ==========================================
+   MOBILE OVERFLOW / HORIZONTAL SCROLL FIX
+   ========================================== */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+* {
+  box-sizing: border-box;
+}
+.student-registration-page {
+  overflow-x: hidden;
+}

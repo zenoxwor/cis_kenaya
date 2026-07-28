@@ -1,328 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capital International School Kenya</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capital International School — Kenya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header class="site-header">
-        <nav class="navbar">
-            <a class="brand" href="#home" aria-label="Capital International School Kenya home">
-                <span class="shield" aria-hidden="true"></span>
-                <span class="brand-text">CIS Kenya</span>
-            </a>
-            <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="navLinks">Menu</button>
-            <div class="nav-links" id="navLinks">
-                <a href="#home">Home</a>
-                <a href="#about">About</a>
-                <a href="#programs">Programs</a>
-                <a href="#admissions">Admissions</a>
-                <a href="#contact">Contact</a>
-                <a class="btn btn-nav" href="#prereg">Pre-register</a>
-            </div>
-        </nav>
-    </header>
-
-    <main id="home">
-        <section class="hero">
-            <div class="container hero-grid">
-                <div class="hero-copy">
-                    <p class="badge">Cambridge International Curriculum</p>
-                    <h1>Capital International School Kenya</h1>
-                    <p class="hero-subtitle">Empowering the next generation through world-class Cambridge education</p>
-                    <div class="hero-features">
-                        <p>★ Cambridge Accredited</p>
-                        <p>✓ Small Classes</p>
-                        <p>🎓 Expert Teachers</p>
-                        <p>⚡ Fast Enrollment</p>
-                    </div>
-                    <p class="year-badge">Academic Year 2026–2027</p>
-                </div>
-
-                <aside class="prereg-card" id="prereg" aria-labelledby="preregTitle">
-                    <div class="prereg-head">
-                        <h2 id="preregTitle">Pre-register</h2>
-                        <p>Secure a spot for Academic Year 2026–2027 (Cambridge Curriculum)</p>
-                    </div>
-                    <form id="preregistration-form" novalidate>
-                        <div class="form-row">
-                            <label>
-                                <span class="sr-only">First name</span>
-                                <input type="text" id="firstName" name="firstName" placeholder="First name" required>
-                            </label>
-                            <label>
-                                <span class="sr-only">Last name</span>
-                                <input type="text" id="lastName" name="lastName" placeholder="Last name" required>
-                            </label>
-                        </div>
-                        <label>
-                            <span class="sr-only">Email address</span>
-                            <input type="email" id="email" name="email" placeholder="Email address" required>
-                        </label>
-                        <label>
-                            <span class="sr-only">Phone / WhatsApp number</span>
-                            <input type="tel" id="phone" name="phone" placeholder="Phone / WhatsApp number" required>
-                        </label>
-                        <label>
-                            <span class="sr-only">Grade level</span>
-                            <select id="grade" name="grade" required>
-                                <option value="" disabled selected>Grade level</option>
-                                <option>Nursery</option>
-                                <option>Kindergarten</option>
-                                <option>Grade 1</option>
-                                <option>Grade 2</option>
-                                <option>Grade 3</option>
-                                <option>Grade 4</option>
-                                <option>Grade 5</option>
-                                <option>Grade 6</option>
-                                <option>Grade 7</option>
-                                <option>Grade 8</option>
-                                <option>Grade 9</option>
-                                <option>Grade 10</option>
-                            </select>
-                        </label>
-
-                        <fieldset class="uploads">
-                            <legend>Optional document uploads (PDF/image accepted)</legend>
-                            <label for="birthCertificate">Birth Certificate</label>
-                            <input type="file" id="birthCertificate" name="birthCertificate" accept=".pdf,image/*">
-                            <label for="nationalId">National ID</label>
-                            <input type="file" id="nationalId" name="nationalId" accept=".pdf,image/*">
-                            <label for="previousSchoolReport">Previous School Report</label>
-                            <input type="file" id="previousSchoolReport" name="previousSchoolReport" accept=".pdf,image/*">
-                        </fieldset>
-
-                        <button type="submit" class="btn btn-submit" id="submitBtn">
-                            <span class="submit-label">Submit Request</span>
-                            <span class="submit-spinner" aria-hidden="true"></span>
-                        </button>
-                        <p class="form-error" id="formError" role="alert" aria-live="polite"></p>
-                        <p class="form-note">No payment required • Cambridge International Curriculum</p>
-                    </form>
-                </aside>
-            </div>
-        </section>
-
-        <section class="about" id="about">
-            <div class="container split">
-                <div>
-                    <h2>About Capital International School</h2>
-                    <p>Capital International School (CIS Kenya) offers the Cambridge International Curriculum, preparing students from Nursery through Grade 10 for global opportunities. Our mission is academic excellence, character development, and preparing students for higher education worldwide.</p>
-                    <a class="btn btn-outline" href="#contact">Learn More About Us</a>
-                </div>
-                <div class="image-placeholder" aria-label="School campus image placeholder">
-                    <span>Campus Image Placeholder</span>
-                </div>
-            </div>
-        </section>
-
-        <section class="programs" id="programs">
-            <div class="container">
-                <h2>Our Cambridge Programs</h2>
-                <div class="card-grid">
-                    <article class="card">
-                        <h3>🎓 Early Years (Nursery &amp; Kindergarten)</h3>
-                        <p>A nurturing foundation built on Cambridge Early Years framework</p>
-                    </article>
-                    <article class="card">
-                        <h3>📚 Primary (Grades 1–6)</h3>
-                        <p>Cambridge Primary builds strong foundations in English, Mathematics and Science</p>
-                    </article>
-                    <article class="card">
-                        <h3>🌍 Lower Secondary (Grades 7–10)</h3>
-                        <p>Cambridge Lower Secondary prepares students for IGCSE and beyond</p>
-                    </article>
-                </div>
-            </div>
-        </section>
-
-        <section class="why-cis">
-            <div class="container">
-                <h2>Why Choose CIS Kenya?</h2>
-                <div class="feature-grid">
-                    <article class="feature-box">
-                        <h3>🏆 Cambridge Certified</h3>
-                        <p>Internationally recognized qualifications</p>
-                    </article>
-                    <article class="feature-box">
-                        <h3>👩‍🏫 Expert Teachers</h3>
-                        <p>Qualified and experienced educators</p>
-                    </article>
-                    <article class="feature-box">
-                        <h3>🏫 Modern Facilities</h3>
-                        <p>Tech labs, library, sports facilities</p>
-                    </article>
-                    <article class="feature-box">
-                        <h3>🌐 Global Community</h3>
-                        <p>Diverse international student body</p>
-                    </article>
-                </div>
-            </div>
-        </section>
-
-        <section class="admissions" id="admissions">
-            <div class="container admissions-panel">
-                <h2>Admissions</h2>
-                <ol>
-                    <li>Pre-register Online</li>
-                    <li>Verify Email</li>
-                    <li>Document Review</li>
-                    <li>Interview</li>
-                    <li>Enrollment</li>
-                </ol>
-                <a class="btn btn-gold" href="#prereg">Start Your Application</a>
-            </div>
-        </section>
-
-        <section class="contact" id="contact">
-            <div class="container split">
-                <div>
-                    <h2>Contact Us</h2>
-                    <p><strong>Address:</strong> Nairobi, Kenya</p>
-                    <p><strong>Phone:</strong> +254 700 000 000</p>
-                    <p><strong>Email:</strong> info@ciskenya.ac.ke</p>
-                </div>
-                <div class="map-placeholder" aria-label="Map placeholder">
-                    <span>Map Placeholder</span>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="site-footer">
-        <div class="container footer-grid">
-            <div>
-                <a class="brand footer-brand" href="#home">
-                    <span class="shield" aria-hidden="true"></span>
-                    <span class="brand-text">Capital International School Kenya</span>
-                </a>
-            </div>
-            <div class="quick-links">
-                <a href="#home">Home</a>
-                <a href="#about">About</a>
-                <a href="#programs">Programs</a>
-                <a href="#admissions">Admissions</a>
-                <a href="#contact">Contact</a>
-            </div>
-        </div>
-        <p class="copyright">© 2026 Capital International School Kenya. All rights reserved.</p>
-    </footer>
-
-    <div class="modal-overlay" id="successModal" aria-hidden="true">
-        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-            <div class="modal-icon" aria-hidden="true">✓</div>
-            <h3 id="modalTitle">Thank you!</h3>
-            <p>Your pre-registration has been received. Please check your email to verify your address. Our admissions team will contact you within 24–48 hours.</p>
-            <button type="button" class="btn btn-close-modal" id="closeModal">Close</button>
-        </div>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="logo" href="index.html">
+        <div class="header-shield" aria-hidden="true"></div>
+        <div class="logo-text">Kenya CIS</div>
+      </a>
+      <nav class="main-nav" role="navigation" aria-label="Main navigation">
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#programs">Programs</a>
+        <a href="#facilities">Facilities</a>
+        <a href="#admissions">Admissions</a>
+        <a href="#contact">Contact</a>
+        <a href="student-registration.html" style="color: var(--gold); font-weight: 700;">Student Register</a>
+      </nav>
+      <button class="mobile-toggle" aria-label="Open menu">☰</button>
     </div>
+  </header>
 
-    <script>
-        const form = document.getElementById('preregistration-form');
-        const submitButton = document.getElementById('submitBtn');
-        const errorMessage = document.getElementById('formError');
-        const modal = document.getElementById('successModal');
-        const closeModal = document.getElementById('closeModal');
-        const menuToggle = document.getElementById('menuToggle');
-        const navLinks = document.getElementById('navLinks');
-        const endpoint = 'https://admin-theta-rouge-89.vercel.app/api/public/preregister';
+  <main role="main">
+    <section id="home" class="hero hero-pro">
+      <div class="hero-pro-inner">
+        <div class="hero-pro-left">
+          <p class="eyebrow">Welcome to</p>
+          <h1 class="hero-pro-title">Capital International School <span class="gold">— Kenya</span></h1>
+          <p class="hero-pro-lead">Delivering world-class education with a warm, modern campus. Join a community where curiosity, confidence, and character come first.</p>
 
-        function setLoading(isLoading) {
-            submitButton.disabled = isLoading;
-            submitButton.classList.toggle('is-loading', isLoading);
-        }
+          <div class="hero-pro-ctas">
+                      <a class="btn ghost" href="#programs">Our programs</a>
+                    </div>
 
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.classList.add('active');
-        }
+          <div class="pro-stats">
+            <div class="stat-item">
+              <div class="stat-number" data-target="6">0</div>
+              <div class="stat-label">Years running</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" data-target="12">0</div>
+              <div class="stat-label">Students per teacher</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" data-target="120">0</div>
+              <div class="stat-label">Seats left</div>
+            </div>
+          </div>
 
-        function clearError() {
-            errorMessage.textContent = '';
-            errorMessage.classList.remove('active');
-        }
+          <div class="hero-note">
+            <p>Visit us for a campus tour or contact admissions for more details.</p>
+          </div>
+        </div>
 
-        function openModal() {
-            modal.classList.add('active');
-            modal.setAttribute('aria-hidden', 'false');
-        }
+        <div class="hero-pro-right">
+          <div class="artboard">
+            <div class="art-media">
+              <img class="hero-photo" src="assets/hero-illustration.svg" alt="Kenya campus illustration" loading="lazy">
+              <div class="photo-overlay" aria-hidden="true"></div>
+              <!-- decorative overlay blob to preserve crafted look -->
+              <svg class="art-blob" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <defs>
+                  <linearGradient id="gA" x1="0" x2="1">
+                    <stop offset="0" stop-color="#fff6ea" />
+                    <stop offset="1" stop-color="#fff9f2" />
+                  </linearGradient>
+                </defs>
+                <g transform="translate(300,300)">
+                  <path class="blob" d="M120,-180C165,-150,204,-91,204,-24C204,43,165,102,120,141C75,180,24,198,-30,201C-84,204,-168,191,-200,144C-232,97,-212,6,-199,-64C-186,-134,-181,-180,-141,-204C-101,-228,-57,-230,-12,-226C33,-222,67,-210,120,-180Z" fill="url(#gA)" opacity="0.9"></path>
+                </g>
+              </svg>
+            </div>
 
-        function closeSuccessModal() {
-            modal.classList.remove('active');
-            modal.setAttribute('aria-hidden', 'true');
-        }
+            <div class="scroll-hint">Scroll <span>↓</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        form.addEventListener('submit', async event => {
-            event.preventDefault();
-            clearError();
-            setLoading(true);
+    <section id="about" class="about-section">
+      <div class="about-inner">
+        <div class="about-text">
+          <h2>About CIS Kenya</h2>
+          <p>Capital International School (Kenya) offers a balanced curriculum focused on academic excellence and character development. Our teachers champion curiosity and collaboration.</p>
+          <p>With a warm, modern campus and a community of learners from around the globe, we create an environment where every student thrives.</p>
+          <a class="btn outline" href="#programs">Explore Programs</a>
+        </div>
+        <div class="about-image">
+          <img src="assets/about-campus.svg" alt="CIS Kenya campus" class="about-img">
+        </div>
+      </div>
+    </section>
 
-            const payload = new FormData();
-            payload.append('first_name', form.firstName.value.trim());
-            payload.append('last_name', form.lastName.value.trim());
-            payload.append('email', form.email.value.trim());
-            payload.append('phone', form.phone.value.trim());
-            payload.append('grade_level', form.grade.value);
+    <section id="programs" class="programs-section">
+      <div class="section-header">
+        <h2>Our Programs</h2>
+        <p>Designed to prepare students for higher education and global opportunities.</p>
+      </div>
+      <div class="programs-grid">
+        <article class="program-card">
+          <div class="program-image">
+            <img src="assets/program-stem.svg" alt="STEM program" class="program-img">
+            <div class="program-overlay"></div>
+            <div class="program-label">
+              <div class="label-ico">🎓</div>
+              <h3>STEM</h3>
+            </div>
+          </div>
+          <div class="program-content">
+            <p>Project-based learning in science, technology, engineering and math. Build real solutions to real problems.</p>
+            <a href="#programs" class="link-arrow">Learn more →</a>
+          </div>
+        </article>
 
-            if (form.birthCertificate.files[0]) {
-                payload.append('birthCertificate', form.birthCertificate.files[0]);
+        <article class="program-card">
+          <div class="program-image">
+            <img src="assets/program-arts.svg" alt="Arts program" class="program-img">
+            <div class="program-overlay"></div>
+            <div class="program-label">
+              <div class="label-ico">🎨</div>
+              <h3>Arts</h3>
+            </div>
+          </div>
+          <div class="program-content">
+            <p>Visual and performing arts to develop creativity and expression. Showcase your unique perspective to the world.</p>
+            <a href="#programs" class="link-arrow">Learn more →</a>
+          </div>
+        </article>
+
+        <article class="program-card">
+          <div class="program-image">
+            <img src="assets/program-humanities.svg" alt="Humanities program" class="program-img">
+            <div class="program-overlay"></div>
+            <div class="program-label">
+              <div class="label-ico">🌍</div>
+              <h3>Humanities</h3>
+            </div>
+          </div>
+          <div class="program-content">
+            <p>Critical thinking through literature, history and languages. Understand the world and your place in it.</p>
+            <a href="#programs" class="link-arrow">Learn more →</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="facilities" class="facilities-section">
+      <div class="section-header">
+        <h2>Our Facilities</h2>
+        <p>World-class infrastructure designed for learning and growth.</p>
+      </div>
+      <div class="facilities-grid">
+        <article class="facility-card">
+          <div class="facility-image">
+            <img src="assets/facility-labs.svg" alt="Tech Labs" class="facility-img">
+            <div class="facility-label">Tech Labs</div>
+          </div>
+          <p>State-of-the-art laboratories for STEM exploration and innovation.</p>
+        </article>
+        <article class="facility-card">
+          <div class="facility-image">
+            <img src="assets/facility-studio.svg" alt="Creative Studio" class="facility-img">
+            <div class="facility-label">Creative Studio</div>
+          </div>
+          <p>Dedicated space for visual and performing arts.</p>
+        </article>
+        <article class="facility-card">
+          <div class="facility-image">
+            <img src="assets/facility-sports.svg" alt="Sports Fields" class="facility-img">
+            <div class="facility-label">Sports Fields</div>
+          </div>
+          <p>Outdoor spaces for athletics, wellness, and recreation.</p>
+        </article>
+        <article class="facility-card">
+          <div class="facility-image">
+            <img src="assets/facility-library.svg" alt="Library" class="facility-img">
+            <div class="facility-label">Library</div>
+          </div>
+          <p>Resource hub with digital access and quiet study spaces.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="admissions" class="admissions-section">
+      <div class="admissions-inner">
+        <div class="admissions-content">
+          <h2>Admissions & Enrollment</h2>
+          <p>Join the CIS Kenya community. We welcome students from all backgrounds and offer a range of enrollment options.</p>
+          
+          <div class="admissions-grid">
+            <div class="admission-item">
+              <h4>📋 Application Process</h4>
+              <p>Submit an online application, take an entrance assessment, and attend a campus interview.</p>
+            </div>
+            <div class="admission-item">
+              <h4>💰 Tuition & Fees</h4>
+              <p>Competitive pricing with financial aid options. Visit our registrar for current rates and payment plans.</p>
+            </div>
+            <div class="admission-item">
+              <h4>📅 Key Dates</h4>
+              <p>Applications open in September. Admissions interviews run through May. New students join in August.</p>
+            </div>
+          </div>
+
+          <div class="admissions-cta">
+            <a class="btn primary" href="student-registration.html">Apply now</a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="contact-section">
+      <div class="contact-inner">
+        <div>
+          <h3>Contact Us</h3>
+          <p><strong>Address:</strong> 123 Kenya Road, City Center</p>
+          <p><strong>Phone:</strong> +123 456 7890</p>
+          <p><strong>Email:</strong> info@kenayaacademy.com</p>
+        </div>
+        <div class="map-placeholder">Map</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-shield"></div>
+        <div>Kenya CIS</div>
+      </div>
+      <p>Building tomorrow's leaders, one student at a time.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile nav toggle
+    const toggle = document.querySelector('.mobile-toggle');
+    const nav = document.querySelector('.main-nav');
+    if (toggle && nav) {
+      toggle.addEventListener('click', () => nav.classList.toggle('open'));
+    }
+
+    // Smooth scrolling + emoji burst (keeps UX fun)
+    function burstEmoji(emoji, x, y) {
+      const el = document.createElement('span');
+      el.className = 'burst-emoji';
+      el.textContent = emoji || '✨';
+      document.body.appendChild(el);
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.addEventListener('animationend', () => el.remove());
+    }
+
+    document.querySelectorAll('.main-nav a[href^="#"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href').slice(1);
+        const target = document.getElementById(targetId);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const emoji = link.dataset.emoji || (link.querySelector('.nav-emoji') && link.querySelector('.nav-emoji').textContent) || '✨';
+        burstEmoji(emoji, e.clientX || window.innerWidth/2, e.clientY || window.innerHeight/2);
+        if (nav.classList.contains('open')) nav.classList.remove('open');
+      });
+    });
+
+    // Hero entrance and stat counters
+    document.addEventListener('DOMContentLoaded', () => {
+      const hero = document.querySelector('.hero-pro');
+      const stats = document.querySelectorAll('.stat-number');
+
+      // reveal animation for hero elements
+      if (hero) {
+        hero.classList.add('reveal');
+        setTimeout(() => hero.classList.add('reveal-done'), 700);
+      }
+
+      // animate numbers when visible using IntersectionObserver
+      if ('IntersectionObserver' in window) {
+        const obs = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              stats.forEach(el => animateCount(el));
+              obs.disconnect();
             }
-            if (form.nationalId.files[0]) {
-                payload.append('nationalId', form.nationalId.files[0]);
-            }
-            if (form.previousSchoolReport.files[0]) {
-                payload.append('previousSchoolReport', form.previousSchoolReport.files[0]);
-            }
+          });
+        }, { threshold: 0.3 });
+        if (hero) obs.observe(hero);
+      } else {
+        // fallback
+        stats.forEach(el => animateCount(el));
+      }
 
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    body: payload
-                });
-                let result = {};
-                try {
-                    result = await response.json();
-                } catch (parseError) {
-                    result = {};
-                }
-
-                if (!response.ok || !result.success) {
-                    showError(result.message || 'We could not submit your request right now. Please try again.');
-                    return;
-                }
-
-                openModal();
-                form.reset();
-            } catch (error) {
-                showError('Network error. Please check your internet connection and try again.');
-            } finally {
-                setLoading(false);
-            }
-        });
-
-        closeModal.addEventListener('click', closeSuccessModal);
-        modal.addEventListener('click', event => {
-            if (event.target === modal) {
-                closeSuccessModal();
-            }
-        });
-
-        menuToggle.addEventListener('click', () => {
-            const isOpen = navLinks.classList.toggle('open');
-            menuToggle.setAttribute('aria-expanded', String(isOpen));
-        });
-
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                navLinks.classList.remove('open');
-                menuToggle.setAttribute('aria-expanded', 'false');
-            });
-        });
-    </script>
+      function animateCount(el) {
+        const target = parseInt(el.dataset.target || '0', 10);
+        let current = 0;
+        const duration = 1200;
+        const start = performance.now();
+        function step(ts) {
+          const progress = Math.min((ts - start) / duration, 1);
+          el.textContent = Math.floor(progress * target + (1 - progress) * current);
+          if (progress < 1) requestAnimationFrame(step);
+          else el.textContent = target;
+        }
+        requestAnimationFrame(step);
+      }
+    });
+  </script>
 </body>
 </html>
