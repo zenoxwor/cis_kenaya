@@ -40,12 +40,6 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "School leadership decisions and approvals."
   },
   {
-    id: "principal_staff_accounts",
-    href: "/admin/principal/staff-accounts",
-    label: "Staff Accounts",
-    description: "Principal-managed teacher and worker accounts."
-  },
-  {
     id: "reception_dashboard",
     href: "/admin/reception",
     label: "Reception / Admissions",

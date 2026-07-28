@@ -133,16 +133,6 @@ This folder contains the **separate internal admin surface** built with Next.js 
   - `OBSERVABILITY_PROVIDER_DSN`
   - `OBSERVABILITY_RELEASE`
 
-## Principal staff account management
-
-- Principal route: `/admin/principal/staff-accounts`
-- LocalStorage-backed mock CRUD for teacher/worker/staff admin accounts:
-  - list accounts
-  - create account (Full Name, Username, Email, Role, Temporary Password)
-  - edit name/role/status
-  - deactivate/activate account
-- Structured for easy repository swap to database persistence later.
-
 ## Exams and grading module
 
 - New routes:

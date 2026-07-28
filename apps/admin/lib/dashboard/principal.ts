@@ -12,7 +12,6 @@ export const principalDashboardData: RoleDashboardData = {
   shortcuts: [
     { label: "Open decision workflow", href: "/admin/principal/reports", hint: "Review and approve admissions" },
     { label: "Open analytics center", href: "/admin/principal/analytics", hint: "Cross-functional school analytics" },
-    { label: "Manage staff accounts", href: "/admin/principal/staff-accounts", hint: "Create and maintain teacher/worker accounts" },
     { label: "Check finance exposure", href: "/admin/finance/reports", hint: "Tuition collection and risk" }
   ],
   recentActivity: [
