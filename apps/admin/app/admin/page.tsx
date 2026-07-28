@@ -33,6 +33,12 @@ const roleDashboards = [
     label: "Teacher",
     href: "/admin/exams/marks",
     description: "Class marks entry, submission, and report card review."
+  },
+  {
+    role: ROLE.TEACHER,
+    label: "Attendance",
+    href: "/admin/attendance",
+    description: "Mark and review daily attendance for your class."
   }
 ] as const satisfies ReadonlyArray<{
   role: AppRole;

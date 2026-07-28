@@ -136,10 +136,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/exams",
       "/admin/exams/marks",
       "/admin/exams/reports",
-      "/admin/finance",
-      "/admin/finance/invoices",
-      "/admin/finance/reports",
       "/admin/communications",
+      "/admin/communications/compose",
       "/admin/communications/history",
       "/admin/communications/templates",
       "/admin/communications/settings",
@@ -151,7 +149,6 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "principal_dashboard",
       "principal_staff_accounts",
       "reception_dashboard",
-      "finance_dashboard",
       "exams_suite",
       "communications_center",
       "attendance_module"
@@ -164,8 +161,6 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       application: ["view", "approve", "export"],
       enrollment: ["view", "approve", "export"],
       student_document: ["view", "approve", "export"],
-      fee_invoice: ["view", "approve", "export"],
-      payment: ["view", "export"],
       exam_term: ["view", "approve"],
       exam_component: ["view", "approve"],
       student_mark: ["view", "approve", "export"],
@@ -173,7 +168,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       visitor_log: ["view", "export"],
       audit_log: ["view"],
       report: ["view", "export"],
-      communication: ["view", "export"],
+      communication: ["view", "create", "edit", "export"],
       message_template: ["view", "create", "edit", "approve"],
       attendance_record: ["view", "create", "edit", "approve", "export"],
       attendance_correction: ["view", "approve"]
@@ -250,8 +245,15 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     }
   },
   [ROLE.TEACHER]: {
-    routeAccess: ["/admin", "/admin/exams", "/admin/exams/marks", "/admin/exams/reports"],
-    navigationVisibility: ["dashboard", "exams_suite"],
+    routeAccess: [
+      "/admin",
+      "/admin/exams",
+      "/admin/exams/marks",
+      "/admin/exams/reports",
+      "/admin/attendance",
+      "/admin/attendance/reports"
+    ],
+    navigationVisibility: ["dashboard", "exams_suite", "attendance_module"],
     actions: {
       dashboard: ["view"],
       student: ["view"],
@@ -259,7 +261,9 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       exam_component: ["view"],
       student_mark: ["view", "create", "edit"],
       report_card: ["view", "export"],
-      report: ["view", "export"]
+      report: ["view", "export"],
+      attendance_record: ["view", "create", "edit"],
+      attendance_correction: ["view", "create"]
     }
   }
 };

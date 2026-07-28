@@ -14,7 +14,7 @@ function mapRole(appRole: AppRole): Role {
     PRINCIPAL: "principal",
     RECEPTION: "reception",
     FINANCE: "admin",
-    TEACHER: "viewer"
+    TEACHER: "reception"  // Teachers can mark attendance
   };
   return map[appRole] ?? "viewer";
 }
