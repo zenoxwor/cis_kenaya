@@ -14,7 +14,11 @@ export const superAdminDashboardData: RoleDashboardData = {
   shortcuts: [
     { label: "User governance", href: "/admin/super-admin/users", hint: "Manage roles and account states" },
     { label: "Audit console", href: "/admin/super-admin/audit", hint: "Inspect governance event trail" },
-    { label: "Oversight settings", href: "/admin/super-admin/settings", hint: "Tune policy controls" },
+    {
+      label: "Oversight settings",
+      href: "/admin/super-admin/settings",
+      hint: "Tune policy controls, backup readiness, and restore workflows"
+    },
     { label: "Principal reports", href: "/admin/principal/reports", hint: "Review school-level outcomes" },
     { label: "Admissions board", href: "/admin/reception/applications", hint: "Escalations and approval queue" }
   ],
@@ -33,8 +37,8 @@ export const superAdminDashboardData: RoleDashboardData = {
     },
     {
       when: "08:12",
-      title: "Security policy review",
-      detail: "Session timeout baseline review added to backlog.",
+      title: "Restore drill validated",
+      detail: "Latest dry-run recovery checklist passed export verification gates.",
       status: "info"
     }
   ],

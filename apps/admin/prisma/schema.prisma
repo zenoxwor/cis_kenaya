@@ -159,6 +159,10 @@ model User {
   email        String
   fullName     String
   passwordHash String?
+  modulePermissions String[]       @default([])
+  mustChangePassword Boolean       @default(false)
+  passwordUpdatedAt DateTime?
+  tempPasswordIssuedAt DateTime?
   phoneNumber  String?
   isActive     Boolean          @default(true)
   lastLoginAt  DateTime?

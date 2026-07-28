@@ -31,7 +31,26 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!canAccessRoute(session.user.role, pathname)) {
+  if (!session.user.isActive) {
+    logAuditEvent({
+      actor: {
+        id: session.user.id,
+        role: session.user.role,
+        name: session.user.fullName,
+        ipAddress
+      },
+      action: "auth.user_inactive",
+      entity: "Route",
+      entityId: pathname,
+      module: "auth",
+      status: "denied",
+      metadata: { search }
+    });
+    const unauthorizedUrl = new URL("/admin/unauthorized", request.url);
+    return NextResponse.redirect(unauthorizedUrl);
+  }
+
+  if (!canAccessRoute(session.user.role, pathname, session.user.modulePermissions)) {
     logAuditEvent({
       actor: {
         id: session.user.id,

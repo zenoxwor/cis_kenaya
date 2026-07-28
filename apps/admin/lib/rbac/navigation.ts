@@ -22,6 +22,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Unified trends across enrollment, attendance, finance, exams, and communications."
   },
   {
+    id: "operations_resilience",
+    href: "/admin/operations",
+    label: "Backup & Recovery",
+    description: "Monitor backup coverage, restore drills, and recovery readiness."
+  },
+  {
     id: "super_admin_console",
     href: "/admin/super-admin",
     label: "Super Admin Console",
@@ -83,6 +89,10 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
   }
 ];
 
-export function getVisibleNavigation(role: AppRole) {
-  return ADMIN_NAV_ITEMS.filter(item => canViewNavigation(role, item.id) && canAccessRoute(role, item.href));
+export function getVisibleNavigation(role: AppRole, modulePermissions?: string[]) {
+  return ADMIN_NAV_ITEMS.filter(
+    item =>
+      canViewNavigation(role, item.id, modulePermissions) &&
+      canAccessRoute(role, item.href, modulePermissions)
+  );
 }

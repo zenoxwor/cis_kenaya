@@ -74,6 +74,45 @@ export const mockAuditLogs: AuditLogEntry[] = [
     metadata: {
       verified: true
     }
+  },
+  {
+    id: "evt_seed_005",
+    actor: {
+      id: "mock-super-admin",
+      role: ROLE.SUPER_ADMIN,
+      name: "System Administrator",
+      ipAddress: "10.10.0.31"
+    },
+    action: "backup_recovery.backup_triggered",
+    entity: "BackupSnapshot",
+    entityId: "backup-2026-07-28-0200",
+    module: "operations",
+    status: "success",
+    timestamp: "2026-07-28T02:07:00.000Z",
+    metadata: {
+      trigger: "AUTOMATED",
+      exportVerified: true
+    }
+  },
+  {
+    id: "evt_seed_006",
+    actor: {
+      id: "mock-super-admin",
+      role: ROLE.SUPER_ADMIN,
+      name: "System Administrator",
+      ipAddress: "10.10.0.31"
+    },
+    action: "backup_recovery.restore_completed",
+    entity: "RestoreWorkflow",
+    entityId: "restore-2026-07-25-0600",
+    module: "operations",
+    status: "success",
+    timestamp: "2026-07-25T06:08:00.000Z",
+    metadata: {
+      mode: "DRY_RUN",
+      kind: "DRILL",
+      backupId: "backup-2026-07-27-0200"
+    }
   }
 ];
 

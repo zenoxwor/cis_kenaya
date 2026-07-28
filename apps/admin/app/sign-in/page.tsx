@@ -37,6 +37,11 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             Incorrect username or password. Please try again.
           </p>
         )}
+        {error === "inactive_account" && (
+          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            This account is inactive. Contact a Super Admin to reactivate access.
+          </p>
+        )}
 
         {authMode === "mock" ? (
           <form action="/api/auth/mock-sign-in" className="mt-6 space-y-4" method="post">

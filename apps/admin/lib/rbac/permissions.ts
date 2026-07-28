@@ -1,5 +1,11 @@
 import type { AppRole } from "@/lib/rbac/roles";
 import { ROLE } from "@/lib/rbac/roles";
+import {
+  getRoutePermissionKey,
+  hasAnyModulePermission,
+  hasModulePermission,
+  type ModulePermissionKey
+} from "@/lib/admin/module-permissions";
 
 export const ACTION_PERMISSIONS = [
   "view",
@@ -35,7 +41,8 @@ export const DOMAIN_RESOURCES = [
   "message_template",
   "attendance_record",
   "attendance_correction",
-  "finance_automation"
+  "finance_automation",
+  "backup_recovery"
 ] as const;
 
 export type DomainResource = (typeof DOMAIN_RESOURCES)[number];
@@ -43,6 +50,7 @@ export type DomainResource = (typeof DOMAIN_RESOURCES)[number];
 export const ADMIN_ROUTE_KEYS = [
   "/admin",
   "/admin/analytics",
+  "/admin/operations",
   "/admin/super-admin",
   "/admin/super-admin/users",
   "/admin/super-admin/audit",
@@ -78,6 +86,7 @@ export type AdminRouteKey = (typeof ADMIN_ROUTE_KEYS)[number];
 export const ADMIN_NAV_KEYS = [
   "dashboard",
   "executive_analytics",
+  "operations_resilience",
   "super_admin_console",
   "principal_dashboard",
   "principal_staff_accounts",
@@ -91,6 +100,21 @@ export const ADMIN_NAV_KEYS = [
 ] as const;
 
 export type AdminNavKey = (typeof ADMIN_NAV_KEYS)[number];
+
+const NAV_PERMISSION_KEYS: Partial<Record<AdminNavKey, ModulePermissionKey>> = {
+  executive_analytics: "executive_analytics",
+  operations_resilience: "backup_recovery",
+  super_admin_console: "super_admin_console",
+  principal_dashboard: "principal_dashboard",
+  principal_staff_accounts: "staff_accounts",
+  reception_dashboard: "reception_admissions",
+  registration_wizard: "registration_wizard",
+  finance_dashboard: "finance_ops",
+  exams_suite: "exams_grading",
+  communications_center: "communications_centre",
+  documents_center: "document_center",
+  attendance_module: "attendance"
+};
 
 export type RolePermissionMatrix = {
   routeAccess: AdminRouteKey[];
@@ -125,7 +149,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       message_template: ["view", "create", "edit", "approve", "override"],
       attendance_record: ["view", "create", "edit", "approve", "export", "override"],
       attendance_correction: ["view", "create", "edit", "approve", "override"],
-      finance_automation: ["view", "create", "edit", "approve", "export", "override"]
+      finance_automation: ["view", "create", "edit", "approve", "export", "override"],
+      backup_recovery: ["view", "create", "edit", "approve", "export", "override"]
     }
   },
   [ROLE.PRINCIPAL]: {
@@ -133,6 +158,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     routeAccess: [
       "/admin",
       "/admin/analytics",
+      "/admin/operations",
       "/admin/principal",
       "/admin/principal/reports",
       "/admin/principal/analytics",
@@ -158,6 +184,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     navigationVisibility: [
       "dashboard",
       "executive_analytics",
+      "operations_resilience",
       "principal_dashboard",
       "principal_staff_accounts",
       "reception_dashboard",
@@ -186,7 +213,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       communication: ["view", "create", "edit", "export"],
       message_template: ["view", "create", "edit", "approve"],
       attendance_record: ["view", "create", "edit", "approve", "export"],
-      attendance_correction: ["view", "approve"]
+      attendance_correction: ["view", "approve"],
+      backup_recovery: ["view"]
       // `settings` resource intentionally omitted — Super Admin only
     }
   },
@@ -290,18 +318,37 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
   }
 };
 
-export function canAccessRoute(role: AppRole, route: string) {
-  return ROLE_PERMISSION_MATRIX[role].routeAccess.some(allowedRoute => {
+export function canAccessRoute(role: AppRole, route: string, modulePermissions?: string[]) {
+  const canAccessByRole = ROLE_PERMISSION_MATRIX[role].routeAccess.some(allowedRoute => {
     if (allowedRoute === "/admin") {
       return route === "/admin" || route === "/admin/";
     }
 
     return route === allowedRoute || route.startsWith(`${allowedRoute}/`);
   });
+  if (!canAccessByRole) {
+    return false;
+  }
+
+  const requiredPermission = getRoutePermissionKey(route);
+  if (!requiredPermission) {
+    return hasAnyModulePermission(modulePermissions, role);
+  }
+
+  return hasModulePermission(modulePermissions, role, requiredPermission);
 }
 
-export function canViewNavigation(role: AppRole, navKey: AdminNavKey) {
-  return ROLE_PERMISSION_MATRIX[role].navigationVisibility.includes(navKey);
+export function canViewNavigation(role: AppRole, navKey: AdminNavKey, modulePermissions?: string[]) {
+  if (!ROLE_PERMISSION_MATRIX[role].navigationVisibility.includes(navKey)) {
+    return false;
+  }
+
+  const requiredPermission = NAV_PERMISSION_KEYS[navKey];
+  if (!requiredPermission) {
+    return hasAnyModulePermission(modulePermissions, role);
+  }
+
+  return hasModulePermission(modulePermissions, role, requiredPermission);
 }
 
 export function canPerformAction(role: AppRole, resource: DomainResource, action: ActionPermission) {

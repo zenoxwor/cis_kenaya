@@ -101,6 +101,29 @@ This folder contains the **separate internal admin surface** built with Next.js 
   - Super Admin policy/settings console: `/admin/super-admin/settings`
   - Security/session/workflow governance placeholders structured for backend persistence wiring.
 
+## Backup, recovery, and operations resilience
+
+- New route: `/admin/operations`
+- Backup cadence:
+  - nightly application backup at **02:00 EAT**
+  - weekly immutable export every **Saturday**
+  - restore drill every **7-14 days**
+- Super Admin capabilities:
+  - trigger a manual backup through the safe local rehearsal flow
+  - run guided restore drills or sandbox restore simulations with a confirmation gate
+  - review backup history, integrity checks, and restore outcomes
+- Principal capability:
+  - read-only visibility into backup posture, restore history, and recovery-readiness indicators
+- Teacher / Reception / Finance:
+  - no backup or restore controls under the current RBAC policy
+- Audit stream coverage:
+  - `backup_recovery.backup_triggered`
+  - `backup_recovery.restore_requested`
+  - `backup_recovery.restore_completed`
+- Runbook:
+  - `docs/backup-recovery-runbook.md`
+  - includes restore steps and the incident checklist used during drills or recovery events
+
 ## Optional provider hooks (Sentry-compatible pattern)
 
 - Shared observability hooks are under `lib/observability/provider-hooks.ts` and can be wired to any provider with `captureException` and `captureEvent` methods.
