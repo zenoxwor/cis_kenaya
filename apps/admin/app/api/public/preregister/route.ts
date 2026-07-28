@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendPreRegistrationVerificationEmail } from "@/lib/email/resend";
 import { prisma } from "@/lib/db/client";
 import { getPublicSiteUrl, getSupabaseStorageClient } from "@/lib/supabase/client";
+import { AUTH_COOKIE_NAME } from "@/lib/auth/config";
+import { parseSessionPayload } from "@/lib/auth/cookie-session";
+import { ROLE } from "@/lib/rbac/roles";
+import { createStudentFromRegistration } from "@/lib/students/create-from-registration";
 
 type CreatePreRegistrationPayload = {
   first_name: string;
@@ -20,6 +24,11 @@ type ResendVerificationPayload = {
 type GetDocumentsPayload = {
   action: "get_documents";
   registration_id: string;
+};
+
+type ManualVerifyPayload = {
+  id: string;
+  action: "manual_verify";
 };
 
 type DocumentFieldConfig = {
@@ -63,7 +72,7 @@ const DOCUMENT_FIELDS: DocumentFieldConfig[] = [
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 
@@ -150,6 +159,22 @@ function parseGetDocumentsPayload(payload: unknown): GetDocumentsPayload | null 
   }
 
   return { action: "get_documents", registration_id };
+}
+
+function parseManualVerifyPayload(payload: unknown): ManualVerifyPayload | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+  const action = getFieldValue(record, "action");
+  const id = getFieldValue(record, "id");
+
+  if (action !== "manual_verify" || !id) {
+    return null;
+  }
+
+  return { action: "manual_verify", id };
 }
 
 function buildVerificationUrl(token: string) {
@@ -571,4 +596,73 @@ export async function POST(request: NextRequest) {
     },
     { status: 415 }
   );
+}
+
+function canManuallyVerify(role: string) {
+  return role === ROLE.SUPER_ADMIN || role === ROLE.RECEPTION;
+}
+
+export async function PATCH(request: NextRequest) {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return createUnavailableResponse(
+      "Pre-registration service is temporarily unavailable. Missing configuration: DATABASE_URL."
+    );
+  }
+
+  const session = parseSessionPayload(request.cookies.get(AUTH_COOKIE_NAME)?.value);
+  if (!session) {
+    return jsonWithCors({ success: false, message: "Unauthenticated." }, { status: 401 });
+  }
+  if (!session.user.isActive) {
+    return jsonWithCors({ success: false, message: "Inactive account." }, { status: 403 });
+  }
+  if (!canManuallyVerify(session.user.role)) {
+    return jsonWithCors(
+      { success: false, message: "Only super admin and receptionist can manually verify." },
+      { status: 403 }
+    );
+  }
+
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return jsonWithCors({ success: false, message: "Invalid JSON body." }, { status: 400 });
+  }
+
+  const body = parseManualVerifyPayload(payload);
+  if (!body) {
+    return jsonWithCors({ success: false, message: "id and action=manual_verify are required." }, { status: 400 });
+  }
+
+  const registration = await prisma.preRegistration.findUnique({
+    where: { id: body.id },
+    select: { id: true, status: true }
+  });
+  if (!registration) {
+    return jsonWithCors({ success: false, message: "Pre-registration not found." }, { status: 404 });
+  }
+
+  if (registration.status !== "unverified") {
+    return jsonWithCors(
+      { success: false, message: "Only unverified registrations can be manually verified." },
+      { status: 409 }
+    );
+  }
+
+  const updateResult = await prisma.preRegistration.updateMany({
+    where: { id: body.id, status: "unverified" },
+    data: { status: "verified" }
+  });
+
+  if (updateResult.count === 0) {
+    return jsonWithCors({ success: false, message: "Registration verification failed." }, { status: 409 });
+  }
+
+  const studentId = await createStudentFromRegistration(body.id);
+  if (!studentId) {
+    return jsonWithCors({ success: false, message: "Student profile creation failed." }, { status: 500 });
+  }
+
+  return jsonWithCors({ success: true, studentId });
 }
