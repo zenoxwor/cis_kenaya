@@ -46,6 +46,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Application pipeline and registration intake."
   },
   {
+    id: "reception_pre_registrations",
+    href: "/admin/reception/pre-registrations",
+    label: "Pre-Registrations",
+    description: "Track email verification status for Cambridge intake requests."
+  },
+  {
     id: "finance_dashboard",
     href: "/admin/finance",
     label: "Finance Ops",

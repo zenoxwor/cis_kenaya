@@ -11,7 +11,8 @@ const RECEPTION_LINKS = [
   { href: "/admin/reception/early-pickup", label: "Early Pick-Up" },
   { href: "/admin/reception/appointments", label: "Appointments" },
   { href: "/admin/reception/lost-found", label: "Lost & Found" },
-  { href: "/admin/reception/documents", label: "Document Intake" }
+  { href: "/admin/reception/documents", label: "Document Intake" },
+  { href: "/admin/reception/pre-registrations", label: "Pre-Registrations" }
 ] as const;
 
 export function ReceptionNav() {
