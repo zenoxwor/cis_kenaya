@@ -89,6 +89,10 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
   }
 ];
 
-export function getVisibleNavigation(role: AppRole) {
-  return ADMIN_NAV_ITEMS.filter(item => canViewNavigation(role, item.id) && canAccessRoute(role, item.href));
+export function getVisibleNavigation(role: AppRole, modulePermissions?: string[]) {
+  return ADMIN_NAV_ITEMS.filter(
+    item =>
+      canViewNavigation(role, item.id, modulePermissions) &&
+      canAccessRoute(role, item.href, modulePermissions)
+  );
 }

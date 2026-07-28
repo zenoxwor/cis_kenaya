@@ -4,6 +4,8 @@ import { AUTH_COOKIE_NAME } from "@/lib/auth/config";
 import { parseSessionPayload, serializeSessionPayload } from "@/lib/auth/cookie-session";
 import { buildSignInPath } from "@/lib/auth/paths";
 import type { SessionUser } from "@/lib/auth/types";
+import { ROLE } from "@/lib/rbac/roles";
+import { hasModulePermission } from "@/lib/admin/module-permissions";
 
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
@@ -18,11 +20,23 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 
 export async function requireCurrentUser(nextPath?: string): Promise<SessionUser> {
   const user = await getCurrentUser();
-  if (user) {
+  if (user?.isActive) {
     return user;
   }
 
   redirect(buildSignInPath(nextPath));
+}
+
+export async function requireSuperAdminUser(nextPath?: string): Promise<SessionUser> {
+  const user = await requireCurrentUser(nextPath);
+  if (
+    user.role !== ROLE.SUPER_ADMIN ||
+    !hasModulePermission(user.modulePermissions, user.role, "super_admin_console")
+  ) {
+    redirect("/admin/unauthorized");
+  }
+
+  return user;
 }
 
 export function createSessionCookieValue(user: SessionUser) {

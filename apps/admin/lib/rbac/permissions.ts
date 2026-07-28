@@ -1,5 +1,11 @@
 import type { AppRole } from "@/lib/rbac/roles";
 import { ROLE } from "@/lib/rbac/roles";
+import {
+  getRoutePermissionKey,
+  hasAnyModulePermission,
+  hasModulePermission,
+  type ModulePermissionKey
+} from "@/lib/admin/module-permissions";
 
 export const ACTION_PERMISSIONS = [
   "view",
@@ -94,6 +100,21 @@ export const ADMIN_NAV_KEYS = [
 ] as const;
 
 export type AdminNavKey = (typeof ADMIN_NAV_KEYS)[number];
+
+const NAV_PERMISSION_KEYS: Partial<Record<AdminNavKey, ModulePermissionKey>> = {
+  executive_analytics: "executive_analytics",
+  operations_resilience: "backup_recovery",
+  super_admin_console: "super_admin_console",
+  principal_dashboard: "principal_dashboard",
+  principal_staff_accounts: "staff_accounts",
+  reception_dashboard: "reception_admissions",
+  registration_wizard: "registration_wizard",
+  finance_dashboard: "finance_ops",
+  exams_suite: "exams_grading",
+  communications_center: "communications_centre",
+  documents_center: "document_center",
+  attendance_module: "attendance"
+};
 
 export type RolePermissionMatrix = {
   routeAccess: AdminRouteKey[];
@@ -297,18 +318,37 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
   }
 };
 
-export function canAccessRoute(role: AppRole, route: string) {
-  return ROLE_PERMISSION_MATRIX[role].routeAccess.some(allowedRoute => {
+export function canAccessRoute(role: AppRole, route: string, modulePermissions?: string[]) {
+  const canAccessByRole = ROLE_PERMISSION_MATRIX[role].routeAccess.some(allowedRoute => {
     if (allowedRoute === "/admin") {
       return route === "/admin" || route === "/admin/";
     }
 
     return route === allowedRoute || route.startsWith(`${allowedRoute}/`);
   });
+  if (!canAccessByRole) {
+    return false;
+  }
+
+  const requiredPermission = getRoutePermissionKey(route);
+  if (!requiredPermission) {
+    return hasAnyModulePermission(modulePermissions, role);
+  }
+
+  return hasModulePermission(modulePermissions, role, requiredPermission);
 }
 
-export function canViewNavigation(role: AppRole, navKey: AdminNavKey) {
-  return ROLE_PERMISSION_MATRIX[role].navigationVisibility.includes(navKey);
+export function canViewNavigation(role: AppRole, navKey: AdminNavKey, modulePermissions?: string[]) {
+  if (!ROLE_PERMISSION_MATRIX[role].navigationVisibility.includes(navKey)) {
+    return false;
+  }
+
+  const requiredPermission = NAV_PERMISSION_KEYS[navKey];
+  if (!requiredPermission) {
+    return hasAnyModulePermission(modulePermissions, role);
+  }
+
+  return hasModulePermission(modulePermissions, role, requiredPermission);
 }
 
 export function canPerformAction(role: AppRole, resource: DomainResource, action: ActionPermission) {

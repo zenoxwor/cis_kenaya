@@ -44,6 +44,13 @@ export async function POST(request: Request) {
     );
     return NextResponse.redirect(failureUrl, 303);
   }
+  if (!user.isActive) {
+    const failureUrl = new URL(
+      `/sign-in?error=inactive_account&next=${encodeURIComponent(nextPath)}`,
+      request.url
+    );
+    return NextResponse.redirect(failureUrl, 303);
+  }
 
   const response = NextResponse.redirect(new URL(nextPath, request.url), 303);
   const sessionCookieValue = createSessionCookieValue(user);

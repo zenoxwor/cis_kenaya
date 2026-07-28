@@ -6,7 +6,7 @@ export default async function AdminLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
   const user = await requireCurrentUser("/admin");
-  const navItems = getAuthorizedNavigation(user.role);
+  const navItems = getAuthorizedNavigation(user);
 
   return (
     <AdminShell navItems={navItems} user={user}>{children}</AdminShell>
