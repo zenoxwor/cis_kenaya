@@ -34,7 +34,8 @@ export const DOMAIN_RESOURCES = [
   "communication",
   "message_template",
   "attendance_record",
-  "attendance_correction"
+  "attendance_correction",
+  "finance_automation"
 ] as const;
 
 export type DomainResource = (typeof DOMAIN_RESOURCES)[number];
@@ -119,7 +120,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       communication: ["view", "create", "edit", "approve", "export", "override"],
       message_template: ["view", "create", "edit", "approve", "override"],
       attendance_record: ["view", "create", "edit", "approve", "export", "override"],
-      attendance_correction: ["view", "create", "edit", "approve", "override"]
+      attendance_correction: ["view", "create", "edit", "approve", "override"],
+      finance_automation: ["view", "create", "edit", "approve", "export", "override"]
     }
   },
   [ROLE.PRINCIPAL]: {
@@ -183,7 +185,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       communication: ["view", "create", "edit", "export"],
       message_template: ["view", "create", "edit", "approve"],
       attendance_record: ["view", "create", "edit", "approve", "export"],
-      attendance_correction: ["view", "approve"]
+      attendance_correction: ["view", "approve"],
+      finance_automation: ["view"]
       // `settings` resource intentionally omitted — Super Admin only
     }
   },
@@ -254,7 +257,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       guardian: ["view", "export"],
       report: ["view", "export"],
       audit_log: ["view"],
-      communication: ["view", "create"]
+      communication: ["view", "create"],
+      finance_automation: ["view", "create", "edit", "approve", "export"]
     }
   },
   [ROLE.TEACHER]: {

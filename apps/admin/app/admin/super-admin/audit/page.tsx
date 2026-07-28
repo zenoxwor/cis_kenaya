@@ -1,6 +1,6 @@
 import { AuditLogConsole } from "@/components/audit/audit-log-console";
-import { mockAuditLogs } from "@/lib/audit/mock-audit-logs";
+import { listAuditLogs } from "@/lib/audit/repository";
 
 export default function SuperAdminAuditPage() {
-  return <AuditLogConsole entries={mockAuditLogs} />;
+  return <AuditLogConsole entries={listAuditLogs()} />;
 }

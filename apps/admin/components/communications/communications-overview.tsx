@@ -4,10 +4,18 @@ import Link from "next/link";
 import type { CommunicationsStats, MessageCampaign } from "@/lib/communications/types";
 import type { AppRole } from "@/lib/rbac/roles";
 import { canPerformAction } from "@/lib/rbac/permissions";
+import type { FinanceAutomationOutcome } from "@/lib/finance/automation";
 
 type Props = {
   stats: CommunicationsStats;
   role: AppRole;
+  financeSummary: {
+    lastEvaluatedAt: string | null;
+    totalSignals: number;
+    actionCount: number;
+    criticalCount: number;
+  };
+  financeOutcomes: FinanceAutomationOutcome[];
 };
 
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -42,6 +50,11 @@ function CampaignRow({ campaign }: { campaign: MessageCampaign }) {
     <tr className="border-t border-slate-100 text-sm">
       <td className="py-3 pl-4 pr-2 font-medium text-slate-800">
         {campaign.template?.name ?? "—"}
+        {Boolean(campaign.audienceMeta && (campaign.audienceMeta as Record<string, unknown>).automation) && (
+          <span className="ml-2 inline-block rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700">
+            Automation
+          </span>
+        )}
       </td>
       <td className="px-2 py-3">
         <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${catColour}`}>
@@ -66,7 +79,7 @@ function CampaignRow({ campaign }: { campaign: MessageCampaign }) {
   );
 }
 
-export function CommunicationsOverview({ stats, role }: Props) {
+export function CommunicationsOverview({ stats, role, financeSummary, financeOutcomes }: Props) {
   const canCompose = canPerformAction(role, "communication", "create");
   const canManageTemplates = canPerformAction(role, "message_template", "create");
 
@@ -151,6 +164,49 @@ export function CommunicationsOverview({ stats, role }: Props) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </div>
+
+      <div className="admin-content-card">
+        <h2 className="mb-3 text-base font-semibold text-slate-900">Finance-linked communication signals</h2>
+        <p className="mb-3 text-sm text-slate-600">
+          Last evaluation:{" "}
+          {financeSummary.lastEvaluatedAt
+            ? new Date(financeSummary.lastEvaluatedAt).toLocaleString("en-KE")
+            : "Not available"}{" "}
+          • {financeSummary.actionCount} mock dispatches from {financeSummary.totalSignals} monitored records.
+        </p>
+        {financeOutcomes.length === 0 ? (
+          <p className="text-sm text-slate-500">No finance automation outcomes available.</p>
+        ) : (
+          <div className="space-y-2">
+            {financeOutcomes.slice(0, 6).map(outcome => (
+              <div
+                key={outcome.id}
+                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-slate-900">{outcome.studentName}</p>
+                  <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                    {outcome.triggerType}
+                  </span>
+                  <span
+                    className={[
+                      "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                      outcome.severity === "CRITICAL"
+                        ? "bg-red-100 text-red-700"
+                        : outcome.severity === "WARNING"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-sky-100 text-sky-700"
+                    ].join(" ")}
+                  >
+                    {outcome.severity}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-slate-600">{outcome.message}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>

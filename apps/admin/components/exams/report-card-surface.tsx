@@ -12,13 +12,19 @@ import {
 import { createExamRepository } from "@/lib/exams/repository";
 import type { ExamModuleState, ReportCard } from "@/lib/exams/types";
 import { ROLE, type AppRole } from "@/lib/rbac/roles";
+import type { FinanceStatusBadge } from "@/lib/finance/automation";
 
 type ReportCardSurfaceProps = {
   role: AppRole;
   userId: string;
+  financeBadgesByAdmissionNo: Record<string, FinanceStatusBadge[]>;
 };
 
-export function ReportCardSurface({ role, userId }: ReportCardSurfaceProps) {
+export function ReportCardSurface({
+  role,
+  userId,
+  financeBadgesByAdmissionNo
+}: ReportCardSurfaceProps) {
   const repository = useMemo(() => createExamRepository(), []);
   const [state, setState] = useState<ExamModuleState>({ marks: [], reportCards: [] });
   const [notice, setNotice] = useState<string | null>(null);
@@ -52,6 +58,14 @@ export function ReportCardSurface({ role, userId }: ReportCardSurfaceProps) {
   const reportCard = state.reportCards.find(
     entry => entry.studentId === selectedStudent.id && entry.termId === selectedTerm.id
   );
+  const financeBadges = financeBadgesByAdmissionNo[selectedStudent.admissionNo] ?? [];
+  const examHoldActive = financeBadges.some(badge => badge.label === "Exam Hold");
+
+  const financeToneClass: Record<FinanceStatusBadge["tone"], string> = {
+    info: "bg-sky-100 text-sky-700 border-sky-200",
+    warning: "bg-amber-100 text-amber-800 border-amber-200",
+    critical: "bg-red-100 text-red-700 border-red-200"
+  };
 
   function upsertReportCard(nextPartial: Partial<ReportCard>) {
     const existing = reportCard ?? {
@@ -171,6 +185,27 @@ export function ReportCardSurface({ role, userId }: ReportCardSurfaceProps) {
       {notice && (
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 no-print">
           {notice}
+        </div>
+      )}
+
+      {financeBadges.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 no-print">
+          <p className="font-semibold">Finance status signals</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {financeBadges.map(badge => (
+              <span
+                key={`${selectedStudent.id}-${badge.label}`}
+                className={`inline-block rounded-full border px-2 py-0.5 text-xs font-semibold ${financeToneClass[badge.tone]}`}
+              >
+                {badge.label}
+              </span>
+            ))}
+          </div>
+          {examHoldActive && (
+            <p className="mt-2 text-xs font-medium">
+              Exam hold notice is active for this student due to arrears threshold.
+            </p>
+          )}
         </div>
       )}
 

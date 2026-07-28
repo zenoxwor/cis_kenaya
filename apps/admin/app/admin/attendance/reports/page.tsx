@@ -3,6 +3,7 @@ import AttendanceReports from "@/components/attendance/attendance-reports";
 import type { Metadata } from "next";
 import { BRAND } from "@/lib/attendance";
 import { db } from "@/lib/db";
+import { getFinanceBadgesByStudentCode } from "@/lib/finance/automation";
 
 export const metadata: Metadata = {
   title: "Attendance Reports — CIS Kenya Admin",
@@ -16,6 +17,7 @@ export default async function AttendanceReportsPage() {
     orderBy: { gradeLevel: "asc" },
     select: { id: true, name: true },
   });
+  const financeBadgesByStudentCode = getFinanceBadgesByStudentCode();
 
   return (
     <div>
@@ -47,7 +49,10 @@ export default async function AttendanceReportsPage() {
         </div>
       </div>
 
-      <AttendanceReports classes={classes} />
+      <AttendanceReports
+        classes={classes}
+        financeBadgesByStudentCode={financeBadgesByStudentCode}
+      />
     </div>
   );
 }

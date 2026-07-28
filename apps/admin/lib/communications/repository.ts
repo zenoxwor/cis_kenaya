@@ -18,6 +18,7 @@ import {
 const templates: MessageTemplate[] = [...MOCK_TEMPLATES];
 const campaigns: MessageCampaign[] = [...MOCK_CAMPAIGNS];
 const deliveries: MessageDelivery[] = [...MOCK_DELIVERIES];
+const automationDispatchKeys = new Set<string>();
 
 // ─── Templates ────────────────────────────────────────────────────────────────
 
@@ -149,6 +150,96 @@ export function sendCampaign(
     }
   }
 
+  return campaign;
+}
+
+type AutomationCampaignPayload = {
+  dedupeKey: string;
+  triggerType: "UNPAID_RISK_REMINDER" | "EXAM_HOLD_NOTICE" | "OVERDUE_INVOICE_REMINDER";
+  studentName: string;
+  guardianName: string;
+  guardianPhone?: string;
+  guardianEmail?: string;
+  message: string;
+};
+
+export function sendAutomationCampaign(payload: AutomationCampaignPayload) {
+  if (automationDispatchKeys.has(payload.dedupeKey)) {
+    return null;
+  }
+
+  const template =
+    getTemplate("tpl_fee_overdue") ??
+    templates.find(item => item.category === "FEE") ??
+    templates[0];
+
+  if (!template) {
+    throw new Error("No communication template available for automation.");
+  }
+
+  const campaignId = `camp_auto_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const campaign: MessageCampaign = {
+    id: campaignId,
+    campusId: "campus_main",
+    templateId: template.id,
+    sentById: "system_finance_automation",
+    audienceFilter: "individual",
+    audienceMeta: {
+      automation: true,
+      triggerType: payload.triggerType,
+      studentName: payload.studentName,
+      message: payload.message
+    },
+    scheduledAt: null,
+    sentAt: new Date(),
+    status: "SENT",
+    totalCount: 1,
+    sentCount: 1,
+    failedCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    template: {
+      id: template.id,
+      name: `${template.name} (Automation)`,
+      subject: template.subject,
+      type: template.type,
+      category: "FEE"
+    },
+    sentByName: "Finance Automation Engine"
+  };
+
+  campaigns.unshift(campaign);
+
+  const channels: Array<"SMS" | "EMAIL"> = [];
+  if (payload.guardianPhone) {
+    channels.push("SMS");
+  }
+  if (payload.guardianEmail) {
+    channels.push("EMAIL");
+  }
+  if (channels.length === 0) {
+    channels.push("SMS");
+  }
+
+  for (const channel of channels) {
+    deliveries.unshift({
+      id: `del_auto_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      campaignId,
+      guardianId: `auto_guardian_${payload.dedupeKey}`,
+      channel,
+      status: "SENT",
+      errorMessage: null,
+      sentAt: new Date(),
+      deliveredAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      guardianName: payload.guardianName,
+      guardianPhone: payload.guardianPhone,
+      guardianEmail: payload.guardianEmail
+    });
+  }
+
+  automationDispatchKeys.add(payload.dedupeKey);
   return campaign;
 }
 
