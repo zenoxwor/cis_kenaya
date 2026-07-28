@@ -214,6 +214,7 @@ model User {
   attendanceCorrectionApprovals AttendanceCorrection[] @relation("AttendanceCorrectionApprovedBy")
   staffCheckIns      StaffCheckIn[]
   earlyPickupsVerified EarlyPickup[] @relation("EarlyPickupVerifiedBy")
+  verifiedPreRegistrations PreRegistration[] @relation("PreRegistrationVerifiedBy")
 
   @@unique([campusId, email])
   @@index([roleId, isActive])
@@ -235,6 +236,7 @@ model Student {
   enrolledAt        DateTime?
   isActive          Boolean       @default(true)
   schoolClassId     String?
+  assignedSection   String?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -249,6 +251,8 @@ model Student {
   attendanceRecords AttendanceRecord[]
   schoolClass   SchoolClass? @relation(fields: [schoolClassId], references: [id])
   earlyPickups  EarlyPickup[]
+  parentUploadTokens ParentUploadToken[]
+  preRegistrations PreRegistration[]
 
   @@unique([campusId, studentCode])
   @@index([campusId, status])
@@ -848,7 +852,28 @@ model PreRegistration {
   curriculum        String   @default("Cambridge")
   status            String   @default("unverified")
   verificationToken String   @unique @default(cuid())
+  applicationRef    String?  @unique
+  verifiedById      String?
+  verifiedAt        DateTime?
   documents         Json?
   studentId         String?
   createdAt         DateTime @default(now())
+
+  student    Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  verifiedBy User?    @relation("PreRegistrationVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([verifiedById])
+}
+
+model ParentUploadToken {
+  id        String   @id @default(uuid())
+  studentId String
+  token     String   @unique @default(uuid())
+  expiresAt DateTime @default(dbgenerated("(now() + '7 days'::interval)"))
+  createdAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, expiresAt])
 }

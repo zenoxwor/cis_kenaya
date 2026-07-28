@@ -118,7 +118,17 @@ async function fetchDocumentsWithJoins(whereClause?: Prisma.StudentDocumentWhere
           schoolClass: { select: { id: true, name: true } },
           studentLinks: {
             include: {
-              guardian: { select: { fullName: true, phoneNumber: true, email: true } }
+              guardian: {
+                select: {
+                  fullName: true,
+                  phoneNumber: true,
+                  email: true,
+                  addressLine1: true,
+                  addressLine2: true,
+                  city: true,
+                  country: true
+                }
+              }
             },
             orderBy: [{ isPrimary: "desc" }]
           }
@@ -135,6 +145,24 @@ function toRecord(doc: DbDocWithJoins): StudentDocumentRecord {
   const classId = student.schoolClassId ?? "unassigned";
   const className = student.schoolClass?.name ?? "Unassigned";
   const guardianLink = student.studentLinks[0];
+  const guardianPhones = Array.from(
+    new Set(
+      student.studentLinks
+        .map(link => link.guardian.phoneNumber?.trim() ?? "")
+        .filter(phone => phone.length > 0)
+    )
+  );
+  const guardianAddress = guardianLink
+    ? [
+        guardianLink.guardian.addressLine1,
+        guardianLink.guardian.addressLine2,
+        guardianLink.guardian.city,
+        guardianLink.guardian.country
+      ]
+        .map(value => value?.trim() ?? "")
+        .filter(value => value.length > 0)
+        .join(", ") || null
+    : null;
   const guardianName = guardianLink?.guardian.fullName ?? "—";
   const guardianPhone = guardianLink?.guardian.phoneNumber ?? "";
   const guardianEmail = guardianLink?.guardian.email ?? null;
@@ -142,12 +170,16 @@ function toRecord(doc: DbDocWithJoins): StudentDocumentRecord {
   return {
     id: doc.id,
     studentId: doc.studentId,
+    studentCode: student.studentCode,
     studentName,
     classId,
     className,
+    section: student.assignedSection ?? null,
     guardianName,
+    guardianPhones,
     guardianPhone,
     guardianEmail,
+    guardianAddress,
     category: categoryFromDocumentType(doc.documentType),
     documentName: formatDocumentType(doc.documentType),
     fileName: doc.fileName,
@@ -209,7 +241,17 @@ export async function listDocumentRecordsForUser(user: SessionUser): Promise<Stu
         schoolClass: { select: { id: true, name: true } },
         studentLinks: {
           include: {
-            guardian: { select: { fullName: true, phoneNumber: true, email: true } }
+            guardian: {
+              select: {
+                fullName: true,
+                phoneNumber: true,
+                email: true,
+                addressLine1: true,
+                addressLine2: true,
+                city: true,
+                country: true
+              }
+            }
           },
           orderBy: [{ isPrimary: "desc" }]
         }
@@ -234,15 +276,37 @@ export async function listDocumentRecordsForUser(user: SessionUser): Promise<Stu
 
   const placeholderRecords: StudentDocumentRecord[] = studentsWithoutDocs.map(student => {
     const guardianLink = student.studentLinks[0];
+    const guardianPhones = Array.from(
+      new Set(
+        student.studentLinks
+          .map(link => link.guardian.phoneNumber?.trim() ?? "")
+          .filter(phone => phone.length > 0)
+      )
+    );
+    const guardianAddress = guardianLink
+      ? [
+          guardianLink.guardian.addressLine1,
+          guardianLink.guardian.addressLine2,
+          guardianLink.guardian.city,
+          guardianLink.guardian.country
+        ]
+          .map(value => value?.trim() ?? "")
+          .filter(value => value.length > 0)
+          .join(", ") || null
+      : null;
     return {
       id: `placeholder-${student.id}`,
       studentId: student.id,
+      studentCode: student.studentCode,
       studentName: `${student.firstName} ${student.lastName}`.trim(),
       classId: student.schoolClassId ?? "unassigned",
       className: student.schoolClass?.name ?? "Unassigned",
+      section: student.assignedSection ?? null,
       guardianName: guardianLink?.guardian.fullName ?? "—",
+      guardianPhones,
       guardianPhone: guardianLink?.guardian.phoneNumber ?? "",
       guardianEmail: guardianLink?.guardian.email ?? null,
+      guardianAddress,
       category: "identity" as const,
       documentName: "No documents uploaded yet",
       fileName: null,

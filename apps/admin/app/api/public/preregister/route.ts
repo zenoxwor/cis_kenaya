@@ -1,6 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { sendPreRegistrationVerificationEmail } from "@/lib/email/resend";
+import {
+  sendApplicationReceivedEmail,
+  sendPreRegistrationVerificationEmail
+} from "@/lib/email/resend";
 import { prisma } from "@/lib/db/client";
 import { getPublicSiteUrl, getSupabaseStorageClient } from "@/lib/supabase/client";
 import { AUTH_COOKIE_NAME } from "@/lib/auth/config";
@@ -75,6 +78,32 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
+
+function buildApplicationReference(now = new Date(), sequenceSeed?: number) {
+  const year = now.getUTCFullYear();
+  const sequence =
+    sequenceSeed && sequenceSeed > 0
+      ? String(sequenceSeed).padStart(5, "0")
+      : Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `CIS-${year}-${sequence}`;
+}
+
+async function generateApplicationReference(): Promise<string> {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const yearEnd = new Date(Date.UTC(year + 1, 0, 1));
+  const annualCount = await prisma.preRegistration.count({
+    where: {
+      createdAt: {
+        gte: yearStart,
+        lt: yearEnd
+      }
+    }
+  });
+
+  return buildApplicationReference(now, annualCount + 1);
+}
 
 function withCors(response: NextResponse) {
   for (const [header, value] of Object.entries(CORS_HEADERS)) {
@@ -376,17 +405,47 @@ async function createPreRegistration(
   payload: CreatePreRegistrationPayload,
   files: Array<{ config: DocumentFieldConfig; file: File }>
 ) {
-  const createdRegistration = await prisma.preRegistration.create({
-    data: {
-      firstName: payload.first_name,
-      lastName: payload.last_name,
-      email: payload.email,
-      phone: payload.phone,
-      gradeLevel: payload.grade_level,
-      curriculum: "Cambridge",
-      status: "unverified"
+  let createdRegistration:
+    | Awaited<ReturnType<typeof prisma.preRegistration.create>>
+    | null = null;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const applicationRef = attempt < 3
+      ? await generateApplicationReference()
+      : buildApplicationReference();
+
+    try {
+      createdRegistration = await prisma.preRegistration.create({
+        data: {
+          firstName: payload.first_name,
+          lastName: payload.last_name,
+          email: payload.email,
+          phone: payload.phone,
+          gradeLevel: payload.grade_level,
+          curriculum: "Cambridge",
+          status: "unverified",
+          applicationRef
+        }
+      });
+      break;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        Array.isArray(error.meta?.target) &&
+        error.meta.target.includes("applicationRef")
+      ) {
+        continue;
+      }
+      throw error;
     }
-  });
+  }
+
+  if (!createdRegistration) {
+    return jsonWithCors(
+      { success: false, message: "Unable to generate a unique application reference." },
+      { status: 503 }
+    );
+  }
 
   let uploadedDocuments: UploadedDocument[] = [];
   if (files.length > 0) {
@@ -472,10 +531,31 @@ async function createPreRegistration(
       );
     });
 
+  void sendApplicationReceivedEmail(
+    createdRegistration.email,
+    createdRegistration.firstName,
+    createdRegistration.applicationRef ?? "Pending reference"
+  )
+    .then(result => {
+      if (!result.sent) {
+        const status = result.skipped ? "skipped" : "failed";
+        console.warn(
+          `Application received email ${status} for ${createdRegistration?.email}: ${result.errorMessage ?? "no details"}`
+        );
+      }
+    })
+    .catch(error => {
+      const message = error instanceof Error ? error.message : "Unknown email error.";
+      console.error(
+        `Application received email dispatch failed for ${createdRegistration?.email}. ${message}`
+      );
+    });
+
   return jsonWithCors({
     success: true,
     message: "Registration submitted. Check your email.",
     registration_id: createdRegistration.id,
+    application_ref: createdRegistration.applicationRef,
     documents_uploaded: uploadedDocuments.length
   });
 }
@@ -507,6 +587,7 @@ export async function GET() {
       curriculum: item.curriculum,
       status: item.status,
       verification_token: item.verificationToken,
+      application_ref: item.applicationRef ?? null,
       created_at: item.createdAt,
       documents: readStoredDocuments(item.documents),
       student_id: item.studentId ?? null
