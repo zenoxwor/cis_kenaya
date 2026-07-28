@@ -5,6 +5,7 @@ import type {
   FinanceAutomationOutcome,
   FinanceAutomationRules
 } from "@/lib/finance/automation";
+import { getDisplayStudentCode } from "@/lib/students/get-display-student-code";
 
 type FinanceAutomationPanelProps = {
   initialRules: FinanceAutomationRules;
@@ -207,7 +208,9 @@ export function FinanceAutomationPanel({
                   </td>
                   <td className="px-3 py-2">
                     <p className="font-medium text-slate-900">{outcome.studentName}</p>
-                    <p className="text-xs text-slate-500">{outcome.studentCode}</p>
+                    <p className="text-xs text-slate-500">
+                      {getDisplayStudentCode(outcome.studentCode)}
+                    </p>
                   </td>
                   <td className="px-3 py-2">{outcome.module}</td>
                   <td className="px-3 py-2">{outcome.triggerType}</td>

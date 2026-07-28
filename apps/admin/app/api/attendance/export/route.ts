@@ -10,6 +10,7 @@ import { hasMinRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { toDateOnly, STATUS_LABELS } from "@/lib/attendance";
 import type { AttendanceStatus } from "@/lib/attendance";
+import { getDisplayStudentCode } from "@/lib/students/get-display-student-code";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
     },
     orderBy: [{ date: "asc" }, { class: { name: "asc" } }],
     include: {
-      student: { select: { studentCode: true, firstName: true, lastName: true } },
+      student: { select: { studentCode: true, graduationYear: true, firstName: true, lastName: true } },
       class: { select: { name: true } },
       markedBy: { select: { fullName: true } },
     },
@@ -52,8 +53,9 @@ export async function GET(req: NextRequest) {
     const statusLabel = STATUS_LABELS[r.status as AttendanceStatus] ?? r.status;
     const notes = (r.notes ?? "").replace(/"/g, '""');
     const markedBy = r.markedBy.fullName.replace(/"/g, '""');
+    const studentCode = getDisplayStudentCode(r.student.studentCode, r.student.graduationYear);
     rows.push(
-      `${date},${r.class.name},${r.student.studentCode},"${r.student.lastName}","${r.student.firstName}",${statusLabel},"${notes}","${markedBy}"`
+      `${date},${r.class.name},${studentCode},"${r.student.lastName}","${r.student.firstName}",${statusLabel},"${notes}","${markedBy}"`
     );
   }
 

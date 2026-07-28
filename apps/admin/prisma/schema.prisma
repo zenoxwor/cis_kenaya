@@ -231,6 +231,7 @@ model Student {
   primaryLanguage   String?
   nationalId        String?
   status            StudentStatus @default(PROSPECT)
+  graduationYear    Int?
   enrolledAt        DateTime?
   isActive          Boolean       @default(true)
   schoolClassId     String?

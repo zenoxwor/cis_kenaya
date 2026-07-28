@@ -14,6 +14,7 @@ import {
   AT_RISK_THRESHOLD,
   AT_RISK_WINDOW_DAYS,
 } from "@/lib/attendance";
+import { getDisplayStudentCode } from "@/lib/students/get-display-student-code";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -40,7 +41,15 @@ export async function GET(req: NextRequest) {
       date: { gte: start, lte: end },
     },
     include: {
-      student: { select: { id: true, studentCode: true, firstName: true, lastName: true } },
+      student: {
+        select: {
+          id: true,
+          studentCode: true,
+          graduationYear: true,
+          firstName: true,
+          lastName: true
+        }
+      },
       class: { select: { id: true, name: true } },
     },
     orderBy: { date: "asc" },
@@ -53,6 +62,7 @@ export async function GET(req: NextRequest) {
   // Group by student
   type StudentSummary = {
     studentId: string;
+    rawStudentCode: string;
     studentCode: string;
     firstName: string;
     lastName: string;
@@ -74,7 +84,8 @@ export async function GET(req: NextRequest) {
     if (!summaryMap.has(key)) {
       summaryMap.set(key, {
         studentId: r.student.id,
-        studentCode: r.student.studentCode,
+        rawStudentCode: r.student.studentCode,
+        studentCode: getDisplayStudentCode(r.student.studentCode, r.student.graduationYear),
         firstName: r.student.firstName,
         lastName: r.student.lastName,
         classId: r.class.id,

@@ -1,6 +1,10 @@
-import type { PrismaClient } from "@prisma/client";
+type StudentCodePrismaClient = {
+  student: {
+    findMany: (...args: any[]) => Promise<Array<{ studentCode: string }>>;
+  };
+};
 
-export async function generateStudentCode(prisma: PrismaClient): Promise<string> {
+export async function generateStudentCode(prisma: StudentCodePrismaClient): Promise<string> {
   const used = await prisma.student.findMany({ select: { studentCode: true } });
   const usedSet = new Set(used.map(student => student.studentCode));
 
