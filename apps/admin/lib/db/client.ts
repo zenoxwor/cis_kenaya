@@ -25,7 +25,7 @@ function maybeAssignGraduationYear(data: Record<string, unknown> | null | undefi
   const nextStatus = readStudentStatus(data.status);
   const hasGraduationYear = Object.prototype.hasOwnProperty.call(data, "graduationYear");
 
-  if (nextStatus === "ALUMNI" && !hasGraduationYear) {
+  if ((nextStatus === "ALUMNI" || nextStatus === "GRADUATED") && !hasGraduationYear) {
     data.graduationYear = new Date().getFullYear();
   }
 }
