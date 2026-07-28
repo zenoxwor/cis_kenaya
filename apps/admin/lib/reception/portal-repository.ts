@@ -515,7 +515,7 @@ export async function createReceptionIncident(
   }
 ) {
   const campusId = await resolveCampusId(user.id);
-  await prisma.incidentReport.create({
+  const incident = await prisma.incidentReport.create({
     data: {
       campusId,
       type: input.incidentType,
@@ -528,6 +528,15 @@ export async function createReceptionIncident(
       loggedByUserId: user.id,
       status: "PENDING",
       routedAt: new Date()
+    },
+    select: {
+      id: true,
+      type: true,
+      personName: true,
+      description: true,
+      priority: true,
+      createdAt: true
     }
   });
+  return incident;
 }

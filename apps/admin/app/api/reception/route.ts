@@ -30,6 +30,10 @@ import {
   updateInquiryStatus,
   updateLostFoundStatus
 } from "@/lib/reception/repository";
+import {
+  notifyPrincipalsAboutAppointment,
+  notifyPrincipalsAboutIncident
+} from "@/lib/reception/principal-notifications";
 import { REQUIRED_RECEPTION_DOCUMENT_TYPES } from "@/lib/reception/types";
 
 function forbidden(message = "Forbidden") {
@@ -182,7 +186,16 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return badRequest("Invalid incident payload");
     }
-    await createIncident(user, parsed.data);
+    const incident = await createIncident(user, parsed.data);
+    void notifyPrincipalsAboutIncident(user.id, {
+      incidentId: incident.id,
+      incidentType: incident.type,
+      priority: incident.priority,
+      personName: incident.personName,
+      description: incident.description,
+      reportedByName: parsed.data.reportedBy,
+      createdAt: incident.createdAt
+    });
     return NextResponse.json({ success: true });
   }
 
@@ -286,7 +299,16 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return badRequest("Invalid appointment payload");
     }
-    await createAppointment(user, parsed.data);
+    const appointment = await createAppointment(user, parsed.data);
+    void notifyPrincipalsAboutAppointment(user.id, {
+      appointmentId: appointment.id,
+      title: appointment.title,
+      parentName: appointment.parentName,
+      parentPhone: appointment.parentPhone,
+      meetingWith: appointment.meetingWith,
+      scheduledAt: appointment.scheduledAt,
+      createdByName: user.fullName
+    });
     return NextResponse.json({ success: true });
   }
 

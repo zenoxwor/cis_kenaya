@@ -6,6 +6,7 @@ import {
   createReceptionIncident,
   listTodaysIncidentsByUser
 } from "@/lib/reception/portal-repository";
+import { notifyPrincipalsAboutIncident } from "@/lib/reception/principal-notifications";
 import { ROLE } from "@/lib/rbac/roles";
 
 function forbidden(message = "Forbidden") {
@@ -67,7 +68,16 @@ export async function POST(request: NextRequest) {
     return badRequest("Invalid incident payload.");
   }
 
-  await createReceptionIncident(user, parsed.data);
+  const incident = await createReceptionIncident(user, parsed.data);
+  void notifyPrincipalsAboutIncident(user.id, {
+    incidentId: incident.id,
+    incidentType: incident.type,
+    priority: incident.priority,
+    personName: incident.personName,
+    description: incident.description,
+    reportedByName: user.fullName,
+    createdAt: incident.createdAt
+  });
   const rows = await listTodaysIncidentsByUser(user);
 
   return NextResponse.json({

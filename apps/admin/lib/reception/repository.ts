@@ -457,7 +457,7 @@ export async function createIncident(
   input: { type: string; description: string; reportedBy: string; department: string }
 ) {
   const campusId = await resolveCampusId(user.id);
-  await prisma.incidentReport.create({
+  return prisma.incidentReport.create({
     data: {
       campusId,
       type: input.type,
@@ -466,6 +466,14 @@ export async function createIncident(
       department: input.department,
       status: "PENDING",
       routedAt: new Date()
+    },
+    select: {
+      id: true,
+      type: true,
+      personName: true,
+      description: true,
+      priority: true,
+      createdAt: true
     }
   });
 }
@@ -725,7 +733,7 @@ export async function createAppointment(
   }
 ) {
   const campusId = await resolveCampusId(user.id);
-  await prisma.appointment.create({
+  return prisma.appointment.create({
     data: {
       campusId,
       title: input.title,
@@ -735,6 +743,14 @@ export async function createAppointment(
       meetingWith: input.meetingWith,
       scheduledAt: new Date(input.scheduledAt),
       status: "SCHEDULED"
+    },
+    select: {
+      id: true,
+      title: true,
+      parentName: true,
+      parentPhone: true,
+      meetingWith: true,
+      scheduledAt: true
     }
   });
 }
