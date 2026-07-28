@@ -827,3 +827,16 @@ model LostFoundItem {
 
   @@index([campusId, status, foundDate])
 }
+
+model PreRegistration {
+  id                String   @id @default(cuid())
+  firstName         String
+  lastName          String
+  email             String
+  phone             String
+  gradeLevel        String
+  curriculum        String   @default("Cambridge")
+  status            String   @default("unverified")
+  verificationToken String   @unique @default(cuid())
+  createdAt         DateTime @default(now())
+}

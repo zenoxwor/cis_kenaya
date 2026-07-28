@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPublicSiteUrl, getSupabaseServiceClient } from "@/lib/supabase/client";
-
-type VerificationLookup = {
-  id: string;
-  first_name: string;
-};
+import { prisma } from "@/lib/db/client";
+import { getPublicSiteUrl } from "@/lib/supabase/client";
 
 function buildRedirectUrl(request: NextRequest, status: "success" | "invalid" | "error", name?: string) {
   const baseUrl = getPublicSiteUrl() ?? request.nextUrl.origin;
@@ -22,33 +18,38 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(buildRedirectUrl(request, "error"));
   }
 
-  const supabase = getSupabaseServiceClient();
-  if (!supabase) {
+  if (!process.env.DATABASE_URL?.trim()) {
     return NextResponse.redirect(buildRedirectUrl(request, "error"));
   }
 
-  const { data, error } = await supabase
-    .from("pre_registrations")
-    .select("id, first_name")
-    .eq("verification_token", token)
-    .eq("status", "unverified")
-    .single();
+  const registration = await prisma.preRegistration.findFirst({
+    where: {
+      verificationToken: token,
+      status: "unverified"
+    },
+    select: {
+      id: true,
+      firstName: true
+    }
+  });
 
-  if (error || !data) {
+  if (!registration) {
     return NextResponse.redirect(buildRedirectUrl(request, "invalid"));
   }
 
-  const registration = data as VerificationLookup;
+  const updateResult = await prisma.preRegistration.updateMany({
+    where: {
+      id: registration.id,
+      status: "unverified"
+    },
+    data: {
+      status: "verified"
+    }
+  });
 
-  const { error: updateError } = await supabase
-    .from("pre_registrations")
-    .update({ status: "verified" })
-    .eq("id", registration.id)
-    .eq("status", "unverified");
-
-  if (updateError) {
+  if (updateResult.count === 0) {
     return NextResponse.redirect(buildRedirectUrl(request, "error"));
   }
 
-  return NextResponse.redirect(buildRedirectUrl(request, "success", registration.first_name));
+  return NextResponse.redirect(buildRedirectUrl(request, "success", registration.firstName));
 }

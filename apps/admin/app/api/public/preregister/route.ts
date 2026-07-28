@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendPreRegistrationVerificationEmail } from "@/lib/email/resend";
-import { getPublicSiteUrl, getSupabaseServiceClient } from "@/lib/supabase/client";
-
-type PreRegistrationRow = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  grade_level: string;
-  curriculum: string;
-  status: "unverified" | "verified";
-  verification_token: string;
-  created_at: string;
-};
+import { prisma } from "@/lib/db/client";
+import { getPublicSiteUrl } from "@/lib/supabase/client";
 
 type CreatePreRegistrationPayload = {
   first_name: string;
@@ -56,11 +44,11 @@ function parseCreatePayload(payload: unknown): CreatePreRegistrationPayload | nu
   }
 
   const record = payload as Record<string, unknown>;
-  const first_name = getFieldValue(record, "first_name");
-  const last_name = getFieldValue(record, "last_name");
+  const first_name = getFieldValue(record, "first_name") || getFieldValue(record, "firstName");
+  const last_name = getFieldValue(record, "last_name") || getFieldValue(record, "lastName");
   const email = getFieldValue(record, "email");
   const phone = getFieldValue(record, "phone");
-  const grade_level = getFieldValue(record, "grade_level");
+  const grade_level = getFieldValue(record, "grade_level") || getFieldValue(record, "gradeLevel");
 
   if (!first_name || !last_name || !email || !phone || !grade_level) {
     return null;
@@ -94,33 +82,33 @@ function buildVerificationUrl(token: string) {
   return `${siteUrl}/api/verify-email?token=${encodeURIComponent(token)}`;
 }
 
-function createUnavailableResponse() {
+function createUnavailableResponse(message: string) {
   return jsonWithCors(
     {
       success: false,
-      message:
-        "Pre-registration service is temporarily unavailable. Missing configuration: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or NEXT_PUBLIC_SITE_URL."
+      message
     },
     { status: 503 }
   );
 }
 
 async function resendVerificationEmail(registrationId: string) {
-  const supabase = getSupabaseServiceClient();
   const verificationUrlBase = getPublicSiteUrl();
-  if (!supabase || !verificationUrlBase) {
-    return createUnavailableResponse();
+  if (!process.env.DATABASE_URL?.trim()) {
+    return createUnavailableResponse(
+      "Pre-registration service is temporarily unavailable. Missing configuration: DATABASE_URL."
+    );
+  }
+  if (!verificationUrlBase) {
+    return createUnavailableResponse(
+      "Pre-registration service is temporarily unavailable. Missing configuration: NEXT_PUBLIC_SITE_URL."
+    );
   }
 
-  const { data, error } = await supabase
-    .from("pre_registrations")
-    .select(
-      "id, first_name, last_name, email, phone, grade_level, curriculum, status, verification_token, created_at"
-    )
-    .eq("id", registrationId)
-    .single();
-
-  if (error || !data) {
+  const registration = await prisma.preRegistration.findUnique({
+    where: { id: registrationId }
+  });
+  if (!registration) {
     return jsonWithCors(
       {
         success: false,
@@ -129,8 +117,6 @@ async function resendVerificationEmail(registrationId: string) {
       { status: 404 }
     );
   }
-
-  const registration = data as PreRegistrationRow;
 
   if (registration.status !== "unverified") {
     return jsonWithCors(
@@ -143,11 +129,11 @@ async function resendVerificationEmail(registrationId: string) {
   }
 
   const verificationUrl = `${verificationUrlBase}/api/verify-email?token=${encodeURIComponent(
-    registration.verification_token
+    registration.verificationToken
   )}`;
   const emailResult = await sendPreRegistrationVerificationEmail(
     registration.email,
-    registration.first_name,
+    registration.firstName,
     verificationUrl
   );
 
@@ -172,32 +158,30 @@ export async function OPTIONS() {
 }
 
 export async function GET() {
-  const supabase = getSupabaseServiceClient();
-  if (!supabase) {
-    return createUnavailableResponse();
-  }
-
-  const { data, error } = await supabase
-    .from("pre_registrations")
-    .select(
-      "id, first_name, last_name, email, phone, grade_level, curriculum, status, verification_token, created_at"
-    )
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    return jsonWithCors(
-      {
-        success: false,
-        message: "Failed to load pre-registrations.",
-        error: error.message
-      },
-      { status: 500 }
+  if (!process.env.DATABASE_URL?.trim()) {
+    return createUnavailableResponse(
+      "Pre-registration service is temporarily unavailable. Missing configuration: DATABASE_URL."
     );
   }
 
+  const data = await prisma.preRegistration.findMany({
+    orderBy: { createdAt: "desc" }
+  });
+
   return jsonWithCors({
     success: true,
-    data: (data ?? []) as PreRegistrationRow[]
+    data: data.map(item => ({
+      id: item.id,
+      first_name: item.firstName,
+      last_name: item.lastName,
+      email: item.email,
+      phone: item.phone,
+      grade_level: item.gradeLevel,
+      curriculum: item.curriculum,
+      status: item.status,
+      verification_token: item.verificationToken,
+      created_at: item.createdAt
+    }))
   });
 }
 
@@ -231,48 +215,39 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = getSupabaseServiceClient();
-  if (!supabase || !getPublicSiteUrl()) {
-    return createUnavailableResponse();
+  if (!process.env.DATABASE_URL?.trim()) {
+    return createUnavailableResponse(
+      "Pre-registration service is temporarily unavailable. Missing configuration: DATABASE_URL."
+    );
   }
-
-  const { data, error } = await supabase
-    .from("pre_registrations")
-    .insert({
-      first_name: body.first_name,
-      last_name: body.last_name,
-      email: body.email,
-      phone: body.phone,
-      grade_level: body.grade_level,
-      status: "unverified",
-      curriculum: "Cambridge"
-    })
-    .select(
-      "id, first_name, last_name, email, phone, grade_level, curriculum, status, verification_token, created_at"
-    )
-    .single();
-
-  if (error || !data) {
-    return jsonWithCors(
-      {
-        success: false,
-        message: "Failed to submit registration.",
-        error: error?.message
-      },
-      { status: 500 }
+  if (!getPublicSiteUrl()) {
+    return createUnavailableResponse(
+      "Pre-registration service is temporarily unavailable. Missing configuration: NEXT_PUBLIC_SITE_URL."
     );
   }
 
-  const createdRegistration = data as PreRegistrationRow;
+  const createdRegistration = await prisma.preRegistration.create({
+    data: {
+      firstName: body.first_name,
+      lastName: body.last_name,
+      email: body.email,
+      phone: body.phone,
+      gradeLevel: body.grade_level,
+      curriculum: "Cambridge",
+      status: "unverified"
+    }
+  });
 
-  const emailVerificationUrl = buildVerificationUrl(createdRegistration.verification_token);
+  const emailVerificationUrl = buildVerificationUrl(createdRegistration.verificationToken);
   if (!emailVerificationUrl) {
-    return createUnavailableResponse();
+    return createUnavailableResponse(
+      "Pre-registration service is temporarily unavailable. Missing configuration: NEXT_PUBLIC_SITE_URL."
+    );
   }
 
   void sendPreRegistrationVerificationEmail(
     createdRegistration.email,
-    createdRegistration.first_name,
+    createdRegistration.firstName,
     emailVerificationUrl
   )
     .then(result => {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createClient, type RealtimeChannel } from "@supabase/supabase-js";
 
 type PreRegistration = {
   id: string;
@@ -58,26 +57,12 @@ export function PreRegistrationsManager() {
   }, []);
 
   useEffect(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return;
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const channel: RealtimeChannel = supabase
-      .channel("pre-registrations-stream")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "pre_registrations" },
-        () => {
-          void fetchRows();
-        }
-      )
-      .subscribe();
+    const intervalId = window.setInterval(() => {
+      void fetchRows();
+    }, 30000);
 
     return () => {
-      void supabase.removeChannel(channel);
+      window.clearInterval(intervalId);
     };
   }, []);
 

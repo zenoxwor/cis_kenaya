@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-let supabaseServiceClient: SupabaseClient | null | undefined;
+let supabaseStorageClient: SupabaseClient | null | undefined;
 let warnedMissingSupabaseConfig = false;
 let warnedMissingSiteUrl = false;
 
@@ -8,9 +8,9 @@ function normalizeUrl(url: string) {
   return url.endsWith("/") ? url.slice(0, -1) : url;
 }
 
-export function getSupabaseServiceClient() {
-  if (supabaseServiceClient !== undefined) {
-    return supabaseServiceClient;
+export function getSupabaseStorageClient() {
+  if (supabaseStorageClient !== undefined) {
+    return supabaseStorageClient;
   }
 
   const supabaseUrl = process.env.SUPABASE_URL?.trim();
@@ -19,22 +19,22 @@ export function getSupabaseServiceClient() {
   if (!supabaseUrl || !serviceRoleKey) {
     if (!warnedMissingSupabaseConfig) {
       console.warn(
-        "SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY is missing. Supabase-backed preregistration is unavailable."
+        "SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY is missing. Supabase Storage operations are unavailable."
       );
       warnedMissingSupabaseConfig = true;
     }
-    supabaseServiceClient = null;
-    return supabaseServiceClient;
+    supabaseStorageClient = null;
+    return supabaseStorageClient;
   }
 
-  supabaseServiceClient = createClient(supabaseUrl, serviceRoleKey, {
+  supabaseStorageClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
   });
 
-  return supabaseServiceClient;
+  return supabaseStorageClient;
 }
 
 export function getPublicSiteUrl() {
