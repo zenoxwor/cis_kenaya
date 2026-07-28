@@ -1,0 +1,449 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleCode {
+  SUPER_ADMIN
+  PRINCIPAL
+  RECEPTION
+  FINANCE
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  DOCUMENTS_PENDING
+  UNDER_REVIEW
+  INTERVIEW_SCHEDULED
+  APPROVED
+  REJECTED
+  WAITLISTED
+}
+
+enum DocumentStatus {
+  PENDING
+  UPLOADED
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum StudentStatus {
+  PROSPECT
+  APPLICANT
+  ENROLLED
+  INACTIVE
+  ALUMNI
+}
+
+enum EnrollmentStatus {
+  OFFERED
+  ENROLLED
+  WITHDRAWN
+  DEFERRED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  VOIDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SETTLED
+  FAILED
+  REVERSED
+  REFUNDED
+}
+
+model Campus {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  isMain    Boolean  @default(true)
+  timezone  String   @default("UTC")
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  students     Student[]
+  guardians    Guardian[]
+  applications Application[]
+  enrollments  Enrollment[]
+  visitorLogs  VisitorLog[]
+  feeInvoices  FeeInvoice[]
+  payments     Payment[]
+  auditLogs    AuditLog[]
+  studentDocuments StudentDocument[]
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  code        RoleCode @unique
+  name        String
+  description String?
+  isSystem    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users User[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  campusId     String
+  roleId       String
+  email        String
+  fullName     String
+  passwordHash String?
+  phoneNumber  String?
+  isActive     Boolean          @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  campus             Campus         @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  role               Role           @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  applicationsOwned  Application[]     @relation("ApplicationOwnedBy")
+  enrollmentsManaged Enrollment[]      @relation("EnrollmentManagedBy")
+  visitorLogs        VisitorLog[]
+  auditLogsAuthored  AuditLog[]        @relation("AuditLogActor")
+  campaignsSent      MessageCampaign[] @relation("CampaignSentBy")
+
+  @@unique([campusId, email])
+  @@index([roleId, isActive])
+}
+
+model Student {
+  id                String        @id @default(cuid())
+  campusId          String
+  studentCode       String
+  firstName         String
+  lastName          String
+  dateOfBirth       DateTime?
+  gender            String?
+  nationality       String?
+  primaryLanguage   String?
+  status            StudentStatus @default(PROSPECT)
+  enrolledAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  campus        Campus             @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  applications  Application[]
+  documents     StudentDocument[]
+  enrollments   Enrollment[]
+  invoices      FeeInvoice[]
+  studentLinks  StudentGuardian[]
+
+  @@unique([campusId, studentCode])
+  @@index([campusId, status])
+}
+
+model Guardian {
+  id              String   @id @default(cuid())
+  campusId        String
+  guardianCode    String
+  fullName        String
+  relationship    String?
+  email           String?
+  phoneNumber     String
+  occupation      String?
+  addressLine1    String?
+  addressLine2    String?
+  city            String?
+  country         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  campus       Campus             @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  students     StudentGuardian[]
+  applications Application[]
+  deliveries   MessageDelivery[]
+
+  @@unique([campusId, guardianCode])
+  @@index([campusId, phoneNumber])
+}
+
+model StudentGuardian {
+  studentId  String
+  guardianId String
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, guardianId])
+  @@index([guardianId, isPrimary])
+}
+
+model Application {
+  id               String            @id @default(cuid())
+  campusId         String
+  applicationNo    String
+  studentId        String
+  guardianId       String
+  ownerUserId      String
+  academicYear     String
+  gradeAppliedFor  String
+  status           ApplicationStatus @default(DRAFT)
+  currentStep      Int               @default(1)
+  submittedAt      DateTime?
+  approvedAt       DateTime?
+  rejectedReason   String?
+  payloadJson      Json?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  campus   Campus   @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+  owner    User     @relation("ApplicationOwnedBy", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  documents StudentDocument[]
+  enrollment Enrollment?
+
+  @@unique([campusId, applicationNo])
+  @@index([campusId, status, academicYear])
+  @@index([studentId])
+}
+
+model Enrollment {
+  id               String           @id @default(cuid())
+  campusId         String
+  applicationId    String           @unique
+  studentId        String
+  managedByUserId  String?
+  status           EnrollmentStatus @default(OFFERED)
+  enrolledGrade    String
+  section          String?
+  rollNumber       String?
+  startDate        DateTime?
+  endDate          DateTime?
+  notes            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  campus     Campus      @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  student    Student     @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  managedBy  User?       @relation("EnrollmentManagedBy", fields: [managedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([campusId, status])
+  @@index([studentId])
+}
+
+model StudentDocument {
+  id             String         @id @default(cuid())
+  campusId       String
+  studentId      String
+  applicationId  String?
+  documentType   String
+  status         DocumentStatus @default(PENDING)
+  fileName       String?
+  storagePath    String?
+  uploadedAt     DateTime?
+  verifiedAt     DateTime?
+  verifiedByUserId String?
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  campus      Campus       @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  student     Student      @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  application Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  @@index([campusId, status])
+  @@index([studentId, documentType])
+}
+
+model FeeInvoice {
+  id             String        @id @default(cuid())
+  campusId       String
+  studentId      String
+  invoiceNo      String
+  status         InvoiceStatus @default(DRAFT)
+  academicYear   String
+  amountMinor    Int
+  currencyCode   String        @default("USD")
+  issueDate      DateTime?
+  dueDate        DateTime?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  campus   Campus   @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  payments Payment[]
+
+  @@unique([campusId, invoiceNo])
+  @@index([campusId, status, dueDate])
+  @@index([studentId, academicYear])
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  campusId         String
+  invoiceId        String
+  paymentRef       String
+  status           PaymentStatus @default(PENDING)
+  amountMinor      Int
+  currencyCode     String        @default("USD")
+  method           String
+  receivedAt       DateTime?
+  settledAt        DateTime?
+  gatewayTxnRef    String?
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  campus   Campus     @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  invoice  FeeInvoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@unique([campusId, paymentRef])
+  @@index([campusId, status, receivedAt])
+  @@index([invoiceId])
+}
+
+model VisitorLog {
+  id             String   @id @default(cuid())
+  campusId       String
+  recordedByUserId String
+  fullName       String
+  phoneNumber    String?
+  purpose        String
+  hostDepartment String?
+  checkInAt      DateTime @default(now())
+  checkOutAt     DateTime?
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  campus     Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  recordedBy User   @relation(fields: [recordedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([campusId, checkInAt])
+  @@index([recordedByUserId, checkInAt])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  campusId     String
+  actorUserId  String?
+  action       String
+  resourceType String
+  resourceId   String
+  ipAddress    String?
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+
+  campus Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  actor  User?  @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([campusId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([resourceType, resourceId])
+}
+
+// ─── Communications ──────────────────────────────────────────────────────────
+
+enum MessageType {
+  SMS
+  EMAIL
+  BOTH
+}
+
+enum MessageCategory {
+  FEE
+  ATTENDANCE
+  DISCIPLINE
+  GENERAL
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  FAILED
+}
+
+enum DeliveryChannel {
+  SMS
+  EMAIL
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+}
+
+model MessageTemplate {
+  id          String          @id @default(cuid())
+  campusId    String
+  name        String
+  subject     String?
+  body        String
+  type        MessageType     @default(BOTH)
+  category    MessageCategory @default(GENERAL)
+  isSystem    Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  campaigns MessageCampaign[]
+
+  @@index([campusId, category])
+  @@index([campusId, type])
+}
+
+model MessageCampaign {
+  id             String         @id @default(cuid())
+  campusId       String
+  templateId     String
+  sentById       String
+  audienceFilter String         @default("all")
+  audienceMeta   Json?
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  status         CampaignStatus @default(DRAFT)
+  totalCount     Int            @default(0)
+  sentCount      Int            @default(0)
+  failedCount    Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  template   MessageTemplate   @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  sentBy     User              @relation("CampaignSentBy", fields: [sentById], references: [id], onDelete: Restrict)
+  deliveries MessageDelivery[]
+
+  @@index([campusId, status, sentAt])
+  @@index([sentById])
+}
+
+model MessageDelivery {
+  id           String          @id @default(cuid())
+  campaignId   String
+  guardianId   String
+  channel      DeliveryChannel
+  status       DeliveryStatus  @default(PENDING)
+  errorMessage String?
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  campaign MessageCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  guardian Guardian        @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+
+  @@index([campaignId, status])
+  @@index([guardianId, sentAt])
+}

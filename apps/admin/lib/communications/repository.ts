@@ -1,0 +1,223 @@
+import type {
+  MessageTemplate,
+  MessageCampaign,
+  MessageDelivery,
+  CommunicationsStats,
+  ComposePayload,
+  AudienceFilter
+} from "./types";
+import {
+  MOCK_TEMPLATES,
+  MOCK_CAMPAIGNS,
+  MOCK_DELIVERIES,
+  MOCK_STATS
+} from "./mock-data";
+
+// ─── In-memory stores (mock persistence) ─────────────────────────────────────
+
+const templates: MessageTemplate[] = [...MOCK_TEMPLATES];
+const campaigns: MessageCampaign[] = [...MOCK_CAMPAIGNS];
+const deliveries: MessageDelivery[] = [...MOCK_DELIVERIES];
+
+// ─── Templates ────────────────────────────────────────────────────────────────
+
+export function listTemplates(): MessageTemplate[] {
+  return templates;
+}
+
+export function getTemplate(id: string): MessageTemplate | undefined {
+  return templates.find(t => t.id === id);
+}
+
+export function createTemplate(
+  data: Pick<MessageTemplate, "name" | "subject" | "body" | "type" | "category">
+): MessageTemplate {
+  const tpl: MessageTemplate = {
+    id: `tpl_${Date.now()}`,
+    campusId: "campus_main",
+    name: data.name,
+    subject: data.subject,
+    body: data.body,
+    type: data.type,
+    category: data.category,
+    isSystem: false,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  templates.push(tpl);
+  return tpl;
+}
+
+export function updateTemplate(
+  id: string,
+  data: Partial<Pick<MessageTemplate, "name" | "subject" | "body" | "type" | "category">>
+): MessageTemplate | null {
+  const idx = templates.findIndex(t => t.id === id);
+  if (idx === -1) return null;
+  const existing = templates[idx]!;
+  if (existing.isSystem) return null; // system templates are read-only
+  const updated = { ...existing, ...data, updatedAt: new Date() };
+  templates[idx] = updated;
+  return updated;
+}
+
+export function deleteTemplate(id: string): boolean {
+  const idx = templates.findIndex(t => t.id === id && !t.isSystem);
+  if (idx === -1) return false;
+  templates.splice(idx, 1);
+  return true;
+}
+
+// ─── Campaigns ────────────────────────────────────────────────────────────────
+
+export function listCampaigns(): MessageCampaign[] {
+  return [...campaigns].sort(
+    (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0)
+  );
+}
+
+export function getCampaign(id: string): MessageCampaign | undefined {
+  return campaigns.find(c => c.id === id);
+}
+
+/**
+ * Mock send: resolves audience, creates a campaign + deliveries, marks sent.
+ * No real SMS/email provider is called — everything is logged to in-memory store.
+ */
+export function sendCampaign(
+  payload: ComposePayload,
+  sentById: string,
+  sentByName: string
+): MessageCampaign {
+  const template = getTemplate(payload.templateId);
+  if (!template) throw new Error("Template not found");
+
+  const audience = resolveAudience(payload.audienceFilter);
+  const campaign: MessageCampaign = {
+    id: `camp_${Date.now()}`,
+    campusId: "campus_main",
+    templateId: payload.templateId,
+    sentById,
+    audienceFilter: payload.audienceFilter,
+    audienceMeta: payload.audienceMeta ?? null,
+    scheduledAt: payload.scheduledAt ? new Date(payload.scheduledAt) : null,
+    sentAt: payload.scheduledAt ? null : new Date(),
+    status: payload.scheduledAt ? "SCHEDULED" : "SENT",
+    totalCount: audience.length,
+    sentCount: payload.scheduledAt ? 0 : audience.length,
+    failedCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    template: {
+      id: template.id,
+      name: template.name,
+      subject: template.subject,
+      type: template.type,
+      category: template.category
+    },
+    sentByName
+  };
+
+  campaigns.unshift(campaign);
+
+  if (!payload.scheduledAt) {
+    for (const guardian of audience) {
+      const channels: Array<"SMS" | "EMAIL"> =
+        template.type === "BOTH"
+          ? ["SMS", "EMAIL"]
+          : template.type === "SMS"
+          ? ["SMS"]
+          : ["EMAIL"];
+
+      for (const channel of channels) {
+        deliveries.push({
+          id: `del_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          campaignId: campaign.id,
+          guardianId: guardian.id,
+          channel,
+          status: "SENT",
+          errorMessage: null,
+          sentAt: new Date(),
+          deliveredAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          guardianName: guardian.fullName,
+          guardianPhone: guardian.phoneNumber,
+          guardianEmail: guardian.email ?? undefined
+        });
+      }
+    }
+  }
+
+  return campaign;
+}
+
+// ─── Deliveries ───────────────────────────────────────────────────────────────
+
+export function listDeliveries(campaignId?: string): MessageDelivery[] {
+  const list = campaignId
+    ? deliveries.filter(d => d.campaignId === campaignId)
+    : deliveries;
+  return [...list].sort(
+    (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0)
+  );
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+
+export function getCommunicationsStats(): CommunicationsStats {
+  const all = deliveries;
+  const totalSent = all.filter(d => d.status !== "PENDING").length;
+  const totalDelivered = all.filter(d => d.status === "DELIVERED").length;
+  const totalFailed = all.filter(d => d.status === "FAILED").length;
+  const totalPending = all.filter(d => d.status === "PENDING").length;
+  const deliveryRate =
+    totalSent > 0 ? Math.round((totalDelivered / totalSent) * 100) : 0;
+
+  return {
+    totalSent,
+    totalDelivered,
+    totalFailed,
+    totalPending,
+    deliveryRate,
+    recentCampaigns: listCampaigns().slice(0, 5)
+  };
+}
+
+// ─── Audience Resolution (mock) ───────────────────────────────────────────────
+
+type MockGuardian = {
+  id: string;
+  fullName: string;
+  phoneNumber: string;
+  email: string | null;
+};
+
+const MOCK_GUARDIANS: MockGuardian[] = [
+  { id: "g_001", fullName: "David Mwangi", phoneNumber: "+254 712 345 678", email: "d.mwangi@gmail.com" },
+  { id: "g_002", fullName: "Fatuma Hassan", phoneNumber: "+254 722 987 654", email: "f.hassan@gmail.com" },
+  { id: "g_003", fullName: "Samuel Kariuki", phoneNumber: "+254 722 111 222", email: "s.kariuki@outlook.com" },
+  { id: "g_004", fullName: "Mary Njoroge", phoneNumber: "+254 733 444 555", email: "mary.njoroge@yahoo.com" },
+  { id: "g_005", fullName: "Peter Otieno", phoneNumber: "+254 701 223 344", email: "p.otieno@gmail.com" },
+  { id: "g_006", fullName: "Grace Akinyi", phoneNumber: "+254 714 556 677", email: null },
+  { id: "g_007", fullName: "John Kamau", phoneNumber: "+254 725 998 001", email: "j.kamau@gmail.com" }
+];
+
+function resolveAudience(filter: AudienceFilter): MockGuardian[] {
+  switch (filter) {
+    case "all":
+      return MOCK_GUARDIANS;
+    case "fee_overdue":
+      return MOCK_GUARDIANS.slice(0, 4);
+    case "attendance_concern":
+      return MOCK_GUARDIANS.slice(3, 7);
+    case "class":
+    case "individual":
+      return MOCK_GUARDIANS.slice(0, 3);
+    default:
+      return MOCK_GUARDIANS;
+  }
+}
+
+// Re-export mock stats constant
+export { MOCK_STATS };
