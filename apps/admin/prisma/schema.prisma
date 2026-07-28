@@ -115,6 +115,28 @@ enum DeliveryStatus {
   FAILED
 }
 
+enum StaffCheckInStatus {
+  PRESENT
+  DEPARTED
+}
+
+enum IncidentStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum LostFoundStatus {
+  UNCLAIMED
+  CLAIMED
+}
+
 model Campus {
   id        String   @id @default(cuid())
   code      String   @unique
@@ -138,6 +160,13 @@ model Campus {
   subjects     Subject[]
   schoolClasses SchoolClass[]
   studentDocuments StudentDocument[]
+  staffCheckIns StaffCheckIn[]
+  incidentReports IncidentReport[]
+  inquiryLogs InquiryLog[]
+  gatePasses GatePass[]
+  earlyPickups EarlyPickup[]
+  appointments Appointment[]
+  lostFoundItems LostFoundItem[]
 }
 
 model Role {
@@ -164,6 +193,7 @@ model User {
   passwordUpdatedAt DateTime?
   tempPasswordIssuedAt DateTime?
   phoneNumber  String?
+  nationalId   String?
   isActive     Boolean          @default(true)
   lastLoginAt  DateTime?
   createdAt    DateTime @default(now())
@@ -182,6 +212,8 @@ model User {
   attendanceMarked   AttendanceRecord[] @relation("AttendanceMarkedBy")
   attendanceCorrectionRequests AttendanceCorrection[] @relation("AttendanceCorrectionRequestedBy")
   attendanceCorrectionApprovals AttendanceCorrection[] @relation("AttendanceCorrectionApprovedBy")
+  staffCheckIns      StaffCheckIn[]
+  earlyPickupsVerified EarlyPickup[] @relation("EarlyPickupVerifiedBy")
 
   @@unique([campusId, email])
   @@index([roleId, isActive])
@@ -197,6 +229,7 @@ model Student {
   gender            String?
   nationality       String?
   primaryLanguage   String?
+  nationalId        String?
   status            StudentStatus @default(PROSPECT)
   enrolledAt        DateTime?
   isActive          Boolean       @default(true)
@@ -214,6 +247,7 @@ model Student {
   reportCards   ReportCard[]
   attendanceRecords AttendanceRecord[]
   schoolClass   SchoolClass? @relation(fields: [schoolClassId], references: [id])
+  earlyPickups  EarlyPickup[]
 
   @@unique([campusId, studentCode])
   @@index([campusId, status])
@@ -227,6 +261,7 @@ model Guardian {
   relationship    String?
   email           String?
   phoneNumber     String
+  nationalId      String?
   occupation      String?
   addressLine1    String?
   addressLine2    String?
@@ -239,6 +274,7 @@ model Guardian {
   students     StudentGuardian[]
   applications Application[]
   deliveries   MessageDelivery[]
+  earlyPickups EarlyPickup[]
 
   @@unique([campusId, guardianCode])
   @@index([campusId, phoneNumber])
@@ -657,4 +693,137 @@ model AttendanceCorrection {
 
   @@index([recordId])
   @@index([status])
+}
+
+model StaffCheckIn {
+  id           String             @id @default(cuid())
+  campusId     String
+  userId       String
+  date         DateTime
+  checkInTime  DateTime
+  checkOutTime DateTime?
+  status       StaffCheckInStatus @default(PRESENT)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  campus Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, date])
+  @@index([campusId, date, status])
+}
+
+model IncidentReport {
+  id          String         @id @default(cuid())
+  campusId    String
+  type        String
+  description String
+  reportedBy  String
+  department  String
+  status      IncidentStatus @default(PENDING)
+  routedAt    DateTime?
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  campus Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
+
+  @@index([campusId, status, department])
+  @@index([createdAt])
+}
+
+model InquiryLog {
+  id           String   @id @default(cuid())
+  campusId     String
+  callerName   String
+  callerPhone  String?
+  subject      String
+  notes        String?
+  followUpDate DateTime?
+  status       String   @default("PENDING")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  campus Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
+
+  @@index([campusId, status, followUpDate])
+  @@index([createdAt])
+}
+
+model GatePass {
+  id            String   @id @default(cuid())
+  campusId      String
+  visitorName   String
+  visitorId     String
+  purpose       String
+  personToMeet  String
+  department    String
+  checkInTime   DateTime @default(now())
+  checkOutTime  DateTime?
+  passNumber    String
+  status        String   @default("ON_CAMPUS")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  campus Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
+
+  @@unique([campusId, passNumber])
+  @@index([campusId, status, checkInTime])
+}
+
+model EarlyPickup {
+  id                String   @id @default(cuid())
+  campusId          String
+  studentId         String
+  guardianId        String
+  verifiedById      String
+  checkOutTime      DateTime @default(now())
+  releasePassNumber String
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  campus     Campus   @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  guardian   Guardian @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+  verifiedBy User     @relation("EarlyPickupVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict)
+
+  @@unique([campusId, releasePassNumber])
+  @@index([campusId, checkOutTime])
+  @@index([studentId, checkOutTime])
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  campusId    String
+  title       String
+  description String?
+  parentName  String
+  parentPhone String?
+  meetingWith String
+  scheduledAt DateTime
+  status      AppointmentStatus @default(SCHEDULED)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  campus Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
+
+  @@index([campusId, scheduledAt, status])
+}
+
+model LostFoundItem {
+  id          String          @id @default(cuid())
+  campusId    String
+  description String
+  foundBy     String
+  foundDate   DateTime
+  location    String
+  status      LostFoundStatus @default(UNCLAIMED)
+  claimedBy   String?
+  claimedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  campus Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
+
+  @@index([campusId, status, foundDate])
 }
