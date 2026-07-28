@@ -168,7 +168,6 @@ export function sendCampaign(
   return campaign;
 }
 
-<<<<<<< HEAD
 export function logDocumentReminderCampaign(input: DocumentReminderLogInput): MessageCampaign | null {
   if (input.reminders.length === 0) {
     return null;
