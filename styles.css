@@ -294,3 +294,19 @@ body{overflow-x:hidden}
   .main-nav { display: flex; }
   .mobile-toggle { display: none; }
 }
+
+/* Pre-registration card */
+.prereg-card { background:#fff; border-radius:16px; padding:2rem; box-shadow:0 8px 40px rgba(0,0,0,.12); width:100%; }
+.prereg-header h2 { font-size:1.5rem; font-weight:700; color:#1a2744; margin-bottom:.25rem; }
+.prereg-header p { font-size:.85rem; color:#666; margin-bottom:1.25rem; }
+.prereg-card input, .prereg-card select { width:100%; padding:.65rem .9rem; border:1.5px solid #ddd; border-radius:8px; font-size:.9rem; margin-bottom:.75rem; box-sizing:border-box; font-family:inherit; }
+.prereg-card input:focus, .prereg-card select:focus { outline:none; border-color:#c9a84c; }
+.prereg-card .form-row { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+.doc-upload { background:#f9f9f9; border-radius:8px; padding:1rem; margin-bottom:.75rem; }
+.doc-title { font-size:.8rem; font-weight:600; color:#444; margin-bottom:.5rem; }
+.file-label { display:block; font-size:.8rem; color:#555; margin-top:.5rem; margin-bottom:.2rem; }
+.prereg-card input[type=file] { padding:.3rem; font-size:.8rem; }
+.submit-btn { width:100%; padding:.8rem; background:#c9a84c; color:#fff; border:none; border-radius:8px; font-size:1rem; font-weight:700; cursor:pointer; transition:background .2s; }
+.submit-btn:hover { background:#b8943d; }
+.submit-btn:disabled { opacity:.6; cursor:not-allowed; }
+.form-note { font-size:.75rem; color:#888; text-align:center; margin-top:.75rem; }
