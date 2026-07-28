@@ -16,6 +16,7 @@ import { toDateOnly } from "@/lib/attendance";
 import { ATTENDANCE_STATUSES } from "@/lib/attendance";
 import { AppError, routeErrorResponse } from "@/lib/observability/errors";
 import { logAuditEvent } from "@/lib/observability/audit-stream";
+import { getDisplayStudentCode } from "@/lib/students/get-display-student-code";
 
 // â”€â”€â”€ GET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -47,6 +48,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         studentCode: true,
+        graduationYear: true,
         firstName: true,
         lastName: true,
         attendanceRecords: {
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     const result = students.map((s: (typeof students)[number]) => ({
       id: s.id,
-      studentCode: s.studentCode,
+      studentCode: getDisplayStudentCode(s.studentCode, s.graduationYear),
       firstName: s.firstName,
       lastName: s.lastName,
       record: s.attendanceRecords[0] ?? null

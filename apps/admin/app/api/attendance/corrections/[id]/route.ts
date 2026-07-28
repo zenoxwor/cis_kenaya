@@ -10,7 +10,6 @@ import { z } from "zod";
 import { getSession } from "@/lib/session";
 import { canApproveCorrections } from "@/lib/rbac";
 import { prisma as db } from "@/lib/db/client";
-import type { Prisma } from "@prisma/client";
 import { AppError, routeErrorResponse } from "@/lib/observability/errors";
 import { logAuditEvent } from "@/lib/observability/audit-stream";
 
@@ -53,7 +52,7 @@ export async function PATCH(
 
     const newStatus = parsed.data.action === "approve" ? "APPROVED" : "REJECTED";
 
-    await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await db.$transaction(async tx => {
       await tx.attendanceCorrection.update({
         where: { id },
         data: {

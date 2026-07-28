@@ -7,6 +7,7 @@ import type {
 } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import type { SessionUser } from "@/lib/auth/types";
+import { getDisplayStudentCode } from "@/lib/students/get-display-student-code";
 import {
   REQUIRED_RECEPTION_DOCUMENT_TYPES,
   type AppointmentItem,
@@ -149,7 +150,7 @@ export async function getReceptionDashboard(user: SessionUser): Promise<Receptio
       );
       return {
         id: student.id,
-        studentCode: student.studentCode,
+        studentCode: getDisplayStudentCode(student.studentCode, student.graduationYear),
         fullName: studentFullName(student),
         nationalId: student.nationalId,
         phoneNumber: student.studentLinks[0]?.guardian.phoneNumber ?? null,
@@ -247,7 +248,17 @@ export async function searchReceptionDirectory(user: SessionUser, query: string)
       orderBy: [{ updatedAt: "desc" }],
       include: {
         students: {
-          include: { student: { select: { id: true, firstName: true, lastName: true, studentCode: true } } }
+          include: {
+            student: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                studentCode: true,
+                graduationYear: true
+              }
+            }
+          }
         }
       }
     }),
@@ -283,7 +294,7 @@ export async function searchReceptionDirectory(user: SessionUser, query: string)
       );
       return {
         id: student.id,
-        studentCode: student.studentCode,
+        studentCode: getDisplayStudentCode(student.studentCode, student.graduationYear),
         fullName: studentFullName(student),
         nationalId: student.nationalId,
         phoneNumber: student.studentLinks[0]?.guardian.phoneNumber ?? null,
@@ -306,7 +317,7 @@ export async function searchReceptionDirectory(user: SessionUser, query: string)
       linkedStudents: guardian.students.map(link => ({
         id: link.student.id,
         fullName: studentFullName(link.student),
-        studentCode: link.student.studentCode
+        studentCode: getDisplayStudentCode(link.student.studentCode, link.student.graduationYear)
       }))
     })),
     staff: staff.map(userRow => ({
@@ -620,7 +631,7 @@ export async function searchStudentsForEarlyPickup(
   return students.map(student => ({
     id: student.id,
     fullName: studentFullName(student),
-    studentCode: student.studentCode,
+    studentCode: getDisplayStudentCode(student.studentCode, student.graduationYear),
     authorizedGuardians: student.studentLinks.map(link => ({
       id: link.guardian.id,
       fullName: link.guardian.fullName,
@@ -660,7 +671,9 @@ export async function listEarlyPickups(user: SessionUser): Promise<EarlyPickupLo
   const pickups = await prisma.earlyPickup.findMany({
     where: { campusId },
     include: {
-      student: { select: { firstName: true, lastName: true, studentCode: true } },
+      student: {
+        select: { firstName: true, lastName: true, studentCode: true, graduationYear: true }
+      },
       guardian: { select: { fullName: true, nationalId: true } },
       verifiedBy: { select: { fullName: true } }
     },
@@ -671,7 +684,7 @@ export async function listEarlyPickups(user: SessionUser): Promise<EarlyPickupLo
   return pickups.map(item => ({
     id: item.id,
     studentName: studentFullName(item.student),
-    studentCode: item.student.studentCode,
+    studentCode: getDisplayStudentCode(item.student.studentCode, item.student.graduationYear),
     guardianName: item.guardian.fullName,
     guardianNationalId: item.guardian.nationalId,
     verifiedByName: item.verifiedBy.fullName,
@@ -808,7 +821,7 @@ export async function listStudentDocumentOverview(user: SessionUser): Promise<St
     return {
       studentId: student.id,
       studentName: studentFullName(student),
-      studentCode: student.studentCode,
+      studentCode: getDisplayStudentCode(student.studentCode, student.graduationYear),
       uploadedDocuments,
       missingDocuments: REQUIRED_RECEPTION_DOCUMENT_TYPES.filter(
         docType => !uploadedDocuments.includes(docType)
@@ -822,7 +835,9 @@ export async function listStudentDocuments(user: SessionUser): Promise<StudentDo
   const rows = await prisma.studentDocument.findMany({
     where: { campusId },
     include: {
-      student: { select: { id: true, firstName: true, lastName: true, studentCode: true } }
+      student: {
+        select: { id: true, firstName: true, lastName: true, studentCode: true, graduationYear: true }
+      }
     },
     orderBy: [{ uploadedAt: "desc" }, { createdAt: "desc" }],
     take: 200
@@ -832,7 +847,7 @@ export async function listStudentDocuments(user: SessionUser): Promise<StudentDo
     id: item.id,
     studentId: item.studentId,
     studentName: studentFullName(item.student),
-    studentCode: item.student.studentCode,
+    studentCode: getDisplayStudentCode(item.student.studentCode, item.student.graduationYear),
     documentType: item.documentType,
     fileName: item.fileName,
     status: item.status,

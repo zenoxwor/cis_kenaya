@@ -19,6 +19,7 @@ interface ClassOption {
 
 interface StudentSummary {
   studentId: string;
+  rawStudentCode?: string;
   studentCode: string;
   firstName: string;
   lastName: string;
@@ -237,12 +238,12 @@ export default function AttendanceReports({ classes, financeBadgesByStudentCode 
                       </td>
                       <td style={tdStyle}>
                         <div className="flex flex-wrap gap-1">
-                          {(financeBadgesByStudentCode[s.studentCode] ?? []).length === 0 ? (
+                          {(financeBadgesByStudentCode[s.rawStudentCode ?? s.studentCode] ?? []).length === 0 ? (
                             <span style={{ color: BRAND.textMuted, fontSize: "0.75rem" }}>
                               Clear
                             </span>
                           ) : (
-                            (financeBadgesByStudentCode[s.studentCode] ?? []).map(badge => (
+                            (financeBadgesByStudentCode[s.rawStudentCode ?? s.studentCode] ?? []).map(badge => (
                               <span
                                 key={`${s.studentId}-${badge.label}`}
                                 className={`inline-block rounded-full border px-2 py-0.5 text-[11px] font-semibold ${toneClasses[badge.tone]}`}

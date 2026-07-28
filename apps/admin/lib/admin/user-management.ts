@@ -1,5 +1,5 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { RoleCode, type User, type Role, type PrismaClient } from "@prisma/client";
+import { RoleCode, type User, type Role } from "@prisma/client";
 import { ROLE, type AppRole } from "@/lib/rbac/roles";
 import type { ModulePermissionKey } from "@/lib/admin/module-permissions";
 import {
@@ -107,7 +107,16 @@ export function generateTemporaryPassword() {
   return password;
 }
 
-export async function ensureSystemRoles(prisma: PrismaClient) {
+type AdminPrismaClient = {
+  role: {
+    upsert: (...args: any[]) => Promise<any>;
+  };
+  campus: {
+    upsert: (...args: any[]) => Promise<{ id: string }>;
+  };
+};
+
+export async function ensureSystemRoles(prisma: AdminPrismaClient) {
   await Promise.all(
     (Object.keys(ROLE_METADATA) as RoleCode[]).map(roleCode =>
       prisma.role.upsert({
@@ -128,7 +137,7 @@ export async function ensureSystemRoles(prisma: PrismaClient) {
   );
 }
 
-export async function resolveDefaultCampusId(prisma: PrismaClient) {
+export async function resolveDefaultCampusId(prisma: AdminPrismaClient) {
   const mainCampus = await prisma.campus.upsert({
     where: { code: "MAIN" },
     update: {

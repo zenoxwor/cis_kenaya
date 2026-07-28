@@ -16,6 +16,7 @@ import { db } from "@/lib/db";
 import { ATTENDANCE_STATUSES } from "@/lib/attendance";
 import { AppError, routeErrorResponse } from "@/lib/observability/errors";
 import { logAuditEvent } from "@/lib/observability/audit-stream";
+import { getDisplayStudentCode } from "@/lib/students/get-display-student-code";
 
 // â”€â”€â”€ GET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -41,7 +42,9 @@ export async function GET(req: NextRequest) {
       include: {
         record: {
           include: {
-            student: { select: { studentCode: true, firstName: true, lastName: true } },
+            student: {
+              select: { studentCode: true, graduationYear: true, firstName: true, lastName: true }
+            },
             class: { select: { name: true } }
           }
         },
@@ -50,7 +53,21 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    return NextResponse.json({ corrections });
+    const normalizedCorrections = corrections.map(correction => ({
+      ...correction,
+      record: {
+        ...correction.record,
+        student: {
+          ...correction.record.student,
+          studentCode: getDisplayStudentCode(
+            correction.record.student.studentCode,
+            correction.record.student.graduationYear
+          )
+        }
+      }
+    }));
+
+    return NextResponse.json({ corrections: normalizedCorrections });
   } catch (error) {
     return routeErrorResponse(error);
   }
