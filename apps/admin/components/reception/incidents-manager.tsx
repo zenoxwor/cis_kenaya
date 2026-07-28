@@ -1,267 +1,196 @@
 "use client";
 
 import { useState } from "react";
-import type { IncidentBoardItem, InquiryBoardItem } from "@/lib/reception/types";
+import type { ReceptionIncidentLogItem } from "@/lib/reception/portal-repository";
 
 type Props = {
-  initialIncidents: IncidentBoardItem[];
-  initialInquiries: InquiryBoardItem[];
+  initialRows: ReceptionIncidentLogItem[];
 };
 
-type ApiPayload = {
+type ApiResponse = {
   success: boolean;
   data?: {
-    incidents: IncidentBoardItem[];
-    inquiries: InquiryBoardItem[];
+    rows: ReceptionIncidentLogItem[];
   };
+  error?: string;
 };
 
-const DEPARTMENTS = ["Principal/Counselor", "Finance", "Operations", "Admin"] as const;
+const INCIDENT_TYPES = ["Safety", "Complaint", "Maintenance", "Medical", "Other"] as const;
+const PRIORITY_LEVELS = ["Low", "Medium", "Urgent"] as const;
 
-export function IncidentsManager({ initialIncidents, initialInquiries }: Props) {
-  const [incidents, setIncidents] = useState(initialIncidents);
-  const [inquiries, setInquiries] = useState(initialInquiries);
-  const [incidentForm, setIncidentForm] = useState({
-    type: "Complaint",
+export function IncidentsManager({ initialRows }: Props) {
+  const [rows, setRows] = useState(initialRows);
+  const [submitting, setSubmitting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    incidentType: "Complaint" as (typeof INCIDENT_TYPES)[number],
+    personName: "",
     description: "",
-    reportedBy: "",
-    department: "Admin"
-  });
-  const [inquiryForm, setInquiryForm] = useState({
-    callerName: "",
-    callerPhone: "",
-    subject: "",
-    notes: "",
-    followUpDate: ""
+    priority: "Medium" as (typeof PRIORITY_LEVELS)[number]
   });
 
   async function refresh() {
-    const response = await fetch("/api/reception?section=incidents");
-    const payload = (await response.json()) as ApiPayload;
+    const response = await fetch("/api/reception/incidents");
+    const payload = (await response.json()) as ApiResponse;
     if (payload.success && payload.data) {
-      setIncidents(payload.data.incidents);
-      setInquiries(payload.data.inquiries);
+      setRows(payload.data.rows);
     }
   }
 
-  async function saveIncident() {
-    await fetch("/api/reception", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "incident.create", ...incidentForm })
-    });
-    setIncidentForm({ type: "Complaint", description: "", reportedBy: "", department: "Admin" });
-    await refresh();
-  }
+  async function submit() {
+    if (form.description.trim().length < 4) {
+      return;
+    }
 
-  async function saveInquiry() {
-    await fetch("/api/reception", {
+    setSubmitting(true);
+    const response = await fetch("/api/reception/incidents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "inquiry.create", ...inquiryForm })
+      body: JSON.stringify({
+        incidentType: form.incidentType,
+        personName: form.personName.trim() || undefined,
+        description: form.description.trim(),
+        priority: form.priority
+      })
     });
-    setInquiryForm({
-      callerName: "",
-      callerPhone: "",
-      subject: "",
-      notes: "",
-      followUpDate: ""
-    });
-    await refresh();
-  }
-
-  async function setIncidentStatus(id: string, status: "PENDING" | "IN_PROGRESS" | "RESOLVED") {
-    await fetch("/api/reception", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "incident.status", id, status })
-    });
-    await refresh();
-  }
-
-  async function setInquiryStatus(id: string, status: string) {
-    await fetch("/api/reception", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "inquiry.status", id, status })
-    });
-    await refresh();
+    const payload = (await response.json()) as ApiResponse;
+    if (response.ok && payload.success) {
+      setForm({
+        incidentType: "Complaint",
+        personName: "",
+        description: "",
+        priority: "Medium"
+      });
+      setToastMessage("Incident logged and routed to Principal");
+      setTimeout(() => setToastMessage(null), 3200);
+      await refresh();
+    }
+    setSubmitting(false);
   }
 
   return (
     <section className="space-y-4">
       <header className="admin-content-card">
-        <h1 className="text-2xl font-bold text-slate-900">Incidents, Complaints & Inquiry Routing</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Incident &amp; Complaint Logging</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Route front-desk complaints to Principal/Counselor, Finance, Operations, or Admin in one click.
+          Log front-desk incidents and route them directly to the Principal.
         </p>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <article className="admin-content-card space-y-2">
-          <h2 className="text-lg font-semibold text-slate-900">Log incident / complaint</h2>
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            placeholder="Type (Complaint, Behavior, Fees, Maintenance...)"
-            value={incidentForm.type}
-            onChange={event => setIncidentForm(prev => ({ ...prev, type: event.target.value }))}
-          />
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            placeholder="Reported by (Parent, Student, Staff name)"
-            value={incidentForm.reportedBy}
-            onChange={event => setIncidentForm(prev => ({ ...prev, reportedBy: event.target.value }))}
-          />
+      {toastMessage && (
+        <div className="fixed right-4 top-4 z-50 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 shadow-lg">
+          {toastMessage}
+        </div>
+      )}
+
+      <article className="admin-content-card space-y-3">
+        <h2 className="text-lg font-semibold text-slate-900">New incident</h2>
+
+        <label className="block text-sm text-slate-700">
+          Incident Type
           <select
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            value={incidentForm.department}
-            onChange={event => setIncidentForm(prev => ({ ...prev, department: event.target.value }))}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            value={form.incidentType}
+            onChange={event =>
+              setForm(prev => ({
+                ...prev,
+                incidentType: event.target.value as (typeof INCIDENT_TYPES)[number]
+              }))
+            }
           >
-            {DEPARTMENTS.map(department => (
-              <option key={department} value={department}>
-                {department}
+            {INCIDENT_TYPES.map(option => (
+              <option key={option} value={option}>
+                {option}
               </option>
             ))}
           </select>
+        </label>
+
+        <label className="block text-sm text-slate-700">
+          Student/Person Name (optional)
+          <input
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            value={form.personName}
+            onChange={event => setForm(prev => ({ ...prev, personName: event.target.value }))}
+            type="text"
+          />
+        </label>
+
+        <label className="block text-sm text-slate-700">
+          Description
           <textarea
-            className="min-h-24 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            placeholder="Description..."
-            value={incidentForm.description}
-            onChange={event => setIncidentForm(prev => ({ ...prev, description: event.target.value }))}
+            className="mt-1 min-h-24 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            value={form.description}
+            onChange={event => setForm(prev => ({ ...prev, description: event.target.value }))}
           />
-          <button
-            type="button"
-            className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-            onClick={() => {
-              void saveIncident();
-            }}
+        </label>
+
+        <label className="block text-sm text-slate-700">
+          Priority
+          <select
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            value={form.priority}
+            onChange={event =>
+              setForm(prev => ({
+                ...prev,
+                priority: event.target.value as (typeof PRIORITY_LEVELS)[number]
+              }))
+            }
           >
-            Save & route
-          </button>
-        </article>
+            {PRIORITY_LEVELS.map(option => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
 
-        <article className="admin-content-card space-y-2">
-          <h2 className="text-lg font-semibold text-slate-900">Phone call / inquiry log</h2>
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            placeholder="Caller name"
-            value={inquiryForm.callerName}
-            onChange={event => setInquiryForm(prev => ({ ...prev, callerName: event.target.value }))}
-          />
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            placeholder="Caller phone"
-            value={inquiryForm.callerPhone}
-            onChange={event => setInquiryForm(prev => ({ ...prev, callerPhone: event.target.value }))}
-          />
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            placeholder="Subject"
-            value={inquiryForm.subject}
-            onChange={event => setInquiryForm(prev => ({ ...prev, subject: event.target.value }))}
-          />
-          <input
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            type="date"
-            value={inquiryForm.followUpDate}
-            onChange={event => setInquiryForm(prev => ({ ...prev, followUpDate: event.target.value }))}
-          />
-          <textarea
-            className="min-h-24 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            placeholder="Notes..."
-            value={inquiryForm.notes}
-            onChange={event => setInquiryForm(prev => ({ ...prev, notes: event.target.value }))}
-          />
-          <button
-            type="button"
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-            onClick={() => {
-              void saveInquiry();
-            }}
-          >
-            Save inquiry
-          </button>
-        </article>
-      </div>
+        <button
+          type="button"
+          className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+          disabled={submitting}
+          onClick={() => {
+            void submit();
+          }}
+        >
+          {submitting ? "Saving..." : "Log incident"}
+        </button>
+      </article>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <article className="admin-content-card overflow-x-auto">
-          <h2 className="mb-3 text-lg font-semibold text-slate-900">Incident status board</h2>
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-700">
-              <tr>
-                <th className="px-3 py-2">Type</th>
-                <th className="px-3 py-2">Reported by</th>
-                <th className="px-3 py-2">Department</th>
-                <th className="px-3 py-2">Status</th>
+      <article className="admin-content-card overflow-x-auto">
+        <h2 className="mb-3 text-lg font-semibold text-slate-900">Today&apos;s incidents logged by you</h2>
+        <table className="min-w-full text-left text-sm">
+          <thead className="bg-slate-50 text-slate-700">
+            <tr>
+              <th className="px-3 py-2">Time</th>
+              <th className="px-3 py-2">Type</th>
+              <th className="px-3 py-2">Student/Person</th>
+              <th className="px-3 py-2">Priority</th>
+              <th className="px-3 py-2">Description</th>
+              <th className="px-3 py-2">Department</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(item => (
+              <tr key={item.id} className="border-t border-slate-100">
+                <td className="px-3 py-2">{new Date(item.createdAt).toLocaleTimeString("en-KE")}</td>
+                <td className="px-3 py-2">{item.type}</td>
+                <td className="px-3 py-2">{item.personName ?? "—"}</td>
+                <td className="px-3 py-2">{item.priority}</td>
+                <td className="px-3 py-2">{item.description}</td>
+                <td className="px-3 py-2">{item.targetDepartment}</td>
               </tr>
-            </thead>
-            <tbody>
-              {incidents.map(item => (
-                <tr key={item.id} className="border-t border-slate-100">
-                  <td className="px-3 py-2">{item.type}</td>
-                  <td className="px-3 py-2">{item.reportedBy}</td>
-                  <td className="px-3 py-2">{item.department}</td>
-                  <td className="px-3 py-2">
-                    <select
-                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
-                      value={item.status}
-                      onChange={event => {
-                        void setIncidentStatus(
-                          item.id,
-                          event.target.value as "PENDING" | "IN_PROGRESS" | "RESOLVED"
-                        );
-                      }}
-                    >
-                      <option value="PENDING">PENDING</option>
-                      <option value="IN_PROGRESS">IN PROGRESS</option>
-                      <option value="RESOLVED">RESOLVED</option>
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </article>
-
-        <article className="admin-content-card overflow-x-auto">
-          <h2 className="mb-3 text-lg font-semibold text-slate-900">Inquiry follow-up board</h2>
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-700">
+            ))}
+            {rows.length === 0 && (
               <tr>
-                <th className="px-3 py-2">Caller</th>
-                <th className="px-3 py-2">Subject</th>
-                <th className="px-3 py-2">Follow-up</th>
-                <th className="px-3 py-2">Status</th>
+                <td className="px-3 py-4 text-slate-500" colSpan={6}>
+                  No incidents logged by you today.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {inquiries.map(item => (
-                <tr key={item.id} className="border-t border-slate-100">
-                  <td className="px-3 py-2">{item.callerName}</td>
-                  <td className="px-3 py-2">{item.subject}</td>
-                  <td className="px-3 py-2">
-                    {item.followUpDate ? new Date(item.followUpDate).toLocaleDateString("en-KE") : "—"}
-                  </td>
-                  <td className="px-3 py-2">
-                    <select
-                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
-                      value={item.status}
-                      onChange={event => {
-                        void setInquiryStatus(item.id, event.target.value);
-                      }}
-                    >
-                      <option value="PENDING">PENDING</option>
-                      <option value="IN_PROGRESS">IN PROGRESS</option>
-                      <option value="RESOLVED">RESOLVED</option>
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </article>
-      </div>
+            )}
+          </tbody>
+        </table>
+      </article>
     </section>
   );
 }

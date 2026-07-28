@@ -4,14 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const RECEPTION_LINKS = [
-  { href: "/admin/reception/pre-registrations", label: "Pre-Registrations" },
-  { href: "/admin/registration", label: "Registration Wizard" },
-  { href: "/admin/reception/visitors", label: "Visitor Log & Gate Pass" },
-  { href: "/admin/reception/incidents", label: "Incidents & Complaints" },
-  { href: "/admin/reception/appointments", label: "Appointments" },
-  { href: "/admin/documents", label: "Document Center" },
-  { href: "/admin/attendance", label: "Attendance" },
-  { href: "/admin/communications", label: "Communications Centre" }
+  { href: "/admin/reception/registration", label: "Registration Wizard" },
+  { href: "/admin/reception/check-in", label: "Staff Attendance" },
+  { href: "/admin/reception/timetables", label: "Class Timetables" },
+  { href: "/admin/reception/documents", label: "Document Center" },
+  { href: "/admin/reception/incidents", label: "Incidents & Complaints" }
 ] as const;
 
 export function ReceptionNav() {

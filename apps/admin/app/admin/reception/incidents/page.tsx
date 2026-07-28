@@ -1,22 +1,16 @@
 import { IncidentsManager } from "@/components/reception/incidents-manager";
 import { ReceptionNav } from "@/components/reception/reception-nav";
 import { requireReceptionUser } from "@/lib/reception/access";
-import { listIncidents, listInquiries } from "@/lib/reception/repository";
+import { listTodaysIncidentsByUser } from "@/lib/reception/portal-repository";
 
 export default async function ReceptionIncidentsPage() {
   const user = await requireReceptionUser("/admin/reception/incidents");
-  const [incidents, inquiries] = await Promise.all([
-    listIncidents(user),
-    listInquiries(user)
-  ]);
+  const incidents = await listTodaysIncidentsByUser(user);
 
   return (
     <section className="space-y-4">
       <ReceptionNav />
-      <IncidentsManager
-        initialIncidents={incidents}
-        initialInquiries={inquiries}
-      />
+      <IncidentsManager initialRows={incidents} />
     </section>
   );
 }

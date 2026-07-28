@@ -2,6 +2,26 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Timetable {
+  id          String             @id @default(cuid())
+  campusId    String
+  classId     String
+  dayOfWeek   TimetableDayOfWeek
+  period      Int
+  subject     String
+  teacherName String
+  startTime   String
+  endTime     String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  campus Campus     @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  class  SchoolClass @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  @@unique([classId, dayOfWeek, period])
+  @@index([campusId, classId, dayOfWeek])
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -137,6 +157,14 @@ enum LostFoundStatus {
   CLAIMED
 }
 
+enum TimetableDayOfWeek {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+}
+
 model Campus {
   id        String   @id @default(cuid())
   code      String   @unique
@@ -167,6 +195,7 @@ model Campus {
   earlyPickups EarlyPickup[]
   appointments Appointment[]
   lostFoundItems LostFoundItem[]
+  timetables Timetable[]
 }
 
 model Role {
@@ -643,6 +672,7 @@ model SchoolClass {
   students          Student[]
   attendanceRecords AttendanceRecord[]
   attendancePeriods AttendancePeriod[]
+  timetables        Timetable[]
 
   @@unique([campusId, name])
   @@index([campusId, isActive])
@@ -731,9 +761,13 @@ model IncidentReport {
   id          String         @id @default(cuid())
   campusId    String
   type        String
+  personName  String?
   description String
   reportedBy  String
   department  String
+  targetDepartment String    @default("PRINCIPAL")
+  priority    String         @default("MEDIUM")
+  loggedByUserId String?
   status      IncidentStatus @default(PENDING)
   routedAt    DateTime?
   resolvedAt  DateTime?
@@ -743,6 +777,7 @@ model IncidentReport {
   campus Campus @relation(fields: [campusId], references: [id], onDelete: Restrict)
 
   @@index([campusId, status, department])
+  @@index([campusId, loggedByUserId, createdAt])
   @@index([createdAt])
 }
 

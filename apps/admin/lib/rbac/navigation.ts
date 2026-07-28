@@ -52,6 +52,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Structured student registration data capture."
   },
   {
+    id: "reception_timetables",
+    href: "/admin/reception/timetables",
+    label: "Class Timetables",
+    description: "View and manage class timetable schedules."
+  },
+  {
     id: "reception_visitors",
     href: "/admin/reception/visitors",
     label: "Visitor Log & Gate Pass",
