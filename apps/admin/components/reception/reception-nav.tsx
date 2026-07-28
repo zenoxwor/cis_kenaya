@@ -4,10 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const RECEPTION_LINKS = [
-  { href: "/admin/reception/registration", label: "Registration Wizard" },
-  { href: "/admin/reception/check-in", label: "Staff Attendance" },
   { href: "/admin/reception/timetables", label: "Class Timetables" },
-  { href: "/admin/reception/documents", label: "Document Center" },
   { href: "/admin/reception/incidents", label: "Incidents & Complaints" }
 ] as const;
 

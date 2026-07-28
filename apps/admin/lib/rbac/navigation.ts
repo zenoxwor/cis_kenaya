@@ -46,12 +46,6 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Invoices, collections, and payment operations."
   },
   {
-    id: "registration_wizard",
-    href: "/admin/registration",
-    label: "Registration Wizard",
-    description: "Structured student registration data capture."
-  },
-  {
     id: "reception_timetables",
     href: "/admin/reception/timetables",
     label: "Class Timetables",
@@ -80,24 +74,6 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     href: "/admin/exams",
     label: "Exams & Grading",
     description: "Kenyan term exams, marks entry, and report cards."
-  },
-  {
-    id: "documents_center",
-    href: "/admin/documents",
-    label: "Document Center",
-    description: "Track uploads, verification lifecycle, and expiry reminders."
-  },
-  {
-    id: "attendance_module",
-    href: "/admin/attendance",
-    label: "Attendance",
-    description: "Track and manage student attendance records."
-  },
-  {
-    id: "communications_center",
-    href: "/admin/communications",
-    label: "Communications Centre",
-    description: "Send messages to parents and guardians via SMS and email."
   },
   {
     id: "classes_management",

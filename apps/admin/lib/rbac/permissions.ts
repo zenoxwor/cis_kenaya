@@ -256,34 +256,20 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/reception",
       "/admin/reception/applications",
       "/admin/reception/analytics",
-      "/admin/reception/check-in",
-      "/admin/reception/registration",
       "/admin/reception/timetables",
       "/admin/reception/incidents",
       "/admin/reception/visitors",
       "/admin/reception/early-pickup",
       "/admin/reception/appointments",
       "/admin/reception/lost-found",
-      "/admin/reception/documents",
-      "/admin/reception/pre-registrations",
-      "/admin/registration",
-      "/admin/communications",
-      "/admin/communications/compose",
-      "/admin/communications/history",
-      "/admin/documents",
-      "/admin/attendance",
-      "/admin/attendance/reports"
+      "/admin/reception/pre-registrations"
     ],
     navigationVisibility: [
       "reception_pre_registrations",
       "reception_timetables",
-      "registration_wizard",
       "reception_visitors",
       "reception_incidents",
-      "reception_appointments",
-      "documents_center",
-      "attendance_module",
-      "communications_center"
+      "reception_appointments"
     ],
     actions: {
       student: ["view", "create", "edit"],
