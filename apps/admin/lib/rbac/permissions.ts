@@ -41,6 +41,7 @@ export type DomainResource = (typeof DOMAIN_RESOURCES)[number];
 
 export const ADMIN_ROUTE_KEYS = [
   "/admin",
+  "/admin/analytics",
   "/admin/super-admin",
   "/admin/super-admin/users",
   "/admin/super-admin/audit",
@@ -74,6 +75,7 @@ export type AdminRouteKey = (typeof ADMIN_ROUTE_KEYS)[number];
 
 export const ADMIN_NAV_KEYS = [
   "dashboard",
+  "executive_analytics",
   "super_admin_console",
   "principal_dashboard",
   "principal_staff_accounts",
@@ -126,6 +128,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     // Full access to every section EXCEPT the Super Admin console (settings, user mgmt, system config)
     routeAccess: [
       "/admin",
+      "/admin/analytics",
       "/admin/principal",
       "/admin/principal/reports",
       "/admin/principal/analytics",
@@ -153,6 +156,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     // super_admin_console intentionally omitted — Settings is Super Admin only
     navigationVisibility: [
       "dashboard",
+      "executive_analytics",
       "principal_dashboard",
       "principal_staff_accounts",
       "reception_dashboard",
@@ -190,6 +194,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
   [ROLE.RECEPTION]: {
     routeAccess: [
       "/admin",
+      "/admin/analytics",
       "/admin/admissions",
       "/admin/reception",
       "/admin/reception/applications",
@@ -206,6 +211,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     ],
     navigationVisibility: [
       "dashboard",
+      "executive_analytics",
       "reception_dashboard",
       "registration_wizard",
       "exams_suite",
@@ -233,6 +239,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
   [ROLE.FINANCE]: {
     routeAccess: [
       "/admin",
+      "/admin/analytics",
       "/admin/finance",
       "/admin/finance/invoices",
       "/admin/finance/payments",
@@ -243,6 +250,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     ],
     navigationVisibility: [
       "dashboard",
+      "executive_analytics",
       "finance_dashboard",
       "communications_center"
     ],
@@ -260,13 +268,14 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
   [ROLE.TEACHER]: {
     routeAccess: [
       "/admin",
+      "/admin/analytics",
       "/admin/exams",
       "/admin/exams/marks",
       "/admin/exams/reports",
       "/admin/attendance",
       "/admin/attendance/reports"
     ],
-    navigationVisibility: ["dashboard", "exams_suite", "attendance_module"],
+    navigationVisibility: ["dashboard", "executive_analytics", "exams_suite", "attendance_module"],
     actions: {
       dashboard: ["view"],
       student: ["view"],

@@ -49,7 +49,18 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  const result = students.map((s) => ({
+  const result = students.map((s: {
+    id: string;
+    studentCode: string;
+    firstName: string;
+    lastName: string;
+    attendanceRecords: Array<{
+      id: string;
+      status: string;
+      notes: string | null;
+      markedAt: Date;
+    }>;
+  }) => ({
     id: s.id,
     studentCode: s.studentCode,
     firstName: s.firstName,

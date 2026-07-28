@@ -6,6 +6,12 @@ import { ROLE, ROLE_LABELS, type AppRole } from "@/lib/rbac/roles";
 const roleDashboards = [
   {
     role: ROLE.SUPER_ADMIN,
+    label: "Executive Analytics",
+    href: "/admin/analytics",
+    description: "Cross-module performance view for enrollment, attendance, finance, academics, and communications."
+  },
+  {
+    role: ROLE.SUPER_ADMIN,
     label: "Super Admin",
     href: "/admin/super-admin",
     description: "Platform control, identity governance, and global settings."
@@ -66,7 +72,7 @@ export default async function AdminDashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         {visibleCards.map(item => (
-          <article key={item.role} className="admin-content-card">
+          <article key={item.href} className="admin-content-card">
             <h2 className="text-lg font-semibold text-slate-900">{item.label}</h2>
             <p className="mt-2 text-sm text-slate-600">{item.description}</p>
             <Link className="mt-4 inline-flex text-sm font-semibold" href={item.href}>
