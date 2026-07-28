@@ -20,6 +20,8 @@ const STEP_LABELS = [
   "Review, consent, and submission"
 ] as const;
 
+const SHORT_STEP_LABELS = ["Profile", "Guardian", "Academic", "Medical", "Documents", "Review"] as const;
+
 type WizardNotice = {
   type: "success" | "error" | "info";
   message: string;
@@ -220,155 +222,185 @@ export function RegistrationWizard({ initialDraftId }: RegistrationWizardProps) 
 
   return (
     <section className="space-y-4">
-      <header className="admin-content-card">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">Admissions Intake</p>
-        <h1 className="mt-2 text-2xl font-bold text-slate-900">6-Step Registration Wizard</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Draft ID: <span className="font-medium">{draft.id}</span> • Application:{" "}
-          <span className="font-medium">{draft.applicationNo}</span> • Status:{" "}
-          <span className="font-medium">{draft.applicationStatus}</span>
-        </p>
+      {/* Wizard header – mirrors public wizard header style */}
+      <header className="admin-content-card overflow-hidden">
+        <div className="rounded-lg bg-gradient-to-br from-brand-50 to-white px-5 py-5 -mx-5 -mt-5 mb-4 border-b border-brand-100">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">Admissions Intake</p>
+          <h1 className="mt-1.5 text-2xl font-bold text-slate-900">Student Registration &amp; Documentation</h1>
+          <p className="mt-1 text-sm text-slate-500">Complete all 6 steps to register the student. Progress is saved automatically.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <span className="flex items-center gap-1.5">
+            <span className="font-medium text-slate-700">Draft:</span>
+            <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-slate-600">{draft.id.slice(0, 12)}…</code>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="font-medium text-slate-700">Ref:</span>
+            <span className="font-medium text-brand-700">{draft.applicationNo}</span>
+          </span>
+          <span
+            className={[
+              "rounded-full border px-2 py-0.5 font-semibold",
+              draft.applicationStatus === "SUBMITTED" || draft.applicationStatus === "APPROVED"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : draft.applicationStatus === "REJECTED"
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-brand-200 bg-brand-50 text-brand-700"
+            ].join(" ")}
+          >
+            {draft.applicationStatus}
+          </span>
+        </div>
       </header>
 
-      <WizardProgress labels={[...STEP_LABELS]} currentStep={currentStep} />
+      <WizardProgress labels={[...STEP_LABELS]} shortLabels={[...SHORT_STEP_LABELS]} currentStep={currentStep} />
 
       {notice && (
         <div
+          role="alert"
           className={[
-            "rounded-lg border px-4 py-3 text-sm",
+            "flex items-start gap-3 rounded-xl border px-4 py-3.5 text-sm font-medium shadow-sm",
             notice.type === "error"
               ? "border-red-200 bg-red-50 text-red-700"
               : notice.type === "success"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-slate-200 bg-slate-50 text-slate-700"
+                : "border-brand-100 bg-brand-50 text-brand-700"
           ].join(" ")}
         >
+          <span aria-hidden="true" className="mt-0.5 shrink-0 text-base">
+            {notice.type === "error" ? "⚠" : notice.type === "success" ? "✓" : "ℹ"}
+          </span>
           {notice.message}
         </div>
       )}
 
-      <div className="admin-content-card space-y-4">
-        {currentStep === 1 && (
-          <StepStudentProfile
-            draft={draft}
-            errors={errors}
-            onChange={(key, value) =>
-              updateDraft(prev => ({
-                ...prev,
-                student: { ...prev.student, [key]: value }
-              }))
-            }
-          />
-        )}
+      <div className="admin-content-card space-y-6">
+        {/* Animated step content – key forces remount on step change */}
+        <div className="wizard-step-enter" key={currentStep}>
+          {currentStep === 1 && (
+            <StepStudentProfile
+              draft={draft}
+              errors={errors}
+              onChange={(key, value) =>
+                updateDraft(prev => ({
+                  ...prev,
+                  student: { ...prev.student, [key]: value }
+                }))
+              }
+            />
+          )}
 
-        {currentStep === 2 && (
-          <StepGuardianContacts
-            draft={draft}
-            errors={errors}
-            onChange={(key, value) =>
-              updateDraft(prev => ({
-                ...prev,
-                guardian: { ...prev.guardian, [key]: value }
-              }))
-            }
-          />
-        )}
+          {currentStep === 2 && (
+            <StepGuardianContacts
+              draft={draft}
+              errors={errors}
+              onChange={(key, value) =>
+                updateDraft(prev => ({
+                  ...prev,
+                  guardian: { ...prev.guardian, [key]: value }
+                }))
+              }
+            />
+          )}
 
-        {currentStep === 3 && (
-          <StepAcademicPlacement
-            draft={draft}
-            errors={errors}
-            onChange={(key, value) =>
-              updateDraft(prev => ({
-                ...prev,
-                academic: { ...prev.academic, [key]: value }
-              }))
-            }
-          />
-        )}
+          {currentStep === 3 && (
+            <StepAcademicPlacement
+              draft={draft}
+              errors={errors}
+              onChange={(key, value) =>
+                updateDraft(prev => ({
+                  ...prev,
+                  academic: { ...prev.academic, [key]: value }
+                }))
+              }
+            />
+          )}
 
-        {currentStep === 4 && (
-          <StepMedicalSupport
-            draft={draft}
-            errors={errors}
-            onChange={(key, value) =>
-              updateDraft(prev => ({
-                ...prev,
-                medical: { ...prev.medical, [key]: value }
-              }))
-            }
-          />
-        )}
+          {currentStep === 4 && (
+            <StepMedicalSupport
+              draft={draft}
+              errors={errors}
+              onChange={(key, value) =>
+                updateDraft(prev => ({
+                  ...prev,
+                  medical: { ...prev.medical, [key]: value }
+                }))
+              }
+            />
+          )}
 
-        {currentStep === 5 && (
-          <StepDocumentsUpload
-            draft={draft}
-            errors={errors}
-            selectedType={selectedDocumentType}
-            onTypeChange={setSelectedDocumentType}
-            onFilesSelected={handleUploadDocuments}
-            onStatusChange={(documentId, status) =>
-              updateDraft(prev => ({
-                ...prev,
-                documents: prev.documents.map(document =>
-                  document.id === documentId ? { ...document, status } : document
-                )
-              }))
-            }
-          />
-        )}
+          {currentStep === 5 && (
+            <StepDocumentsUpload
+              draft={draft}
+              errors={errors}
+              selectedType={selectedDocumentType}
+              onTypeChange={setSelectedDocumentType}
+              onFilesSelected={handleUploadDocuments}
+              onStatusChange={(documentId, status) =>
+                updateDraft(prev => ({
+                  ...prev,
+                  documents: prev.documents.map(document =>
+                    document.id === documentId ? { ...document, status } : document
+                  )
+                }))
+              }
+            />
+          )}
 
-        {currentStep === 6 && (
-          <StepReviewSubmit
-            draft={draft}
-            errors={errors}
-            onTermsChange={value =>
-              updateDraft(prev => ({
-                ...prev,
-                review: { ...prev.review, termsConfirmed: value }
-              }))
-            }
-            onNotesChange={value =>
-              updateDraft(prev => ({
-                ...prev,
-                review: { ...prev.review, notes: value }
-              }))
-            }
-          />
-        )}
+          {currentStep === 6 && (
+            <StepReviewSubmit
+              draft={draft}
+              errors={errors}
+              onTermsChange={value =>
+                updateDraft(prev => ({
+                  ...prev,
+                  review: { ...prev.review, termsConfirmed: value }
+                }))
+              }
+              onNotesChange={value =>
+                updateDraft(prev => ({
+                  ...prev,
+                  review: { ...prev.review, notes: value }
+                }))
+              }
+            />
+          )}
+        </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-4">
+        {/* Form actions: utility buttons + primary navigation CTAs */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
+          {/* Utility buttons */}
           <div className="flex flex-wrap gap-2">
             <button
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-100"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
               onClick={handleSaveDraft}
               type="button"
             >
               Save draft
             </button>
             <button
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-100"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
               onClick={handleClearDraft}
               type="button"
             >
               New draft
             </button>
             <button
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-100"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
               onClick={handleExportJson}
               type="button"
             >
               Export JSON
             </button>
             <button
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-100"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
               onClick={handlePrint}
               type="button"
             >
               Print
             </button>
             <button
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-100"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
               onClick={handleExportPdf}
               type="button"
             >
@@ -376,30 +408,31 @@ export function RegistrationWizard({ initialDraftId }: RegistrationWizardProps) 
             </button>
           </div>
 
-          <div className="flex gap-2">
+          {/* Primary navigation CTAs – styled like public wizard */}
+          <div className="flex gap-3">
             <button
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl border-2 border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               disabled={currentStep === 1}
               onClick={handlePrevious}
               type="button"
             >
-              Previous
+              ← Previous
             </button>
             {currentStep < REGISTRATION_STEPS.length ? (
               <button
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                className="rounded-xl bg-gradient-to-r from-brand-700 to-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/20 transition-all hover:-translate-y-px hover:shadow-md hover:shadow-brand-500/30"
                 onClick={handleNext}
                 type="button"
               >
-                Next
+                Next →
               </button>
             ) : (
               <button
-                className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-900"
+                className="rounded-xl bg-gradient-to-r from-emerald-700 to-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-500/20 transition-all hover:-translate-y-px hover:shadow-md hover:shadow-emerald-500/30"
                 onClick={handleSubmitApplication}
                 type="button"
               >
-                Submit application
+                Complete Registration ✓
               </button>
             )}
           </div>
@@ -419,8 +452,20 @@ function FieldError({ error }: { error?: string }) {
     return null;
   }
 
-  return <p className="text-xs text-red-600">{error}</p>;
+  return (
+    <p className="flex items-center gap-1 text-xs font-medium text-red-600" role="alert">
+      <span aria-hidden="true">⚠</span>
+      {error}
+    </p>
+  );
 }
+
+/** Shared input/label classes */
+const inputBase =
+  "w-full rounded-xl border-2 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 transition-all focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/10";
+const inputError = "border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-500/10";
+const inputNormal = "border-slate-200";
+const labelBase = "mb-1.5 block text-sm font-semibold text-slate-800";
 
 function TextInput(props: {
   label: string;
@@ -428,18 +473,82 @@ function TextInput(props: {
   onChange: (value: string) => void;
   error?: string;
   type?: string;
+  placeholder?: string;
 }) {
   return (
-    <label className="space-y-1 text-sm">
-      <span className="font-medium text-slate-700">{props.label}</span>
+    <div className="flex flex-col gap-1">
+      <label className={labelBase}>{props.label}</label>
       <input
-        className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-brand-500 focus:outline-none"
+        className={[inputBase, props.error ? inputError : inputNormal].join(" ")}
         onChange={event => props.onChange(event.target.value)}
+        placeholder={props.placeholder}
         type={props.type ?? "text"}
         value={props.value}
       />
       <FieldError error={props.error} />
-    </label>
+    </div>
+  );
+}
+
+function SelectInput(props: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  error?: string;
+  placeholder?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className={labelBase}>{props.label}</label>
+      <select
+        className={[inputBase, props.error ? inputError : inputNormal].join(" ")}
+        onChange={event => props.onChange(event.target.value)}
+        value={props.value}
+      >
+        <option value="">{props.placeholder ?? "Select…"}</option>
+        {props.options.map(opt => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <FieldError error={props.error} />
+    </div>
+  );
+}
+
+function TextAreaInput(props: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  placeholder?: string;
+  rows?: number;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className={labelBase}>{props.label}</label>
+      <textarea
+        className={[inputBase, "resize-y", props.error ? inputError : inputNormal].join(" ")}
+        onChange={event => props.onChange(event.target.value)}
+        placeholder={props.placeholder}
+        rows={props.rows ?? 3}
+        value={props.value}
+      />
+      <FieldError error={props.error} />
+    </div>
+  );
+}
+
+function StepHeading({ step, title }: { step: number; title: string }) {
+  return (
+    <div className="flex items-center gap-3 pb-4 border-b-2 border-slate-100 mb-2">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-700 to-brand-300 text-sm font-bold text-white shadow-sm">
+        {step}
+      </div>
+      <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+    </div>
   );
 }
 
@@ -449,17 +558,57 @@ function StepStudentProfile({
   onChange
 }: SharedStepProps & { onChange: (key: keyof RegistrationDraft["student"], value: string) => void }) {
   return (
-    <>
-      <h2 className="text-lg font-semibold">Step 1: Student profile</h2>
-      <div className="grid gap-3 md:grid-cols-2">
-        <TextInput label="First name *" value={draft.student.firstName} onChange={value => onChange("firstName", value)} error={errors.firstName} />
-        <TextInput label="Last name *" value={draft.student.lastName} onChange={value => onChange("lastName", value)} error={errors.lastName} />
-        <TextInput label="Preferred name" value={draft.student.preferredName} onChange={value => onChange("preferredName", value)} />
-        <TextInput label="Date of birth *" type="date" value={draft.student.dateOfBirth} onChange={value => onChange("dateOfBirth", value)} error={errors.dateOfBirth} />
-        <TextInput label="Nationality *" value={draft.student.nationality} onChange={value => onChange("nationality", value)} error={errors.nationality} />
-        <TextInput label="Gender" value={draft.student.gender} onChange={value => onChange("gender", value)} />
+    <div className="space-y-5">
+      <StepHeading step={1} title="Student Profile &amp; Identity" />
+      <div className="grid gap-5 md:grid-cols-2">
+        <TextInput
+          label="First name *"
+          value={draft.student.firstName}
+          onChange={value => onChange("firstName", value)}
+          error={errors.firstName}
+          placeholder="Enter first name"
+        />
+        <TextInput
+          label="Last name *"
+          value={draft.student.lastName}
+          onChange={value => onChange("lastName", value)}
+          error={errors.lastName}
+          placeholder="Enter last name"
+        />
+        <TextInput
+          label="Preferred / nickname"
+          value={draft.student.preferredName}
+          onChange={value => onChange("preferredName", value)}
+          placeholder="Optional preferred name"
+        />
+        <TextInput
+          label="Date of birth *"
+          type="date"
+          value={draft.student.dateOfBirth}
+          onChange={value => onChange("dateOfBirth", value)}
+          error={errors.dateOfBirth}
+        />
+        <TextInput
+          label="Nationality *"
+          value={draft.student.nationality}
+          onChange={value => onChange("nationality", value)}
+          error={errors.nationality}
+          placeholder="e.g. Kenyan"
+        />
+        <SelectInput
+          label="Gender"
+          value={draft.student.gender}
+          onChange={value => onChange("gender", value)}
+          options={[
+            { value: "male", label: "Male" },
+            { value: "female", label: "Female" },
+            { value: "non-binary", label: "Non-binary" },
+            { value: "prefer-not-to-say", label: "Prefer not to say" }
+          ]}
+          placeholder="Select gender"
+        />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -469,20 +618,81 @@ function StepGuardianContacts({
   onChange
 }: SharedStepProps & { onChange: (key: keyof RegistrationDraft["guardian"], value: string) => void }) {
   return (
-    <>
-      <h2 className="text-lg font-semibold">Step 2: Guardian and emergency contacts</h2>
-      <div className="grid gap-3 md:grid-cols-2">
-        <TextInput label="Guardian full name *" value={draft.guardian.guardianFullName} onChange={value => onChange("guardianFullName", value)} error={errors.guardianFullName} />
-        <TextInput label="Relationship *" value={draft.guardian.guardianRelationship} onChange={value => onChange("guardianRelationship", value)} error={errors.guardianRelationship} />
-        <TextInput label="Guardian email" type="email" value={draft.guardian.guardianEmail} onChange={value => onChange("guardianEmail", value)} />
-        <TextInput label="Guardian phone *" value={draft.guardian.guardianPhone} onChange={value => onChange("guardianPhone", value)} error={errors.guardianPhone} />
-        <TextInput label="Emergency contact name *" value={draft.guardian.emergencyContactName} onChange={value => onChange("emergencyContactName", value)} error={errors.emergencyContactName} />
-        <TextInput label="Emergency contact phone *" value={draft.guardian.emergencyContactPhone} onChange={value => onChange("emergencyContactPhone", value)} error={errors.emergencyContactPhone} />
-        <TextInput label="Address line" value={draft.guardian.addressLine1} onChange={value => onChange("addressLine1", value)} />
-        <TextInput label="City" value={draft.guardian.city} onChange={value => onChange("city", value)} />
-        <TextInput label="Country" value={draft.guardian.country} onChange={value => onChange("country", value)} />
+    <div className="space-y-5">
+      <StepHeading step={2} title="Guardian &amp; Emergency Contacts" />
+      <div className="grid gap-5 md:grid-cols-2">
+        <TextInput
+          label="Guardian full name *"
+          value={draft.guardian.guardianFullName}
+          onChange={value => onChange("guardianFullName", value)}
+          error={errors.guardianFullName}
+          placeholder="Enter full name"
+        />
+        <SelectInput
+          label="Relationship to student *"
+          value={draft.guardian.guardianRelationship}
+          onChange={value => onChange("guardianRelationship", value)}
+          error={errors.guardianRelationship}
+          options={[
+            { value: "father", label: "Father" },
+            { value: "mother", label: "Mother" },
+            { value: "uncle", label: "Uncle" },
+            { value: "aunt", label: "Aunt" },
+            { value: "grandfather", label: "Grandfather" },
+            { value: "grandmother", label: "Grandmother" },
+            { value: "legal-guardian", label: "Legal Guardian" },
+            { value: "other", label: "Other" }
+          ]}
+          placeholder="Select relationship"
+        />
+        <TextInput
+          label="Guardian email"
+          type="email"
+          value={draft.guardian.guardianEmail}
+          onChange={value => onChange("guardianEmail", value)}
+          placeholder="guardian@email.com"
+        />
+        <TextInput
+          label="Guardian phone *"
+          value={draft.guardian.guardianPhone}
+          onChange={value => onChange("guardianPhone", value)}
+          error={errors.guardianPhone}
+          placeholder="+254 7XX XXX XXX"
+        />
+        <TextInput
+          label="Emergency contact name *"
+          value={draft.guardian.emergencyContactName}
+          onChange={value => onChange("emergencyContactName", value)}
+          error={errors.emergencyContactName}
+          placeholder="Alternate emergency contact"
+        />
+        <TextInput
+          label="Emergency contact phone *"
+          value={draft.guardian.emergencyContactPhone}
+          onChange={value => onChange("emergencyContactPhone", value)}
+          error={errors.emergencyContactPhone}
+          placeholder="+254 7XX XXX XXX"
+        />
+        <TextInput
+          label="Address line"
+          value={draft.guardian.addressLine1}
+          onChange={value => onChange("addressLine1", value)}
+          placeholder="Street / Building / Apartment"
+        />
+        <TextInput
+          label="City"
+          value={draft.guardian.city}
+          onChange={value => onChange("city", value)}
+          placeholder="City"
+        />
+        <TextInput
+          label="Country"
+          value={draft.guardian.country}
+          onChange={value => onChange("country", value)}
+          placeholder="Country"
+        />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -492,23 +702,46 @@ function StepAcademicPlacement({
   onChange
 }: SharedStepProps & { onChange: (key: keyof RegistrationDraft["academic"], value: string) => void }) {
   return (
-    <>
-      <h2 className="text-lg font-semibold">Step 3: Academic placement</h2>
-      <div className="grid gap-3 md:grid-cols-2">
-        <TextInput label="Current school *" value={draft.academic.currentSchool} onChange={value => onChange("currentSchool", value)} error={errors.currentSchool} />
-        <TextInput label="Current grade *" value={draft.academic.currentGrade} onChange={value => onChange("currentGrade", value)} error={errors.currentGrade} />
-        <TextInput label="Applied grade *" value={draft.academic.appliedGrade} onChange={value => onChange("appliedGrade", value)} error={errors.appliedGrade} />
-        <TextInput label="Academic year *" value={draft.academic.academicYear} onChange={value => onChange("academicYear", value)} error={errors.academicYear} />
-      </div>
-      <label className="mt-3 block space-y-1 text-sm">
-        <span className="font-medium text-slate-700">Placement notes</span>
-        <textarea
-          className="min-h-24 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-brand-500 focus:outline-none"
-          onChange={event => onChange("notes", event.target.value)}
-          value={draft.academic.notes}
+    <div className="space-y-5">
+      <StepHeading step={3} title="Academic History &amp; Placement" />
+      <div className="grid gap-5 md:grid-cols-2">
+        <TextInput
+          label="Current / previous school *"
+          value={draft.academic.currentSchool}
+          onChange={value => onChange("currentSchool", value)}
+          error={errors.currentSchool}
+          placeholder="Enter school name"
         />
-      </label>
-    </>
+        <TextInput
+          label="Current grade *"
+          value={draft.academic.currentGrade}
+          onChange={value => onChange("currentGrade", value)}
+          error={errors.currentGrade}
+          placeholder="e.g. Grade 9"
+        />
+        <TextInput
+          label="Applied grade *"
+          value={draft.academic.appliedGrade}
+          onChange={value => onChange("appliedGrade", value)}
+          error={errors.appliedGrade}
+          placeholder="e.g. Grade 10"
+        />
+        <TextInput
+          label="Academic year *"
+          value={draft.academic.academicYear}
+          onChange={value => onChange("academicYear", value)}
+          error={errors.academicYear}
+          placeholder="e.g. 2024–2025"
+        />
+      </div>
+      <TextAreaInput
+        label="Placement notes"
+        value={draft.academic.notes}
+        onChange={value => onChange("notes", value)}
+        placeholder="Additional context for academic placement…"
+        rows={3}
+      />
+    </div>
   );
 }
 
@@ -520,24 +753,58 @@ function StepMedicalSupport({
   onChange: (key: keyof RegistrationDraft["medical"], value: string | boolean) => void;
 }) {
   return (
-    <>
-      <h2 className="text-lg font-semibold">Step 4: Medical and support needs</h2>
-      <div className="grid gap-3 md:grid-cols-2">
-        <TextInput label="Known allergies" value={draft.medical.allergies} onChange={value => onChange("allergies", value)} />
-        <TextInput label="Current medications" value={draft.medical.medications} onChange={value => onChange("medications", value)} />
-        <TextInput label="Support needs" value={draft.medical.supportNeeds} onChange={value => onChange("supportNeeds", value)} />
-        <TextInput label="Physician contact" value={draft.medical.physicianContact} onChange={value => onChange("physicianContact", value)} />
-      </div>
-      <label className="mt-3 flex items-center gap-2 text-sm">
-        <input
-          checked={draft.medical.medicalConsentConfirmed}
-          onChange={event => onChange("medicalConsentConfirmed", event.target.checked)}
-          type="checkbox"
+    <div className="space-y-5">
+      <StepHeading step={4} title="Medical &amp; Special Support Needs" />
+      <div className="grid gap-5 md:grid-cols-2">
+        <TextInput
+          label="Known allergies"
+          value={draft.medical.allergies}
+          onChange={value => onChange("allergies", value)}
+          placeholder="e.g. Peanuts, Penicillin"
         />
-        <span>I confirm medical declarations are accurate. *</span>
-      </label>
-      <FieldError error={errors.medicalConsentConfirmed} />
-    </>
+        <TextInput
+          label="Current medications"
+          value={draft.medical.medications}
+          onChange={value => onChange("medications", value)}
+          placeholder="List medications if any"
+        />
+        <TextInput
+          label="Special / support needs"
+          value={draft.medical.supportNeeds}
+          onChange={value => onChange("supportNeeds", value)}
+          placeholder="e.g. Learning support, mobility aid"
+        />
+        <TextInput
+          label="Physician / doctor contact"
+          value={draft.medical.physicianContact}
+          onChange={value => onChange("physicianContact", value)}
+          placeholder="Name and phone number"
+        />
+      </div>
+      <div
+        className={[
+          "rounded-xl border-2 px-4 py-3 transition-colors",
+          draft.medical.medicalConsentConfirmed
+            ? "border-emerald-200 bg-emerald-50"
+            : errors.medicalConsentConfirmed
+              ? "border-red-300 bg-red-50/40"
+              : "border-slate-200 bg-slate-50"
+        ].join(" ")}
+      >
+        <label className="flex cursor-pointer items-start gap-3 text-sm">
+          <input
+            checked={draft.medical.medicalConsentConfirmed}
+            className="mt-0.5 h-4 w-4 accent-brand-500"
+            onChange={event => onChange("medicalConsentConfirmed", event.target.checked)}
+            type="checkbox"
+          />
+          <span className="font-medium text-slate-700">
+            I confirm the medical declarations above are accurate and consent has been obtained. *
+          </span>
+        </label>
+        <FieldError error={errors.medicalConsentConfirmed} />
+      </div>
+    </div>
   );
 }
 
@@ -555,64 +822,65 @@ function StepDocumentsUpload({
   onStatusChange: (documentId: string, status: RegistrationDraft["documents"][number]["status"]) => void;
 }) {
   return (
-    <>
-      <h2 className="text-lg font-semibold">Step 5: Documents upload and verification</h2>
-      <p className="text-sm text-slate-600">
-        Required types: {REQUIRED_DOCUMENT_TYPES.join(", ")}
+    <div className="space-y-5">
+      <StepHeading step={5} title="Documents Upload &amp; Verification" />
+      <p className="text-sm text-slate-500">
+        Required document types:{" "}
+        <span className="font-medium text-slate-700">{REQUIRED_DOCUMENT_TYPES.join(", ")}</span>
       </p>
-      <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
-        <label className="space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Document type</span>
-          <select
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-brand-500 focus:outline-none"
-            onChange={event => onTypeChange(event.target.value)}
-            value={selectedType}
-          >
-            {[...REQUIRED_DOCUMENT_TYPES, "Medical Form", "Transfer Certificate"].map(option => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Upload files</span>
+
+      {/* Upload controls */}
+      <div className="grid gap-4 rounded-xl border-2 border-dashed border-brand-200 bg-brand-50/40 p-4 md:grid-cols-[1fr_auto]">
+        <SelectInput
+          label="Document type"
+          value={selectedType}
+          onChange={onTypeChange}
+          options={[...REQUIRED_DOCUMENT_TYPES, "Medical Form", "Transfer Certificate"].map(t => ({
+            value: t,
+            label: t
+          }))}
+          placeholder="Select type…"
+        />
+        <div className="flex flex-col gap-1">
+          <label className={labelBase}>Upload files</label>
           <input
-            className="block rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="block rounded-xl border-2 border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-200 cursor-pointer"
             multiple
             onChange={event => onFilesSelected(event.target.files)}
             type="file"
+            aria-label="Upload document files"
           />
-        </label>
+        </div>
       </div>
       <FieldError error={errors.documents} />
 
-      <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
+      {/* Documents table */}
+      <div className="overflow-x-auto rounded-xl border border-slate-200">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-700">
+          <thead className="bg-slate-50">
             <tr>
-              <th className="px-3 py-2">Type</th>
-              <th className="px-3 py-2">File</th>
-              <th className="px-3 py-2">Size</th>
-              <th className="px-3 py-2">Status</th>
+              <th className="px-4 py-2.5 font-semibold text-slate-600">Type</th>
+              <th className="px-4 py-2.5 font-semibold text-slate-600">File</th>
+              <th className="px-4 py-2.5 font-semibold text-slate-600">Size</th>
+              <th className="px-4 py-2.5 font-semibold text-slate-600">Status</th>
             </tr>
           </thead>
           <tbody>
             {draft.documents.length === 0 ? (
               <tr>
-                <td className="px-3 py-3 text-slate-500" colSpan={4}>
-                  No documents uploaded yet.
+                <td className="px-4 py-5 text-center text-slate-400 italic" colSpan={4}>
+                  No documents uploaded yet. Select a type and upload files above.
                 </td>
               </tr>
             ) : (
               draft.documents.map(document => (
-                <tr key={document.id} className="border-t border-slate-100">
-                  <td className="px-3 py-2">{document.type}</td>
-                  <td className="px-3 py-2">{document.fileName}</td>
-                  <td className="px-3 py-2">{Math.round(document.sizeBytes / 1024)} KB</td>
-                  <td className="px-3 py-2">
+                <tr key={document.id} className="border-t border-slate-100 hover:bg-slate-50/60 transition-colors">
+                  <td className="px-4 py-2.5 font-medium text-slate-700">{document.type}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{document.fileName}</td>
+                  <td className="px-4 py-2.5 text-slate-500">{Math.round(document.sizeBytes / 1024)} KB</td>
+                  <td className="px-4 py-2.5">
                     <select
-                      className="rounded border border-slate-200 px-2 py-1"
+                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium focus:border-brand-500 focus:outline-none"
                       onChange={event =>
                         onStatusChange(
                           document.id,
@@ -634,7 +902,7 @@ function StepDocumentsUpload({
           </tbody>
         </table>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -648,39 +916,60 @@ function StepReviewSubmit({
   onNotesChange: (value: string) => void;
 }) {
   return (
-    <>
-      <h2 className="text-lg font-semibold">Step 6: Review and submission</h2>
-      <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm md:grid-cols-2">
-        <p>
-          <span className="font-medium">Student:</span> {draft.student.firstName} {draft.student.lastName}
-        </p>
-        <p>
-          <span className="font-medium">Guardian:</span> {draft.guardian.guardianFullName}
-        </p>
-        <p>
-          <span className="font-medium">Applied grade:</span> {draft.academic.appliedGrade}
-        </p>
-        <p>
-          <span className="font-medium">Documents:</span> {draft.documents.length}
-        </p>
+    <div className="space-y-5">
+      <StepHeading step={6} title="Review, Consent &amp; Submission" />
+
+      {/* Summary card */}
+      <div className="rounded-xl border-2 border-slate-100 bg-slate-50 p-4">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Registration Summary</p>
+        <div className="grid gap-3 md:grid-cols-2">
+          {[
+            { label: "Student", value: `${draft.student.firstName} ${draft.student.lastName}`.trim() || "—" },
+            { label: "Guardian", value: draft.guardian.guardianFullName || "—" },
+            { label: "Applied grade", value: draft.academic.appliedGrade || "—" },
+            { label: "Academic year", value: draft.academic.academicYear || "—" },
+            { label: "Documents uploaded", value: String(draft.documents.length) },
+            { label: "Application status", value: draft.applicationStatus }
+          ].map(item => (
+            <div key={item.label} className="rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{item.label}</p>
+              <p className="mt-0.5 text-sm font-medium text-slate-800">{item.value}</p>
+            </div>
+          ))}
+        </div>
       </div>
-      <label className="block space-y-1 text-sm">
-        <span className="font-medium text-slate-700">Admissions notes</span>
-        <textarea
-          className="min-h-24 w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-brand-500 focus:outline-none"
-          onChange={event => onNotesChange(event.target.value)}
-          value={draft.review.notes}
-        />
-      </label>
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          checked={draft.review.termsConfirmed}
-          onChange={event => onTermsChange(event.target.checked)}
-          type="checkbox"
-        />
-        <span>I confirm this registration data is complete and consent is collected. *</span>
-      </label>
-      <FieldError error={errors.termsConfirmed} />
-    </>
+
+      <TextAreaInput
+        label="Admissions notes (internal)"
+        value={draft.review.notes}
+        onChange={onNotesChange}
+        placeholder="Internal notes visible only to admissions staff…"
+        rows={3}
+      />
+
+      <div
+        className={[
+          "rounded-xl border-2 px-4 py-3 transition-colors",
+          draft.review.termsConfirmed
+            ? "border-emerald-200 bg-emerald-50"
+            : errors.termsConfirmed
+              ? "border-red-300 bg-red-50/40"
+              : "border-slate-200 bg-slate-50"
+        ].join(" ")}
+      >
+        <label className="flex cursor-pointer items-start gap-3 text-sm">
+          <input
+            checked={draft.review.termsConfirmed}
+            className="mt-0.5 h-4 w-4 accent-brand-500"
+            onChange={event => onTermsChange(event.target.checked)}
+            type="checkbox"
+          />
+          <span className="font-medium text-slate-700">
+            I confirm this registration data is complete, accurate, and that guardian consent has been obtained. *
+          </span>
+        </label>
+        <FieldError error={errors.termsConfirmed} />
+      </div>
+    </div>
   );
 }

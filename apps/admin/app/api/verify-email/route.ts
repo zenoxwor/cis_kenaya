@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { getPublicSiteUrl } from "@/lib/supabase/client";
-import { createStudentFromRegistration } from "@/lib/students/create-from-registration";
 
 function buildRedirectUrl(request: NextRequest, status: "success" | "invalid" | "error", name?: string) {
   const baseUrl = getPublicSiteUrl() ?? request.nextUrl.origin;
@@ -25,11 +24,9 @@ export async function GET(request: NextRequest) {
 
   const registration = await prisma.preRegistration.findFirst({
     where: {
-      verificationToken: token,
-      status: "unverified"
+      verificationToken: token
     },
     select: {
-      id: true,
       firstName: true
     }
   });
@@ -37,24 +34,6 @@ export async function GET(request: NextRequest) {
   if (!registration) {
     return NextResponse.redirect(buildRedirectUrl(request, "invalid"));
   }
-
-  const updateResult = await prisma.preRegistration.updateMany({
-    where: {
-      id: registration.id,
-      status: "unverified"
-    },
-    data: {
-      status: "verified"
-    }
-  });
-
-  if (updateResult.count === 0) {
-    return NextResponse.redirect(buildRedirectUrl(request, "error"));
-  }
-
-  void createStudentFromRegistration(registration.id).catch(error => {
-    console.error("Failed to auto-create student from pre-registration:", error);
-  });
 
   return NextResponse.redirect(buildRedirectUrl(request, "success", registration.firstName));
 }

@@ -12,6 +12,7 @@ type PreRegistration = {
   curriculum: string;
   status: "unverified" | "verified";
   verification_token: string;
+  application_ref: string | null;
   created_at: string;
   documents: UploadedDocument[];
   student_id: string | null;
@@ -28,6 +29,15 @@ type UploadedDocument = {
 type SignedDocument = UploadedDocument & {
   signedUrl: string | null;
   error: string | null;
+};
+
+type SchoolClassOption = {
+  id: string;
+  name: string;
+  gradeLevel: string;
+  campus: {
+    name: string;
+  };
 };
 
 type PreRegistrationResponse = {
@@ -47,10 +57,16 @@ type DocumentsResponse = {
   data?: SignedDocument[];
 };
 
-type ManualVerifyResponse = {
+type VerifyRegistrationResponse = {
   success: boolean;
-  message?: string;
+  error?: string;
   studentId?: string;
+  studentRecordId?: string;
+  uploadLink?: string;
+};
+
+type ClassesResponse = {
+  classes: SchoolClassOption[];
 };
 
 const PAGE_SIZE = 10;
@@ -62,13 +78,24 @@ export function PreRegistrationsManager() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [resendingId, setResendingId] = useState<string | null>(null);
-  const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
   const [documentsName, setDocumentsName] = useState("");
   const [signedDocuments, setSignedDocuments] = useState<SignedDocument[]>([]);
+
+  const [verifyModalOpen, setVerifyModalOpen] = useState(false);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [verifyTarget, setVerifyTarget] = useState<PreRegistration | null>(null);
+  const [classOptions, setClassOptions] = useState<SchoolClassOption[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [verifyForm, setVerifyForm] = useState({
+    assignedClassId: "",
+    assignedSection: "",
+    generateInvoice: false
+  });
 
   async function fetchRows() {
     const response = await fetch("/api/public/preregister", { method: "GET" });
@@ -80,6 +107,22 @@ export function PreRegistrationsManager() {
 
     setRows(payload.data);
     setError(null);
+  }
+
+  async function fetchClassOptions(): Promise<SchoolClassOption[]> {
+    setLoadingClasses(true);
+    const response = await fetch("/api/classes", { method: "GET" });
+    const payload = (await response.json()) as Partial<ClassesResponse> & { error?: string };
+
+    if (!response.ok || !Array.isArray(payload.classes)) {
+      setError(payload.error ?? "Failed to load classes.");
+      setLoadingClasses(false);
+      return [];
+    }
+
+    setClassOptions(payload.classes);
+    setLoadingClasses(false);
+    return payload.classes;
   }
 
   useEffect(() => {
@@ -108,7 +151,11 @@ export function PreRegistrationsManager() {
 
     return rows.filter(entry => {
       const fullName = `${entry.first_name} ${entry.last_name}`.toLowerCase();
-      return fullName.includes(query) || entry.email.toLowerCase().includes(query);
+      return (
+        fullName.includes(query) ||
+        entry.email.toLowerCase().includes(query) ||
+        entry.application_ref?.toLowerCase().includes(query)
+      );
     });
   }, [rows, search]);
 
@@ -148,40 +195,9 @@ export function PreRegistrationsManager() {
       return;
     }
 
+    setSuccessMessage("Verification email sent.");
     await fetchRows();
     setResendingId(null);
-  }
-
-  async function manuallyVerifyRegistration(registrationId: string) {
-    setVerifyingId(registrationId);
-    setError(null);
-    setSuccessMessage(null);
-
-    const response = await fetch("/api/public/preregister", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        id: registrationId,
-        action: "manual_verify"
-      })
-    });
-
-    const payload = (await response.json()) as ManualVerifyResponse;
-    if (!response.ok || !payload.success || !payload.studentId) {
-      setError(payload.message ?? "Failed to manually verify registration.");
-      setVerifyingId(null);
-      return;
-    }
-
-    setRows(previous =>
-      previous.map(row =>
-        row.id === registrationId ? { ...row, status: "verified", student_id: payload.studentId ?? row.student_id } : row
-      )
-    );
-    setSuccessMessage("Student profile created");
-    setVerifyingId(null);
   }
 
   async function openDocuments(row: PreRegistration) {
@@ -213,13 +229,86 @@ export function PreRegistrationsManager() {
     setDocumentsLoading(false);
   }
 
+  async function openVerifyModal(row: PreRegistration) {
+    setVerifyTarget(row);
+    setVerifyForm({
+      assignedClassId: classOptions[0]?.id ?? "",
+      assignedSection: "",
+      generateInvoice: false
+    });
+    setVerifyModalOpen(true);
+    setSuccessMessage(null);
+    setError(null);
+    if (classOptions.length === 0) {
+      const loadedClasses = await fetchClassOptions();
+      setVerifyForm(current => ({
+        ...current,
+        assignedClassId: current.assignedClassId || loadedClasses[0]?.id || ""
+      }));
+    }
+  }
+
+  async function confirmVerification() {
+    if (!verifyTarget) {
+      return;
+    }
+    if (!verifyForm.assignedClassId) {
+      setError("Please select a class before confirming.");
+      return;
+    }
+
+    setVerifyingId(verifyTarget.id);
+    setError(null);
+    setSuccessMessage(null);
+
+    const response = await fetch("/api/admin/verify-registration", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        preRegistrationId: verifyTarget.id,
+        assignedClassId: verifyForm.assignedClassId,
+        assignedSection: verifyForm.assignedSection.trim() || undefined,
+        generateInvoice: verifyForm.generateInvoice
+      })
+    });
+
+    const payload = (await response.json()) as VerifyRegistrationResponse;
+    if (!response.ok || !payload.success || !payload.studentRecordId || !payload.studentId) {
+      setError(payload.error ?? "Failed to verify and create student record.");
+      setVerifyingId(null);
+      return;
+    }
+
+    setRows(previous =>
+      previous.map(row =>
+        row.id === verifyTarget.id
+          ? {
+              ...row,
+              status: "verified",
+              student_id: payload.studentRecordId ?? row.student_id
+            }
+          : row
+      )
+    );
+    setSuccessMessage(
+      payload.uploadLink
+        ? `Student record created (${payload.studentId}). Parent upload link generated.`
+        : `Student record created (${payload.studentId}).`
+    );
+    setVerifyingId(null);
+    setVerifyModalOpen(false);
+    setVerifyTarget(null);
+  }
+
   return (
     <section className="space-y-4">
       <header className="admin-content-card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Pre-Registrations</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Monitor Cambridge intake requests and verification status in real time.
+            Review applications and create student records after admissions verification.
           </p>
         </div>
         <input
@@ -229,8 +318,8 @@ export function PreRegistrationsManager() {
             setSearch(event.target.value);
             setCurrentPage(1);
           }}
-          placeholder="Search by name or email"
-          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm md:w-80"
+          placeholder="Search by name, email, or application ref"
+          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm md:w-96"
         />
       </header>
 
@@ -247,14 +336,14 @@ export function PreRegistrationsManager() {
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-700">
             <tr>
+              <th className="px-3 py-2">Application Ref</th>
               <th className="px-3 py-2">Name</th>
               <th className="px-3 py-2">Email</th>
               <th className="px-3 py-2">Phone</th>
               <th className="px-3 py-2">Grade</th>
-              <th className="px-3 py-2">Curriculum</th>
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2">Registered At</th>
-              <th className="px-3 py-2">Action</th>
+              <th className="px-3 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -267,13 +356,13 @@ export function PreRegistrationsManager() {
             )}
             {pagedRows.map(row => (
               <tr key={row.id} className="border-t border-slate-100">
+                <td className="px-3 py-2 font-semibold text-slate-700">{row.application_ref ?? "—"}</td>
                 <td className="px-3 py-2 font-medium text-slate-900">
                   {row.first_name} {row.last_name}
                 </td>
                 <td className="px-3 py-2">{row.email}</td>
                 <td className="px-3 py-2">{row.phone}</td>
                 <td className="px-3 py-2">{row.grade_level}</td>
-                <td className="px-3 py-2">{row.curriculum}</td>
                 <td className="px-3 py-2">
                   <span
                     className={[
@@ -295,7 +384,7 @@ export function PreRegistrationsManager() {
                         className="inline-flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100 disabled:opacity-60"
                         disabled={verifyingId === row.id || resendingId === row.id}
                         onClick={() => {
-                          void manuallyVerifyRegistration(row.id);
+                          void openVerifyModal(row);
                         }}
                       >
                         {verifyingId === row.id && (
@@ -304,7 +393,7 @@ export function PreRegistrationsManager() {
                             aria-hidden="true"
                           />
                         )}
-                        {verifyingId === row.id ? "Verifying..." : "Verify"}
+                        {verifyingId === row.id ? "Creating..." : "Verify & Create Student"}
                       </button>
                     )}
                     {row.status === "unverified" && (
@@ -367,6 +456,91 @@ export function PreRegistrationsManager() {
           </button>
         </div>
       </footer>
+
+      {verifyModalOpen && verifyTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/65 p-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Confirm Verification</h2>
+                <p className="text-sm text-slate-600">
+                  {verifyTarget.first_name} {verifyTarget.last_name} • {verifyTarget.application_ref ?? "No reference"}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="rounded-lg border border-slate-200 px-3 py-1 text-sm font-semibold hover:bg-slate-50"
+                onClick={() => {
+                  setVerifyModalOpen(false);
+                  setVerifyTarget(null);
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <label className="block space-y-1">
+                <span className="text-sm font-semibold text-slate-700">Assign Class</span>
+                <select
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                  value={verifyForm.assignedClassId}
+                  disabled={loadingClasses || verifyingId === verifyTarget.id}
+                  onChange={event =>
+                    setVerifyForm(current => ({ ...current, assignedClassId: event.target.value }))
+                  }
+                >
+                  <option value="">Select class</option>
+                  {classOptions.map(classOption => (
+                    <option key={classOption.id} value={classOption.id}>
+                      {classOption.gradeLevel} • {classOption.name} ({classOption.campus.name})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-sm font-semibold text-slate-700">Section (optional)</span>
+                <input
+                  type="text"
+                  placeholder="e.g. A"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                  value={verifyForm.assignedSection}
+                  disabled={verifyingId === verifyTarget.id}
+                  onChange={event =>
+                    setVerifyForm(current => ({ ...current, assignedSection: event.target.value }))
+                  }
+                />
+              </label>
+
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={verifyForm.generateInvoice}
+                  disabled={verifyingId === verifyTarget.id}
+                  onChange={event =>
+                    setVerifyForm(current => ({ ...current, generateInvoice: event.target.checked }))
+                  }
+                />
+                Generate initial admission fee invoice
+              </label>
+
+              <button
+                type="button"
+                disabled={verifyingId === verifyTarget.id || loadingClasses}
+                className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+                onClick={() => {
+                  void confirmVerification();
+                }}
+              >
+                {verifyingId === verifyTarget.id
+                  ? "Creating Student Record..."
+                  : "Confirm & Create Student Record"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {documentsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/65 p-4">
