@@ -123,6 +123,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     }
   },
   [ROLE.PRINCIPAL]: {
+    // Full access to every section EXCEPT the Super Admin console (settings, user mgmt, system config)
     routeAccess: [
       "/admin",
       "/admin/principal",
@@ -133,6 +134,11 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/reception",
       "/admin/reception/applications",
       "/admin/reception/analytics",
+      "/admin/registration",
+      "/admin/finance",
+      "/admin/finance/invoices",
+      "/admin/finance/payments",
+      "/admin/finance/reports",
       "/admin/exams",
       "/admin/exams/marks",
       "/admin/exams/reports",
@@ -144,25 +150,31 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/attendance",
       "/admin/attendance/reports"
     ],
+    // super_admin_console intentionally omitted — Settings is Super Admin only
     navigationVisibility: [
       "dashboard",
       "principal_dashboard",
       "principal_staff_accounts",
       "reception_dashboard",
+      "registration_wizard",
+      "finance_dashboard",
       "exams_suite",
       "communications_center",
       "attendance_module"
     ],
     actions: {
       dashboard: ["view"],
+      user: ["view"],                                                   // read-only; no create/override
       staff_account: ["view", "create", "edit"],
-      student: ["view", "approve", "export"],
-      guardian: ["view", "export"],
-      application: ["view", "approve", "export"],
-      enrollment: ["view", "approve", "export"],
+      student: ["view", "create", "edit", "approve", "export"],
+      guardian: ["view", "create", "edit", "export"],
+      application: ["view", "create", "edit", "approve", "export"],
+      enrollment: ["view", "create", "edit", "approve", "export"],
       student_document: ["view", "approve", "export"],
-      exam_term: ["view", "approve"],
-      exam_component: ["view", "approve"],
+      fee_invoice: ["view", "approve", "export"],
+      payment: ["view", "export"],
+      exam_term: ["view", "create", "edit", "approve"],
+      exam_component: ["view", "create", "edit", "approve"],
       student_mark: ["view", "approve", "export"],
       report_card: ["view", "approve", "export"],
       visitor_log: ["view", "export"],
@@ -172,6 +184,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       message_template: ["view", "create", "edit", "approve"],
       attendance_record: ["view", "create", "edit", "approve", "export"],
       attendance_correction: ["view", "approve"]
+      // `settings` resource intentionally omitted — Super Admin only
     }
   },
   [ROLE.RECEPTION]: {
