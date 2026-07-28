@@ -56,6 +56,18 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     href: "/admin/exams",
     label: "Exams & Grading",
     description: "Kenyan term exams, marks entry, and report cards."
+  },
+  {
+    id: "communications_center",
+    href: "/admin/communications",
+    label: "Communications Centre",
+    description: "Send messages to parents and guardians via SMS and email."
+  },
+  {
+    id: "attendance_module",
+    href: "/admin/attendance",
+    label: "Attendance",
+    description: "Track and manage student attendance records."
   }
 ];
 

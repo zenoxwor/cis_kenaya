@@ -30,7 +30,11 @@ export const DOMAIN_RESOURCES = [
   "visitor_log",
   "audit_log",
   "settings",
-  "report"
+  "report",
+  "communication",
+  "message_template",
+  "attendance_record",
+  "attendance_correction"
 ] as const;
 
 export type DomainResource = (typeof DOMAIN_RESOURCES)[number];
@@ -56,7 +60,14 @@ export const ADMIN_ROUTE_KEYS = [
   "/admin/finance/reports",
   "/admin/exams",
   "/admin/exams/marks",
-  "/admin/exams/reports"
+  "/admin/exams/reports",
+  "/admin/communications",
+  "/admin/communications/compose",
+  "/admin/communications/templates",
+  "/admin/communications/history",
+  "/admin/communications/settings",
+  "/admin/attendance",
+  "/admin/attendance/reports"
 ] as const;
 
 export type AdminRouteKey = (typeof ADMIN_ROUTE_KEYS)[number];
@@ -69,7 +80,9 @@ export const ADMIN_NAV_KEYS = [
   "reception_dashboard",
   "registration_wizard",
   "finance_dashboard",
-  "exams_suite"
+  "exams_suite",
+  "communications_center",
+  "attendance_module"
 ] as const;
 
 export type AdminNavKey = (typeof ADMIN_NAV_KEYS)[number];
@@ -102,7 +115,11 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       visitor_log: ["view", "create", "edit", "export", "override"],
       audit_log: ["view", "export", "override"],
       settings: ["view", "edit", "approve", "override"],
-      report: ["view", "export", "override"]
+      report: ["view", "export", "override"],
+      communication: ["view", "create", "edit", "approve", "export", "override"],
+      message_template: ["view", "create", "edit", "approve", "override"],
+      attendance_record: ["view", "create", "edit", "approve", "export", "override"],
+      attendance_correction: ["view", "create", "edit", "approve", "override"]
     }
   },
   [ROLE.PRINCIPAL]: {
@@ -121,7 +138,13 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/exams/reports",
       "/admin/finance",
       "/admin/finance/invoices",
-      "/admin/finance/reports"
+      "/admin/finance/reports",
+      "/admin/communications",
+      "/admin/communications/history",
+      "/admin/communications/templates",
+      "/admin/communications/settings",
+      "/admin/attendance",
+      "/admin/attendance/reports"
     ],
     navigationVisibility: [
       "dashboard",
@@ -129,7 +152,9 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "principal_staff_accounts",
       "reception_dashboard",
       "finance_dashboard",
-      "exams_suite"
+      "exams_suite",
+      "communications_center",
+      "attendance_module"
     ],
     actions: {
       dashboard: ["view"],
@@ -147,7 +172,11 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       report_card: ["view", "approve", "export"],
       visitor_log: ["view", "export"],
       audit_log: ["view"],
-      report: ["view", "export"]
+      report: ["view", "export"],
+      communication: ["view", "export"],
+      message_template: ["view", "create", "edit", "approve"],
+      attendance_record: ["view", "create", "edit", "approve", "export"],
+      attendance_correction: ["view", "approve"]
     }
   },
   [ROLE.RECEPTION]: {
@@ -160,9 +189,21 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/registration",
       "/admin/exams",
       "/admin/exams/marks",
-      "/admin/exams/reports"
+      "/admin/exams/reports",
+      "/admin/communications",
+      "/admin/communications/compose",
+      "/admin/communications/history",
+      "/admin/attendance",
+      "/admin/attendance/reports"
     ],
-    navigationVisibility: ["dashboard", "reception_dashboard", "registration_wizard", "exams_suite"],
+    navigationVisibility: [
+      "dashboard",
+      "reception_dashboard",
+      "registration_wizard",
+      "exams_suite",
+      "communications_center",
+      "attendance_module"
+    ],
     actions: {
       dashboard: ["view"],
       student: ["view", "create", "edit"],
@@ -175,7 +216,10 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       student_mark: ["view", "create", "edit", "export"],
       report_card: ["view"],
       visitor_log: ["view", "create", "edit"],
-      report: ["view", "export"]
+      report: ["view", "export"],
+      communication: ["view", "create"],
+      attendance_record: ["view", "create", "edit"],
+      attendance_correction: ["view", "create"]
     }
   },
   [ROLE.FINANCE]: {
@@ -184,9 +228,16 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/finance",
       "/admin/finance/invoices",
       "/admin/finance/payments",
-      "/admin/finance/reports"
+      "/admin/finance/reports",
+      "/admin/communications",
+      "/admin/communications/compose",
+      "/admin/communications/history"
     ],
-    navigationVisibility: ["dashboard", "finance_dashboard"],
+    navigationVisibility: [
+      "dashboard",
+      "finance_dashboard",
+      "communications_center"
+    ],
     actions: {
       dashboard: ["view"],
       fee_invoice: ["view", "create", "edit", "approve", "export"],
@@ -194,7 +245,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       student: ["view", "export"],
       guardian: ["view", "export"],
       report: ["view", "export"],
-      audit_log: ["view"]
+      audit_log: ["view"],
+      communication: ["view", "create"]
     }
   },
   [ROLE.TEACHER]: {

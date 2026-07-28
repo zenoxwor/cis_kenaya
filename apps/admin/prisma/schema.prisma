@@ -83,6 +83,38 @@ enum ReportCardStatus {
   PUBLISHED
 }
 
+enum MessageType {
+  SMS
+  EMAIL
+  BOTH
+}
+
+enum MessageCategory {
+  FEE
+  ATTENDANCE
+  DISCIPLINE
+  GENERAL
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  FAILED
+}
+
+enum DeliveryChannel {
+  SMS
+  EMAIL
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+}
+
 model Campus {
   id        String   @id @default(cuid())
   code      String   @unique
@@ -104,6 +136,8 @@ model Campus {
   auditLogs    AuditLog[]
   terms        Term[]
   subjects     Subject[]
+  schoolClasses SchoolClass[]
+  studentDocuments StudentDocument[]
 }
 
 model Role {
@@ -140,6 +174,10 @@ model User {
   marksEntered       StudentMark[]  @relation("StudentMarkEnteredBy")
   marksVerified      StudentMark[]  @relation("StudentMarkVerifiedBy")
   reportCardsApproved ReportCard[]  @relation("ReportCardApprovedBy")
+  campaignsSent      MessageCampaign[] @relation("CampaignSentBy")
+  attendanceMarked   AttendanceRecord[] @relation("AttendanceMarkedBy")
+  attendanceCorrectionRequests AttendanceCorrection[] @relation("AttendanceCorrectionRequestedBy")
+  attendanceCorrectionApprovals AttendanceCorrection[] @relation("AttendanceCorrectionApprovedBy")
 
   @@unique([campusId, email])
   @@index([roleId, isActive])
@@ -157,6 +195,8 @@ model Student {
   primaryLanguage   String?
   status            StudentStatus @default(PROSPECT)
   enrolledAt        DateTime?
+  isActive          Boolean       @default(true)
+  schoolClassId     String?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -168,6 +208,8 @@ model Student {
   studentLinks  StudentGuardian[]
   marks         StudentMark[]
   reportCards   ReportCard[]
+  attendanceRecords AttendanceRecord[]
+  schoolClass   SchoolClass? @relation(fields: [schoolClassId], references: [id])
 
   @@unique([campusId, studentCode])
   @@index([campusId, status])
@@ -192,6 +234,7 @@ model Guardian {
   campus       Campus             @relation(fields: [campusId], references: [id], onDelete: Restrict)
   students     StudentGuardian[]
   applications Application[]
+  deliveries   MessageDelivery[]
 
   @@unique([campusId, guardianCode])
   @@index([campusId, phoneNumber])
@@ -466,4 +509,148 @@ model ReportCard {
 
   @@unique([studentId, termId])
   @@index([termId, status])
+}
+
+// ─── Communications ──────────────────────────────────────────────────────────
+
+model MessageTemplate {
+  id          String          @id @default(cuid())
+  campusId    String
+  name        String
+  subject     String?
+  body        String
+  type        MessageType     @default(BOTH)
+  category    MessageCategory @default(GENERAL)
+  isSystem    Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  campaigns MessageCampaign[]
+
+  @@index([campusId, category])
+  @@index([campusId, type])
+}
+
+model MessageCampaign {
+  id             String         @id @default(cuid())
+  campusId       String
+  templateId     String
+  sentById       String
+  audienceFilter String         @default("all")
+  audienceMeta   Json?
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  status         CampaignStatus @default(DRAFT)
+  totalCount     Int            @default(0)
+  sentCount      Int            @default(0)
+  failedCount    Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  template   MessageTemplate   @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  sentBy     User              @relation("CampaignSentBy", fields: [sentById], references: [id], onDelete: Restrict)
+  deliveries MessageDelivery[]
+
+  @@index([campusId, status, sentAt])
+  @@index([sentById])
+}
+
+model MessageDelivery {
+  id           String          @id @default(cuid())
+  campaignId   String
+  guardianId   String
+  channel      DeliveryChannel
+  status       DeliveryStatus  @default(PENDING)
+  errorMessage String?
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  campaign MessageCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  guardian Guardian        @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+
+  @@index([campaignId, status])
+  @@index([guardianId, sentAt])
+}
+
+// ─── Attendance ───────────────────────────────────────────────────────────────
+
+model SchoolClass {
+  id         String   @id @default(cuid())
+  campusId   String
+  name       String
+  gradeLevel String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  campus            Campus             @relation(fields: [campusId], references: [id], onDelete: Restrict)
+  students          Student[]
+  attendanceRecords AttendanceRecord[]
+  attendancePeriods AttendancePeriod[]
+
+  @@unique([campusId, name])
+  @@index([campusId, isActive])
+}
+
+model AttendancePeriod {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  startDate DateTime
+  endDate   DateTime
+  classId   String?
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  class   SchoolClass?     @relation(fields: [classId], references: [id])
+  records AttendanceRecord[]
+
+  @@index([classId, status])
+}
+
+model AttendanceRecord {
+  id         String   @id @default(cuid())
+  studentId  String
+  classId    String
+  periodId   String?
+  date       DateTime
+  status     String   @default("PRESENT")
+  notes      String?
+  markedById String
+  markedAt   DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  student     Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  class       SchoolClass       @relation(fields: [classId], references: [id], onDelete: Restrict)
+  period      AttendancePeriod? @relation(fields: [periodId], references: [id])
+  markedBy    User              @relation("AttendanceMarkedBy", fields: [markedById], references: [id], onDelete: Restrict)
+  corrections AttendanceCorrection[]
+
+  @@unique([studentId, date])
+  @@index([classId, date])
+  @@index([date])
+}
+
+model AttendanceCorrection {
+  id             String    @id @default(cuid())
+  recordId       String
+  requestedById  String
+  reason         String
+  originalStatus String
+  newStatus      String
+  approvedById   String?
+  status         String    @default("PENDING")
+  reviewedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  record      AttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Restrict)
+  requestedBy User             @relation("AttendanceCorrectionRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+  approvedBy  User?            @relation("AttendanceCorrectionApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([recordId])
+  @@index([status])
 }
