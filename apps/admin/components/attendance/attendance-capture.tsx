@@ -36,19 +36,22 @@ export default function AttendanceCapture({ canMark }: Props) {
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [classesLoading, setClassesLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Load classes on mount
   useEffect(() => {
+    setClassesLoading(true);
     fetch("/api/classes")
       .then((r) => r.json())
       .then((d) => {
         setClasses(d.classes ?? []);
         if (d.classes?.length > 0) setSelectedClass(d.classes[0].id);
       })
-      .catch(() => setError("Failed to load classes"));
+      .catch(() => setError("Failed to load classes"))
+      .finally(() => setClassesLoading(false));
   }, []);
 
   // Load students when class or date changes
@@ -119,8 +122,42 @@ export default function AttendanceCapture({ canMark }: Props) {
 
   return (
     <div>
-      {/* Controls row */}
-      <div
+      {/* Empty state when no classes exist */}
+      {!classesLoading && classes.length === 0 && (
+        <div
+          style={{
+            background: "#fffbeb",
+            border: "1px solid #fcd34d",
+            borderRadius: 8,
+            padding: "1.25rem 1.5rem",
+            marginBottom: "1.5rem",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "0.75rem",
+          }}
+        >
+          <span style={{ fontSize: "1.25rem" }}>⚠️</span>
+          <div>
+            <p style={{ fontWeight: 700, color: "#92400e", marginBottom: 4 }}>
+              No classes found.
+            </p>
+            <p style={{ color: "#78350f", fontSize: "0.875rem" }}>
+              Please set up classes in{" "}
+              <a
+                href="/admin/principal/classes"
+                style={{ color: "#b45309", fontWeight: 600, textDecoration: "underline" }}
+              >
+                Principal → Class Management
+              </a>{" "}
+              before marking attendance.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Controls row — only show when classes exist */}
+      {(classesLoading || classes.length > 0) && (
+        <div
         style={{
           display: "flex",
           flexWrap: "wrap",
@@ -183,6 +220,7 @@ export default function AttendanceCapture({ canMark }: Props) {
           </button>
         )}
       </div>
+      )}
 
       {/* Summary badges */}
       {students.length > 0 && (
