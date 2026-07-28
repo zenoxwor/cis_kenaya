@@ -242,7 +242,7 @@ class StudentRegistrationWizard {
     this.progressBar.style.width = `${progress}%`;
   }
 
-  handleSubmit(e) {
+  async handleSubmit(e) {
     e.preventDefault();
 
     if (!this.validateStep(this.currentStep)) {
@@ -251,7 +251,113 @@ class StudentRegistrationWizard {
     }
 
     this.collectAllData();
-    this.showSummary();
+    await this.submitToAdmin();
+  }
+
+  async submitToAdmin() {
+    const submitBtn = document.getElementById('submitBtn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>⏳ Submitting...</span>';
+
+    try {
+      const formData = new FormData();
+      const d = this.formData;
+
+      // Map 6-step form fields to the API's expected fields
+      formData.append('first_name', d.firstName || '');
+      formData.append('last_name', d.familyName || '');
+      formData.append('email', d.studentEmail || d.guardianEmail || '');
+      formData.append('phone', d.guardianPhone || d.studentPhone || '');
+      formData.append('grade_level', d.gradeLevel || d.educationLevel || '');
+
+      // Extra fields stored as JSON metadata
+      const extra = {
+        fatherName: d.fatherName,
+        motherName: d.motherName,
+        gender: d.gender,
+        dateOfBirth: d.dateOfBirth,
+        placeOfBirth: d.placeOfBirth,
+        nationality: d.nationality,
+        nationalId: d.nationalId,
+        nativeLanguage: d.nativeLanguage,
+        religion: d.religion,
+        fullAddress: d.fullAddress,
+        homeLocation: d.homeLocation,
+        studentPhone: d.studentPhone,
+        guardianName: d.guardianName,
+        guardianRelationship: d.guardianRelationship,
+        guardianNationalId: d.guardianNationalId,
+        emergencyPhone: d.emergencyPhone,
+        guardianOccupation: d.guardianOccupation,
+        motherPhone: d.motherPhone,
+        parentalStatus: d.parentalStatus,
+        educationLevel: d.educationLevel,
+        enrollmentDate: d.enrollmentDate,
+        studentStatus: d.studentStatus,
+        bloodType: d.bloodType,
+        allergies: d.allergies,
+        chronicConditions: d.chronicConditions,
+        specialNeeds: d.specialNeeds,
+        busTransport: d.busTransport,
+        busRoute: d.busRoute,
+        mealPlan: d.mealPlan,
+        source: 'full_registration_form'
+      };
+      formData.append('extra', JSON.stringify(extra));
+
+      // Attach uploaded files
+      const fileFields = ['studentPhoto', 'birthCert', 'idCopy', 'transcript', 'medicalRec'];
+      fileFields.forEach(id => {
+        const input = document.getElementById(id);
+        if (input && input.files && input.files[0]) {
+          formData.append(id, input.files[0]);
+        }
+      });
+
+      const response = await fetch('https://admin-theta-rouge-89.vercel.app/api/public/preregister', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Submission failed');
+
+      // Clear saved draft
+      localStorage.removeItem('studentFormData');
+
+      // Show success screen
+      this.showSuccessScreen(d.firstName);
+
+    } catch (err) {
+      this.showErrorNotification(err.message || 'Something went wrong. Please try again.');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  }
+
+  showSuccessScreen(firstName) {
+    const container = document.querySelector('.reg-container');
+    container.innerHTML = `
+      <div style="text-align:center;padding:80px 24px;max-width:520px;margin:0 auto;">
+        <div style="font-size:4rem;margin-bottom:1.5rem;">✅</div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:2rem;color:#1a2744;margin-bottom:1rem;">Registration Submitted!</h2>
+        <p style="color:#555;line-height:1.7;font-size:1rem;margin-bottom:2rem;">
+          Thank you, <strong>${firstName || 'there'}</strong>! Your registration has been received by our admissions team.
+          We will review your details and contact you within <strong>24–48 hours</strong>.
+        </p>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1.25rem;margin-bottom:2rem;text-align:left;">
+          <p style="color:#166534;font-size:.9rem;margin:0;">
+            🏫 <strong>Capital International School Kenya</strong><br>
+            Cambridge International Curriculum · 2026–2027 Academic Year<br>
+            Our team will reach out to confirm your enrollment appointment.
+          </p>
+        </div>
+        <a href="index.html" style="display:inline-block;background:#1a2744;color:#f8d16a;padding:.85rem 2.5rem;border-radius:999px;font-weight:700;font-size:1rem;text-decoration:none;">
+          ← Back to Homepage
+        </a>
+      </div>
+    `;
   }
 
   collectAllData() {
