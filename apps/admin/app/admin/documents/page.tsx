@@ -11,7 +11,7 @@ export default async function DocumentsPage() {
     redirect("/admin/unauthorized");
   }
 
-  const records = listDocumentRecordsForUser(user);
+  const records = await listDocumentRecordsForUser(user);
 
   return (
     <section className="space-y-6">

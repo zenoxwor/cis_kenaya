@@ -483,7 +483,8 @@ export async function GET() {
       status: item.status,
       verification_token: item.verificationToken,
       created_at: item.createdAt,
-      documents: readStoredDocuments(item.documents)
+      documents: readStoredDocuments(item.documents),
+      student_id: item.studentId ?? null
     }))
   });
 }

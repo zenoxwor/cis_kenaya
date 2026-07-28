@@ -14,6 +14,7 @@ type PreRegistration = {
   verification_token: string;
   created_at: string;
   documents: UploadedDocument[];
+  student_id: string | null;
 };
 
 type UploadedDocument = {
@@ -253,6 +254,14 @@ export function PreRegistrationsManager() {
                       >
                         {resendingId === row.id ? "Sending..." : "Resend Verification Email"}
                       </button>
+                    )}
+                    {row.status === "verified" && row.student_id && (
+                      <a
+                        className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                        href={`/admin/reception?section=search&q=${encodeURIComponent(`${row.first_name} ${row.last_name}`)}`}
+                      >
+                        View Student Profile
+                      </a>
                     )}
                     <button
                       type="button"

@@ -1,15 +1,15 @@
+import type { DocumentStatus, Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db/client";
 import type { SessionUser } from "@/lib/auth/types";
 import { ROLE } from "@/lib/rbac/roles";
-import { MOCK_STUDENT_DOCUMENTS } from "@/lib/document-center/mock-data";
 import {
   DOCUMENT_STATUS_TRANSITIONS,
+  type DocumentCategory,
   type DocumentReminderRecipient,
   type DocumentReminderType,
   type DocumentVerificationStatus,
   type StudentDocumentRecord
 } from "@/lib/document-center/types";
-
-const documentStore: StudentDocumentRecord[] = structuredClone(MOCK_STUDENT_DOCUMENTS);
 
 type DocumentMutationActor = Pick<SessionUser, "id" | "fullName" | "role">;
 
@@ -34,15 +34,69 @@ type ReminderInput = {
   documentIds?: string[];
 };
 
-function cloneRecord(record: StudentDocumentRecord): StudentDocumentRecord {
-  return {
-    ...record,
-    timeline: [...record.timeline]
-  };
+function toVerificationStatus(status: DocumentStatus): DocumentVerificationStatus {
+  switch (status) {
+    case "PENDING":
+      return "missing";
+    case "UPLOADED":
+      return "uploaded";
+    case "VERIFIED":
+      return "verified";
+    case "REJECTED":
+      return "rejected";
+    case "EXPIRED":
+      return "expired";
+  }
 }
 
-function byUpdatedDesc(a: StudentDocumentRecord, b: StudentDocumentRecord) {
-  return new Date(b.lastUpdatedAt).getTime() - new Date(a.lastUpdatedAt).getTime();
+function toPrismaStatus(status: DocumentVerificationStatus): DocumentStatus {
+  switch (status) {
+    case "missing":
+      return "PENDING";
+    case "uploaded":
+      return "UPLOADED";
+    case "verified":
+      return "VERIFIED";
+    case "rejected":
+      return "REJECTED";
+    case "expired":
+      return "EXPIRED";
+  }
+}
+
+function categoryFromDocumentType(documentType: string): DocumentCategory {
+  const lower = documentType.toLowerCase().replace(/_/g, " ");
+  if (lower.includes("birth") || lower.includes("national id") || lower.includes("passport") || lower.includes("guardian id")) {
+    return "identity";
+  }
+  if (lower.includes("medical") || lower.includes("immuniz") || lower.includes("vaccine")) {
+    return "medical";
+  }
+  if (lower.includes("transcript") || lower.includes("report card") || lower.includes("previous school") || lower.includes("academic")) {
+    return "academic";
+  }
+  if (lower.includes("admission")) {
+    return "admission";
+  }
+  if (lower.includes("consent")) {
+    return "consent";
+  }
+  if (lower.includes("fee") || lower.includes("finance")) {
+    return "finance";
+  }
+  return "identity";
+}
+
+function formatDocumentType(documentType: string): string {
+  return documentType
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function addDaysIso(sourceIso: string, days: number) {
+  const date = new Date(sourceIso);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString();
 }
 
 function toIsoAtStartOfDay(value: string) {
@@ -53,222 +107,253 @@ function toIsoAtStartOfDay(value: string) {
   return date.toISOString();
 }
 
-function addDaysIso(sourceIso: string, days: number) {
-  const date = new Date(sourceIso);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString();
-}
+type DbDocWithJoins = Awaited<ReturnType<typeof fetchDocumentsWithJoins>>[number];
 
-function computeStatus(record: StudentDocumentRecord, now: Date) {
-  if (record.status === "verified" && record.expiresAt) {
-    const expiry = new Date(record.expiresAt);
-    if (expiry.getTime() < now.getTime()) {
-      return "expired" as const;
-    }
-  }
-  return record.status;
-}
-
-function pushTimeline(
-  record: StudentDocumentRecord,
-  actor: DocumentMutationActor | { fullName: string; role: "SYSTEM" },
-  action: string,
-  note: string,
-  fromStatus: DocumentVerificationStatus | null,
-  toStatus: DocumentVerificationStatus | null,
-  at: string
-) {
-  record.timeline.unshift({
-    id: `evt-${Date.now()}-${Math.floor(Math.random() * 10_000)}`,
-    at,
-    actorName: actor.fullName,
-    actorRole: actor.role,
-    action,
-    note,
-    fromStatus,
-    toStatus
+async function fetchDocumentsWithJoins(whereClause?: Prisma.StudentDocumentWhereInput) {
+  return prisma.studentDocument.findMany({
+    where: whereClause,
+    include: {
+      student: {
+        include: {
+          schoolClass: { select: { id: true, name: true } },
+          studentLinks: {
+            include: {
+              guardian: { select: { fullName: true, phoneNumber: true, email: true } }
+            },
+            orderBy: [{ isPrimary: "desc" }]
+          }
+        }
+      }
+    },
+    orderBy: { updatedAt: "desc" }
   });
 }
 
-function applySystemExpiry(record: StudentDocumentRecord, now: Date) {
-  if (record.status !== "verified" || !record.expiresAt) {
-    return;
-  }
+function toRecord(doc: DbDocWithJoins): StudentDocumentRecord {
+  const student = doc.student;
+  const studentName = `${student.firstName} ${student.lastName}`.trim();
+  const classId = student.schoolClassId ?? "unassigned";
+  const className = student.schoolClass?.name ?? "Unassigned";
+  const guardianLink = student.studentLinks[0];
+  const guardianName = guardianLink?.guardian.fullName ?? "—";
+  const guardianPhone = guardianLink?.guardian.phoneNumber ?? "";
+  const guardianEmail = guardianLink?.guardian.email ?? null;
 
-  const expiresAt = new Date(record.expiresAt);
-  if (expiresAt.getTime() < now.getTime()) {
-    const at = now.toISOString();
-    const fromStatus = record.status;
-    record.status = "expired";
-    record.lastUpdatedAt = at;
-    record.nextReminderAt = null;
-    pushTimeline(
-      record,
-      { fullName: "System Scheduler", role: "SYSTEM" },
-      "Document expired",
-      "Verification has expired and needs a fresh upload.",
-      fromStatus,
-      "expired",
-      at
-    );
-  }
+  return {
+    id: doc.id,
+    studentId: doc.studentId,
+    studentName,
+    classId,
+    className,
+    guardianName,
+    guardianPhone,
+    guardianEmail,
+    category: categoryFromDocumentType(doc.documentType),
+    documentName: formatDocumentType(doc.documentType),
+    fileName: doc.fileName,
+    storagePath: doc.storagePath,
+    signedUrl: null,
+    status: toVerificationStatus(doc.status),
+    uploadedAt: doc.uploadedAt?.toISOString() ?? null,
+    verifiedAt: doc.verifiedAt?.toISOString() ?? null,
+    rejectedAt: doc.rejectedAt?.toISOString() ?? null,
+    expiresAt: doc.expiresAt?.toISOString() ?? null,
+    reminderLeadDays: doc.reminderLeadDays,
+    reminderEnabled: doc.reminderEnabled,
+    nextReminderAt: doc.nextReminderAt?.toISOString() ?? null,
+    lastReminderAt: doc.lastReminderAt?.toISOString() ?? null,
+    missingReminderEveryDays: doc.missingReminderEveryDays,
+    nextMissingReminderAt: doc.nextMissingReminderAt?.toISOString() ?? null,
+    lastMissingReminderAt: doc.lastMissingReminderAt?.toISOString() ?? null,
+    lastUpdatedAt: doc.updatedAt.toISOString(),
+    timeline: []
+  };
 }
 
-function canViewRecord(record: StudentDocumentRecord, user: SessionUser) {
-  if (user.role !== ROLE.TEACHER) {
-    return true;
-  }
-
-  const assignedClasses = user.assignedClassIds ?? [];
-  return assignedClasses.includes(record.classId);
-}
-
-function syncSystemStatuses() {
+async function syncExpiredDocuments(docIds: string[]) {
+  if (docIds.length === 0) return;
   const now = new Date();
-  for (const record of documentStore) {
-    applySystemExpiry(record, now);
-  }
+  await prisma.studentDocument.updateMany({
+    where: {
+      id: { in: docIds },
+      status: "VERIFIED",
+      expiresAt: { lt: now }
+    },
+    data: { status: "EXPIRED" }
+  });
 }
 
-function getRecordOrThrow(documentId: string) {
-  const record = documentStore.find(doc => doc.id === documentId);
-  if (!record) {
-    throw new Error("Document record not found.");
-  }
-  return record;
+function canViewDocument(doc: { student: { schoolClassId: string | null } }, user: SessionUser) {
+  if (user.role !== ROLE.TEACHER) return true;
+  const classId = doc.student.schoolClassId;
+  const assignedClasses = user.assignedClassIds ?? [];
+  return classId !== null && assignedClasses.includes(classId);
 }
 
-export function listDocumentRecordsForUser(user: SessionUser) {
-  syncSystemStatuses();
-  return documentStore.filter(record => canViewRecord(record, user)).map(cloneRecord).sort(byUpdatedDesc);
+export async function listDocumentRecordsForUser(user: SessionUser): Promise<StudentDocumentRecord[]> {
+  const whereClause =
+    user.role === ROLE.TEACHER
+      ? { student: { schoolClassId: { in: user.assignedClassIds ?? [] } } }
+      : undefined;
+
+  const docs = await fetchDocumentsWithJoins(whereClause);
+
+  const expiredCandidateIds = docs
+    .filter(doc => doc.status === "VERIFIED" && doc.expiresAt && doc.expiresAt < new Date())
+    .map(doc => doc.id);
+  await syncExpiredDocuments(expiredCandidateIds);
+
+  const freshDocs = expiredCandidateIds.length > 0
+    ? await fetchDocumentsWithJoins(whereClause)
+    : docs;
+
+  return freshDocs.filter(doc => canViewDocument(doc, user)).map(toRecord);
 }
 
-export function transitionDocumentStatus(input: TransitionInput) {
-  syncSystemStatuses();
-  const record = getRecordOrThrow(input.documentId);
-  const fromStatus = computeStatus(record, new Date());
+export async function transitionDocumentStatus(input: TransitionInput): Promise<void> {
+  const doc = await prisma.studentDocument.findUnique({
+    where: { id: input.documentId },
+    select: { id: true, status: true, expiresAt: true, reminderEnabled: true, reminderLeadDays: true, missingReminderEveryDays: true }
+  });
+  if (!doc) throw new Error("Document record not found.");
 
-  if (fromStatus === input.targetStatus) {
-    return cloneRecord(record);
+  let effectiveStatus = toVerificationStatus(doc.status);
+  if (effectiveStatus === "verified" && doc.expiresAt && doc.expiresAt < new Date()) {
+    effectiveStatus = "expired";
   }
 
-  const allowed = DOCUMENT_STATUS_TRANSITIONS[fromStatus].includes(input.targetStatus);
+  if (effectiveStatus === input.targetStatus) return;
+
+  const allowed = DOCUMENT_STATUS_TRANSITIONS[effectiveStatus].includes(input.targetStatus);
   if (!allowed) {
-    throw new Error(`Invalid status transition from ${fromStatus} to ${input.targetStatus}.`);
+    throw new Error(`Invalid status transition from ${effectiveStatus} to ${input.targetStatus}.`);
   }
 
-  const nowIso = new Date().toISOString();
+  const now = new Date();
+  const nowIso = now.toISOString();
+
+  const updateData: Parameters<typeof prisma.studentDocument.update>[0]["data"] = {
+    status: toPrismaStatus(input.targetStatus),
+    notes: input.note ?? undefined
+  };
 
   if (input.targetStatus === "uploaded") {
-    record.uploadedAt = nowIso;
-    record.fileName = record.fileName ?? `${record.documentName.toLowerCase().replace(/\s+/g, "_")}.pdf`;
-    record.verifiedAt = null;
-    record.rejectedAt = null;
-    record.nextMissingReminderAt = null;
-    record.lastMissingReminderAt = null;
+    updateData.uploadedAt = now;
+    updateData.verifiedAt = null;
+    updateData.rejectedAt = null;
+    updateData.nextMissingReminderAt = null;
+    updateData.lastMissingReminderAt = null;
   }
 
   if (input.targetStatus === "verified") {
-    record.verifiedAt = nowIso;
-    record.rejectedAt = null;
-    record.nextMissingReminderAt = null;
-    record.lastMissingReminderAt = null;
-    if (record.reminderEnabled && record.expiresAt) {
-      record.nextReminderAt = addDaysIso(record.expiresAt, -Math.max(record.reminderLeadDays, 1));
+    updateData.verifiedAt = now;
+    updateData.rejectedAt = null;
+    updateData.nextMissingReminderAt = null;
+    updateData.lastMissingReminderAt = null;
+    if (doc.reminderEnabled && doc.expiresAt) {
+      updateData.nextReminderAt = new Date(
+        addDaysIso(doc.expiresAt.toISOString(), -Math.max(doc.reminderLeadDays, 1))
+      );
     }
   }
 
   if (input.targetStatus === "rejected") {
-    record.rejectedAt = nowIso;
-    record.nextMissingReminderAt = addDaysIso(nowIso, Math.max(record.missingReminderEveryDays, 1));
+    updateData.rejectedAt = now;
+    updateData.nextMissingReminderAt = new Date(
+      addDaysIso(nowIso, Math.max(doc.missingReminderEveryDays, 1))
+    );
   }
 
   if (input.targetStatus === "expired") {
-    record.nextReminderAt = null;
-    record.nextMissingReminderAt = addDaysIso(nowIso, Math.max(record.missingReminderEveryDays, 1));
+    updateData.nextReminderAt = null;
+    updateData.nextMissingReminderAt = new Date(
+      addDaysIso(nowIso, Math.max(doc.missingReminderEveryDays, 1))
+    );
   }
 
-  record.status = input.targetStatus;
-  record.lastUpdatedAt = nowIso;
-
-  pushTimeline(
-    record,
-    input.actor,
-    `Status updated to ${input.targetStatus}`,
-    input.note ?? "Document lifecycle status updated.",
-    fromStatus,
-    input.targetStatus,
-    nowIso
-  );
-
-  return cloneRecord(record);
+  await prisma.studentDocument.update({
+    where: { id: input.documentId },
+    data: updateData
+  });
 }
 
-export function updateDocumentExpiry(input: UpdateExpiryInput) {
-  syncSystemStatuses();
-  const record = getRecordOrThrow(input.documentId);
-  const nowIso = new Date().toISOString();
+export async function updateDocumentExpiry(input: UpdateExpiryInput): Promise<void> {
+  const doc = await prisma.studentDocument.findUnique({
+    where: { id: input.documentId },
+    select: { id: true }
+  });
+  if (!doc) throw new Error("Document record not found.");
 
   const normalizedReminderLeadDays = Math.max(Math.floor(input.reminderLeadDays), 1);
+  const expiresAt = input.expiresAt ? new Date(toIsoAtStartOfDay(input.expiresAt)) : null;
 
-  record.reminderLeadDays = normalizedReminderLeadDays;
-  record.reminderEnabled = input.reminderEnabled;
-  record.expiresAt = input.expiresAt ? toIsoAtStartOfDay(input.expiresAt) : null;
-  record.nextReminderAt =
-    input.reminderEnabled && record.expiresAt
-      ? addDaysIso(record.expiresAt, -normalizedReminderLeadDays)
+  const nextReminderAt =
+    input.reminderEnabled && expiresAt
+      ? new Date(addDaysIso(expiresAt.toISOString(), -normalizedReminderLeadDays))
       : null;
-  record.lastUpdatedAt = nowIso;
 
-  if (record.status === "verified" && record.expiresAt && new Date(record.expiresAt).getTime() < Date.now()) {
-    record.status = "expired";
-  }
+  const now = new Date();
+  const newStatus = expiresAt && expiresAt < now ? "EXPIRED" as DocumentStatus : undefined;
 
-  pushTimeline(
-    record,
-    input.actor,
-    "Expiry schedule updated",
-    record.expiresAt
-      ? `Expiry set to ${record.expiresAt.slice(0, 10)} with ${normalizedReminderLeadDays}-day lead reminder.`
-      : "Expiry cleared for this document.",
-    null,
-    null,
-    nowIso
-  );
-
-  return cloneRecord(record);
+  await prisma.studentDocument.update({
+    where: { id: input.documentId },
+    data: {
+      expiresAt,
+      reminderLeadDays: normalizedReminderLeadDays,
+      reminderEnabled: input.reminderEnabled,
+      nextReminderAt,
+      ...(newStatus ? { status: newStatus } : {})
+    }
+  });
 }
 
-function matchesReminderType(record: StudentDocumentRecord, reminderType: DocumentReminderType, now: Date) {
+function matchesReminderType(
+  record: StudentDocumentRecord,
+  reminderType: DocumentReminderType,
+  now: Date
+) {
   if (reminderType === "missing") {
     return record.status === "missing" || record.status === "rejected" || record.status === "expired";
   }
-
-  if (!record.reminderEnabled || !record.expiresAt) {
-    return false;
-  }
-
+  if (!record.reminderEnabled || !record.expiresAt) return false;
   const expiresAt = new Date(record.expiresAt);
   const daysUntilExpiry = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   return (record.status === "verified" || record.status === "uploaded") && daysUntilExpiry <= 21;
 }
 
-export function queueDocumentReminders(input: ReminderInput): DocumentReminderRecipient[] {
-  syncSystemStatuses();
+export async function queueDocumentReminders(input: ReminderInput): Promise<DocumentReminderRecipient[]> {
   const now = new Date();
   const nowIso = now.toISOString();
   const scopedIds = new Set(input.documentIds ?? []);
 
+  const docs = await prisma.studentDocument.findMany({
+    where: scopedIds.size > 0 ? { id: { in: [...scopedIds] } } : undefined,
+    include: {
+      student: {
+        include: {
+          schoolClass: { select: { id: true, name: true } },
+          studentLinks: {
+            include: {
+              guardian: { select: { fullName: true, phoneNumber: true, email: true } }
+            },
+            orderBy: [{ isPrimary: "desc" }]
+          }
+        }
+      }
+    }
+  });
+
+  const expiredIds = docs
+    .filter(doc => doc.status === "VERIFIED" && doc.expiresAt && doc.expiresAt < now)
+    .map(doc => doc.id);
+  await syncExpiredDocuments(expiredIds);
+
+  const records = docs.map(toRecord);
   const reminders: DocumentReminderRecipient[] = [];
+  const idsToUpdate: string[] = [];
 
-  for (const record of documentStore) {
-    if (scopedIds.size > 0 && !scopedIds.has(record.id)) {
-      continue;
-    }
-
-    if (!matchesReminderType(record, input.reminderType, now)) {
-      continue;
-    }
+  for (const record of records) {
+    if (!matchesReminderType(record, input.reminderType, now)) continue;
 
     reminders.push({
       documentId: record.id,
@@ -281,26 +366,27 @@ export function queueDocumentReminders(input: ReminderInput): DocumentReminderRe
       status: record.status,
       expiresAt: record.expiresAt
     });
+    idsToUpdate.push(record.id);
+  }
 
-    if (input.reminderType === "missing") {
-      record.lastMissingReminderAt = nowIso;
-      record.nextMissingReminderAt = addDaysIso(nowIso, Math.max(record.missingReminderEveryDays, 1));
-    } else {
-      record.lastReminderAt = nowIso;
-      record.nextReminderAt = null;
-    }
+  if (idsToUpdate.length > 0) {
+    const updatePayload =
+      input.reminderType === "missing"
+        ? {
+            lastMissingReminderAt: now,
+            nextMissingReminderAt: new Date(addDaysIso(nowIso, 7))
+          }
+        : {
+            lastReminderAt: now,
+            nextReminderAt: null
+          };
 
-    record.lastUpdatedAt = nowIso;
-    pushTimeline(
-      record,
-      input.actor,
-      `${input.reminderType === "missing" ? "Missing" : "Expiry"} reminder sent`,
-      "Guardian reminder logged to communications history.",
-      null,
-      null,
-      nowIso
-    );
+    await prisma.studentDocument.updateMany({
+      where: { id: { in: idsToUpdate } },
+      data: updatePayload
+    });
   }
 
   return reminders;
 }
+

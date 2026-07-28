@@ -57,6 +57,8 @@ export type StudentDocumentRecord = {
   category: DocumentCategory;
   documentName: string;
   fileName: string | null;
+  storagePath: string | null;
+  signedUrl: string | null;
   status: DocumentVerificationStatus;
   uploadedAt: string | null;
   verifiedAt: string | null;
