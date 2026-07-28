@@ -1,4 +1,4 @@
-import type { TimetableDayOfWeek } from "@prisma/client";
+import { RoleCode, type TimetableDayOfWeek } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import type { SessionUser } from "@/lib/auth/types";
 
@@ -136,7 +136,15 @@ export async function listStaffAttendanceRows(user: SessionUser): Promise<Recept
   const today = startOfTodayUtc();
 
   const staff = await prisma.user.findMany({
-    where: { campusId, isActive: true },
+    where: {
+      campusId,
+      isActive: true,
+      role: {
+        code: {
+          in: [RoleCode.PRINCIPAL, RoleCode.RECEPTION, RoleCode.FINANCE, RoleCode.TEACHER]
+        }
+      }
+    },
     orderBy: [{ fullName: "asc" }],
     select: {
       id: true,

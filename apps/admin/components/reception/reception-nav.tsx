@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const RECEPTION_LINKS = [
+  { href: "/admin/reception/check-in", label: "Employee Attendance" },
   { href: "/admin/reception/timetables", label: "Class Timetables" },
   { href: "/admin/reception/incidents", label: "Incidents & Complaints" }
 ] as const;

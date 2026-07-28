@@ -256,6 +256,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/reception",
       "/admin/reception/applications",
       "/admin/reception/analytics",
+      "/admin/reception/check-in",
       "/admin/reception/timetables",
       "/admin/reception/incidents",
       "/admin/reception/visitors",
