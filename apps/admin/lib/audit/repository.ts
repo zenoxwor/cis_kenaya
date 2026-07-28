@@ -1,6 +1,7 @@
 import type { AppRole } from "@/lib/rbac/roles";
 import type { AuditLogEntry } from "@/lib/audit/types";
 import { mockAuditLogs } from "@/lib/audit/mock-audit-logs";
+import { initializeAuditStream, listAuditEvents, logAuditEvent } from "@/lib/observability/audit-stream";
 
 type AppendAuditLogInput = {
   actorUserId?: string | null;
@@ -13,32 +14,30 @@ type AppendAuditLogInput = {
   campusId?: string;
 };
 
-const auditLogStore: AuditLogEntry[] = [...mockAuditLogs];
+initializeAuditStream(mockAuditLogs);
 
 function nextAuditId() {
   return `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export function listAuditLogs() {
-  return [...auditLogStore].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  return listAuditEvents();
 }
 
 export function appendAuditLog(input: AppendAuditLogInput) {
-  const entry: AuditLogEntry = {
+  return logAuditEvent({
     id: nextAuditId(),
-    campusId: input.campusId ?? "main-campus",
-    actorUserId: input.actorUserId ?? null,
-    actorRole: input.actorRole,
+    actor: {
+      id: input.actorUserId ?? null,
+      role: input.actorRole,
+      name: null,
+      ipAddress: input.ipAddress ?? null
+    },
     action: input.action,
-    resourceType: input.resourceType,
-    resourceId: input.resourceId,
-    ipAddress: input.ipAddress ?? null,
-    metadataJson: JSON.stringify(input.metadata ?? {}),
-    createdAt: new Date().toISOString()
-  };
-
-  auditLogStore.unshift(entry);
-  return entry;
+    entity: input.resourceType,
+    entityId: input.resourceId,
+    module: input.campusId ?? "main-campus",
+    status: "success",
+    metadata: input.metadata ?? {}
+  });
 }
