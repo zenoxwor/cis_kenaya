@@ -2,12 +2,13 @@ import { RoleDashboard } from "@/components/dashboard/role-dashboard";
 import { requireCurrentUser } from "@/lib/auth/session";
 import { getBackupRecoverySnapshot } from "@/lib/backup-recovery/operations";
 import { principalDashboardData } from "@/lib/dashboard/principal";
+import type { RoleDashboardData } from "@/lib/dashboard/types";
 
 export default async function PrincipalPage() {
   await requireCurrentUser("/admin/principal");
   const snapshot = getBackupRecoverySnapshot();
 
-  const dashboardData = {
+  const dashboardData: RoleDashboardData = {
     ...principalDashboardData,
     shortcuts: [
       {
