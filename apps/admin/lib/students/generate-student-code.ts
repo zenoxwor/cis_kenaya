@@ -1,16 +1,24 @@
 import type { PrismaClient } from "@prisma/client";
 
-// Generates codes like CIS-2026-0001, CIS-2026-0002, etc.
 export async function generateStudentCode(prisma: PrismaClient): Promise<string> {
-  const year = new Date().getFullYear();
-  const prefix = `CIS-${year}-`;
+  const used = await prisma.student.findMany({ select: { studentCode: true } });
+  const usedSet = new Set(used.map(student => student.studentCode));
 
-  const latest = await prisma.student.findFirst({
-    where: { studentCode: { startsWith: prefix } },
-    orderBy: { studentCode: "desc" },
-    select: { studentCode: true }
-  });
+  for (let attempts = 0; attempts < 200; attempts += 1) {
+    const num = Math.floor(Math.random() * 900) + 100;
+    const code = String(num);
+    if (!usedSet.has(code)) {
+      return code;
+    }
+  }
 
-  const next = latest ? Number.parseInt(latest.studentCode.replace(prefix, ""), 10) + 1 : 1;
-  return `${prefix}${String(next).padStart(4, "0")}`;
+  for (let attempts = 0; attempts < 500; attempts += 1) {
+    const num = Math.floor(Math.random() * 9000) + 1000;
+    const code = String(num);
+    if (!usedSet.has(code)) {
+      return code;
+    }
+  }
+
+  throw new Error("Could not generate unique student code");
 }
