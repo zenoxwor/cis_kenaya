@@ -208,3 +208,119 @@ export async function sendPreRegistrationVerificationEmail(
     html: htmlBody
   });
 }
+
+export async function sendApplicationReceivedEmail(
+  to: string,
+  firstName: string,
+  applicationRef: string
+) {
+  const subject = `Application Received — Capital International School Kenya (${applicationRef})`;
+  const textBody = [
+    `Dear ${firstName},`,
+    "",
+    "Thank you for submitting your application to Capital International School Kenya.",
+    `Your application reference number is: ${applicationRef}`,
+    "",
+    "Our admissions team will review your submission and contact you within 24–48 hours.",
+    "",
+    "Capital International School Kenya",
+    "Phone: +254 700 000 000",
+    "Email: info@ciskenya.ac.ke"
+  ].join("\n");
+
+  const htmlBody = `
+    <div style="font-family:Arial,sans-serif;background:#f8fafc;padding:24px;">
+      <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+        <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:24px;text-align:center;">
+          <h1 style="margin:0;color:#f8d16a;font-size:24px;">Capital International School Kenya</h1>
+          <p style="margin:8px 0 0;color:#e2e8f0;font-size:14px;">Application Received</p>
+        </div>
+        <div style="padding:28px;">
+          <p style="margin:0 0 16px;color:#0f172a;font-size:16px;">Dear ${firstName},</p>
+          <p style="margin:0 0 14px;color:#334155;line-height:1.6;">
+            Thank you for submitting your application to Capital International School Kenya.
+          </p>
+          <p style="margin:0 0 10px;color:#334155;line-height:1.6;">
+            Your application reference number is:
+          </p>
+          <p style="margin:0 0 18px;color:#0f172a;font-weight:700;font-size:18px;">${applicationRef}</p>
+          <p style="margin:0;color:#334155;line-height:1.6;">
+            Our admissions team will review your submission and contact you within
+            <strong> 24–48 hours</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    text: textBody,
+    html: htmlBody
+  });
+}
+
+export async function sendRegistrationApprovedEmail(
+  to: string,
+  firstName: string,
+  studentCode: string,
+  uploadLink: string
+) {
+  const subject = "Welcome to CIS Kenya — Registration Approved!";
+  const textBody = [
+    `Dear ${firstName},`,
+    "",
+    "Congratulations! Your registration has been approved by Capital International School Kenya.",
+    `Student ID: ${studentCode}`,
+    "",
+    "Please upload the required documents using the secure link below:",
+    uploadLink,
+    "",
+    "This link expires in 7 days.",
+    "",
+    "Capital International School Kenya",
+    "Phone: +254 700 000 000",
+    "Email: info@ciskenya.ac.ke"
+  ].join("\n");
+
+  const htmlBody = `
+    <div style="font-family:Arial,sans-serif;background:#f8fafc;padding:24px;">
+      <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+        <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:24px;text-align:center;">
+          <h1 style="margin:0;color:#f8d16a;font-size:24px;">Welcome to CIS Kenya</h1>
+          <p style="margin:8px 0 0;color:#e2e8f0;font-size:14px;">Registration Approved</p>
+        </div>
+        <div style="padding:28px;">
+          <p style="margin:0 0 16px;color:#0f172a;font-size:16px;">Dear ${firstName},</p>
+          <p style="margin:0 0 14px;color:#334155;line-height:1.6;">
+            Congratulations! Your registration has been approved by Capital International School Kenya.
+          </p>
+          <p style="margin:0 0 20px;color:#0f172a;font-weight:700;">Student ID: ${studentCode}</p>
+          <div style="text-align:center;margin:0 0 20px;">
+            <a
+              href="${uploadLink}"
+              style="display:inline-block;background:#0f172a;color:#f8d16a;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:700;"
+            >
+              Upload Required Documents
+            </a>
+          </div>
+          <p style="margin:0;color:#64748b;font-size:13px;line-height:1.6;">
+            If the button does not work, open this link:
+            <br />
+            <a href="${uploadLink}" style="color:#0f172a;">${uploadLink}</a>
+            <br />
+            This secure link expires in 7 days.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    text: textBody,
+    html: htmlBody
+  });
+}

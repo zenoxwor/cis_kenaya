@@ -48,12 +48,16 @@ export type DocumentReminderType = "missing" | "expiry";
 export type StudentDocumentRecord = {
   id: string;
   studentId: string;
+  studentCode: string;
   studentName: string;
   classId: string;
   className: string;
+  section: string | null;
   guardianName: string;
+  guardianPhones: string[];
   guardianPhone: string;
   guardianEmail: string | null;
+  guardianAddress: string | null;
   category: DocumentCategory;
   documentName: string;
   fileName: string | null;
