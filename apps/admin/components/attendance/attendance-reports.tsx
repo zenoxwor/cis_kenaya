@@ -10,6 +10,7 @@ import {
   AT_RISK_WINDOW_DAYS,
 } from "@/lib/attendance";
 import type { AttendanceStatus } from "@/lib/attendance";
+import type { FinanceStatusBadge } from "@/lib/finance/automation";
 
 interface ClassOption {
   id: string;
@@ -43,9 +44,10 @@ interface ReportData {
 
 interface Props {
   classes: ClassOption[];
+  financeBadgesByStudentCode: Record<string, FinanceStatusBadge[]>;
 }
 
-export default function AttendanceReports({ classes }: Props) {
+export default function AttendanceReports({ classes, financeBadgesByStudentCode }: Props) {
   const today = todayString();
   const sevenDaysAgo = (() => {
     const d = new Date();
@@ -90,6 +92,12 @@ export default function AttendanceReports({ classes }: Props) {
   const attendanceRate = (s: StudentSummary) => {
     if (s.totalDays === 0) return "â€”";
     return `${Math.round(((s.present + s.late) / s.totalDays) * 100)}%`;
+  };
+
+  const toneClasses: Record<FinanceStatusBadge["tone"], string> = {
+    info: "bg-sky-100 text-sky-700 border-sky-200",
+    warning: "bg-amber-100 text-amber-800 border-amber-200",
+    critical: "bg-red-100 text-red-700 border-red-200"
   };
 
   return (
@@ -184,6 +192,7 @@ export default function AttendanceReports({ classes }: Props) {
                     <th style={thStyle}>Absent</th>
                     <th style={thStyle}>Excused</th>
                     <th style={thStyle}>Attendance %</th>
+                    <th style={thStyle}>Finance</th>
                     <th style={thStyle}>Status</th>
                   </tr>
                 </thead>
@@ -225,6 +234,24 @@ export default function AttendanceReports({ classes }: Props) {
                       </td>
                       <td style={{ ...tdStyle, textAlign: "center", fontWeight: 600 }}>
                         {attendanceRate(s)}
+                      </td>
+                      <td style={tdStyle}>
+                        <div className="flex flex-wrap gap-1">
+                          {(financeBadgesByStudentCode[s.studentCode] ?? []).length === 0 ? (
+                            <span style={{ color: BRAND.textMuted, fontSize: "0.75rem" }}>
+                              Clear
+                            </span>
+                          ) : (
+                            (financeBadgesByStudentCode[s.studentCode] ?? []).map(badge => (
+                              <span
+                                key={`${s.studentId}-${badge.label}`}
+                                className={`inline-block rounded-full border px-2 py-0.5 text-[11px] font-semibold ${toneClasses[badge.tone]}`}
+                              >
+                                {badge.label}
+                              </span>
+                            ))
+                          )}
+                        </div>
                       </td>
                       <td style={tdStyle}>
                         {s.atRisk ? (
