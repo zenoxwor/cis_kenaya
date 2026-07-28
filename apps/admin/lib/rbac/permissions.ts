@@ -100,11 +100,14 @@ export const ADMIN_NAV_KEYS = [
   "reception_dashboard",
   "reception_pre_registrations",
   "registration_wizard",
+  "reception_visitors",
+  "reception_incidents",
+  "reception_appointments",
   "finance_dashboard",
   "exams_suite",
-  "communications_center",
   "documents_center",
   "attendance_module",
+  "communications_center",
   "classes_management"
 ] as const;
 
@@ -118,11 +121,14 @@ const NAV_PERMISSION_KEYS: Partial<Record<AdminNavKey, ModulePermissionKey>> = {
   reception_dashboard: "reception_admissions",
   reception_pre_registrations: "reception_admissions",
   registration_wizard: "registration_wizard",
+  reception_visitors: "reception_admissions",
+  reception_incidents: "reception_admissions",
+  reception_appointments: "reception_admissions",
   finance_dashboard: "finance_ops",
   exams_suite: "exams_grading",
-  communications_center: "communications_centre",
   documents_center: "document_center",
   attendance_module: "attendance",
+  communications_center: "communications_centre",
   classes_management: "principal_dashboard"
 };
 
@@ -239,7 +245,6 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
   [ROLE.RECEPTION]: {
     routeAccess: [
       "/admin",
-      "/admin/analytics",
       "/admin/admissions",
       "/admin/reception",
       "/admin/reception/applications",
@@ -253,9 +258,6 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/reception/documents",
       "/admin/reception/pre-registrations",
       "/admin/registration",
-      "/admin/exams",
-      "/admin/exams/marks",
-      "/admin/exams/reports",
       "/admin/communications",
       "/admin/communications/compose",
       "/admin/communications/history",
@@ -264,27 +266,21 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/attendance/reports"
     ],
     navigationVisibility: [
-      "dashboard",
-      "executive_analytics",
-      "reception_dashboard",
       "reception_pre_registrations",
       "registration_wizard",
-      "exams_suite",
-      "communications_center",
+      "reception_visitors",
+      "reception_incidents",
+      "reception_appointments",
       "documents_center",
-      "attendance_module"
+      "attendance_module",
+      "communications_center"
     ],
     actions: {
-      dashboard: ["view"],
       student: ["view", "create", "edit"],
       guardian: ["view", "create", "edit"],
       application: ["view", "create", "edit", "approve"],
       enrollment: ["view", "create", "edit"],
       student_document: ["view", "create", "edit"],
-      exam_term: ["view"],
-      exam_component: ["view"],
-      student_mark: ["view", "create", "edit", "export"],
-      report_card: ["view"],
       visitor_log: ["view", "create", "edit"],
       report: ["view", "export"],
       communication: ["view", "create"],

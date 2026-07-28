@@ -61,7 +61,6 @@ export const DEFAULT_ROLE_MODULE_PERMISSIONS: Record<AppRole, ModulePermissionKe
     "executive_analytics",
     "reception_admissions",
     "registration_wizard",
-    "exams_grading",
     "communications_centre",
     "document_center",
     "attendance"

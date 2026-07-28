@@ -60,20 +60,32 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
   {
     id: "registration_wizard",
     href: "/admin/registration",
-    label: "6-Step Registration Wizard",
+    label: "Registration Wizard",
     description: "Structured student registration data capture."
+  },
+  {
+    id: "reception_visitors",
+    href: "/admin/reception/visitors",
+    label: "Visitor Log & Gate Pass",
+    description: "Register visitors, print passes, and track gate access."
+  },
+  {
+    id: "reception_incidents",
+    href: "/admin/reception/incidents",
+    label: "Incidents & Complaints",
+    description: "Capture front-desk incidents, inquiries, and complaints."
+  },
+  {
+    id: "reception_appointments",
+    href: "/admin/reception/appointments",
+    label: "Appointments",
+    description: "Coordinate parent, guardian, and school office appointments."
   },
   {
     id: "exams_suite",
     href: "/admin/exams",
     label: "Exams & Grading",
     description: "Kenyan term exams, marks entry, and report cards."
-  },
-  {
-    id: "communications_center",
-    href: "/admin/communications",
-    label: "Communications Centre",
-    description: "Send messages to parents and guardians via SMS and email."
   },
   {
     id: "documents_center",
@@ -86,6 +98,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     href: "/admin/attendance",
     label: "Attendance",
     description: "Track and manage student attendance records."
+  },
+  {
+    id: "communications_center",
+    href: "/admin/communications",
+    label: "Communications Centre",
+    description: "Send messages to parents and guardians via SMS and email."
   },
   {
     id: "classes_management",
