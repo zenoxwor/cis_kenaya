@@ -1,5 +1,5 @@
 export type MessageType = "SMS" | "EMAIL" | "BOTH";
-export type MessageCategory = "FEE" | "ATTENDANCE" | "DISCIPLINE" | "GENERAL";
+export type MessageCategory = "FEE" | "ATTENDANCE" | "DISCIPLINE" | "GENERAL" | "DOCUMENT";
 export type CampaignStatus = "DRAFT" | "SCHEDULED" | "SENT" | "FAILED";
 export type DeliveryChannel = "SMS" | "EMAIL";
 export type DeliveryStatus = "PENDING" | "SENT" | "DELIVERED" | "FAILED";

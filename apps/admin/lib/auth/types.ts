@@ -5,6 +5,7 @@ export type SessionUser = {
   email: string;
   fullName: string;
   role: AppRole;
+  assignedClassIds?: string[];
 };
 
 export type AuthSessionPayload = {

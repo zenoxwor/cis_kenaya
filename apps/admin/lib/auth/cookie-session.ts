@@ -28,13 +28,18 @@ export function parseSessionPayload(rawValue: string | undefined) {
       return null;
     }
 
+    const assignedClassIds = Array.isArray(user.assignedClassIds)
+      ? user.assignedClassIds.filter(classId => typeof classId === "string")
+      : undefined;
+
     return {
       v: 1 as const,
       user: {
         id: user.id,
         email: user.email,
         fullName: user.fullName,
-        role: user.role
+        role: user.role,
+        assignedClassIds
       }
     };
   } catch (error) {

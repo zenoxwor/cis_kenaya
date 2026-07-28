@@ -20,6 +20,21 @@ const campaigns: MessageCampaign[] = [...MOCK_CAMPAIGNS];
 const deliveries: MessageDelivery[] = [...MOCK_DELIVERIES];
 const automationDispatchKeys = new Set<string>();
 
+type DocumentReminderLogInput = {
+  sentById: string;
+  sentByName: string;
+  reminderType: "missing" | "expiry";
+  reminders: Array<{
+    studentName: string;
+    guardianName: string;
+    guardianPhone: string;
+    guardianEmail: string | null;
+    documentName: string;
+    category: string;
+    expiresAt: string | null;
+  }>;
+};
+
 // ─── Templates ────────────────────────────────────────────────────────────────
 
 export function listTemplates(): MessageTemplate[] {
@@ -147,6 +162,74 @@ export function sendCampaign(
           guardianEmail: guardian.email ?? undefined
         });
       }
+    }
+  }
+
+  return campaign;
+}
+
+<<<<<<< HEAD
+export function logDocumentReminderCampaign(input: DocumentReminderLogInput): MessageCampaign | null {
+  if (input.reminders.length === 0) {
+    return null;
+  }
+
+  const now = new Date();
+  const campaign: MessageCampaign = {
+    id: `camp_doc_${Date.now()}`,
+    campusId: "campus_main",
+    templateId: `tpl_document_${input.reminderType}`,
+    sentById: input.sentById,
+    audienceFilter: "individual",
+    audienceMeta: {
+      reminderType: input.reminderType,
+      totalDocuments: input.reminders.length
+    },
+    scheduledAt: null,
+    sentAt: now,
+    status: "SENT",
+    totalCount: input.reminders.length,
+    sentCount: input.reminders.length,
+    failedCount: 0,
+    createdAt: now,
+    updatedAt: now,
+    template: {
+      id: `tpl_document_${input.reminderType}`,
+      name:
+        input.reminderType === "missing"
+          ? "Missing Document Reminder"
+          : "Document Expiry Reminder",
+      subject:
+        input.reminderType === "missing"
+          ? "Missing student document follow-up"
+          : "Student document expiry notice",
+      type: "BOTH",
+      category: "DOCUMENT"
+    },
+    sentByName: input.sentByName
+  };
+
+  campaigns.unshift(campaign);
+
+  for (const reminder of input.reminders) {
+    const channels: Array<"SMS" | "EMAIL"> = reminder.guardianEmail ? ["SMS", "EMAIL"] : ["SMS"];
+
+    for (const channel of channels) {
+      deliveries.push({
+        id: `del_doc_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        campaignId: campaign.id,
+        guardianId: `guardian_${reminder.studentName.toLowerCase().replace(/\s+/g, "_")}`,
+        channel,
+        status: "SENT",
+        errorMessage: null,
+        sentAt: now,
+        deliveredAt: null,
+        createdAt: now,
+        updatedAt: now,
+        guardianName: reminder.guardianName,
+        guardianPhone: reminder.guardianPhone,
+        guardianEmail: reminder.guardianEmail ?? undefined
+      });
     }
   }
 
