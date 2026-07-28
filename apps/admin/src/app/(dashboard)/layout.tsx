@@ -60,6 +60,12 @@ export default async function DashboardLayout({
         }}
       >
         <a href="/dashboard" style={navLink}>Dashboard</a>
+        {user && (user.role === "reception" || user.role === "admin" || user.role === "principal" || user.role === "superadmin") && (
+          <a href="/attendance" style={navLink}>Attendance</a>
+        )}
+        {user && (user.role === "admin" || user.role === "principal" || user.role === "superadmin") && (
+          <a href="/attendance/reports" style={navLink}>Reports</a>
+        )}
         {user && (user.role === "admin" || user.role === "superadmin") && (
           <a href="/students" style={navLink}>Students</a>
         )}

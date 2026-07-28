@@ -1,0 +1,136 @@
+// CIS Kenya Admin — Prisma Schema
+// Capital International School, Nairobi, Kenya
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth / Users ─────────────────────────────────────────────────────────────
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  role         String   // superadmin | admin | principal | reception | viewer
+  displayName  String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  markedAttendance      AttendanceRecord[]    @relation("MarkedBy")
+  approvedCorrections   AttendanceCorrection[] @relation("ApprovedBy")
+  requestedCorrections  AttendanceCorrection[] @relation("RequestedBy")
+
+  @@map("admin_users")
+}
+
+// ─── Academic Structure ───────────────────────────────────────────────────────
+
+model SchoolClass {
+  id         String   @id @default(cuid())
+  name       String   @unique // "Grade 1", "Grade 2 A", etc.
+  gradeLevel String   // "1", "2A", "PP1", etc.
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  students          Student[]
+  attendanceRecords AttendanceRecord[]
+  attendancePeriods AttendancePeriod[]
+
+  @@map("school_classes")
+}
+
+model Student {
+  id          String    @id @default(cuid())
+  studentNo   String    @unique // e.g. "CIS-2024-001"
+  firstName   String
+  lastName    String
+  dateOfBirth DateTime?
+  classId     String
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  class             SchoolClass        @relation(fields: [classId], references: [id])
+  attendanceRecords AttendanceRecord[]
+
+  @@map("students")
+}
+
+// ─── Attendance Period ────────────────────────────────────────────────────────
+
+/// A configurable time window (term / week) that groups attendance records.
+model AttendancePeriod {
+  id        String   @id @default(cuid())
+  name      String   // "Term 1 2025", "Week 3", etc.
+  type      String   // "term" | "week" | "day"
+  startDate DateTime
+  endDate   DateTime
+  classId   String?  // null = applies to all classes
+  status    String   @default("OPEN") // "OPEN" | "CLOSED"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  class   SchoolClass? @relation(fields: [classId], references: [id])
+  records AttendanceRecord[]
+
+  @@map("attendance_periods")
+}
+
+// ─── Attendance Record ────────────────────────────────────────────────────────
+
+/// One attendance entry per student per day.
+model AttendanceRecord {
+  id         String   @id @default(cuid())
+  studentId  String
+  classId    String
+  periodId   String?
+  date       DateTime // date only (stored as midnight UTC)
+  status     String   @default("PRESENT") // "PRESENT" | "LATE" | "ABSENT" | "EXCUSED"
+  notes      String?
+  markedById String
+  markedAt   DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  student     Student           @relation(fields: [studentId], references: [id])
+  class       SchoolClass       @relation(fields: [classId], references: [id])
+  period      AttendancePeriod? @relation(fields: [periodId], references: [id])
+  markedBy    AdminUser         @relation("MarkedBy", fields: [markedById], references: [id])
+  corrections AttendanceCorrection[]
+
+  // One record per student per day
+  @@unique([studentId, date])
+  @@index([classId, date])
+  @@index([date])
+  @@map("attendance_records")
+}
+
+// ─── Attendance Correction ────────────────────────────────────────────────────
+
+/// Audit trail for any changes to attendance records.
+model AttendanceCorrection {
+  id             String    @id @default(cuid())
+  recordId       String
+  requestedById  String
+  reason         String
+  originalStatus String    // "PRESENT" | "LATE" | "ABSENT" | "EXCUSED"
+  newStatus      String    // "PRESENT" | "LATE" | "ABSENT" | "EXCUSED"
+  approvedById   String?
+  status         String    @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  reviewedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  record      AttendanceRecord @relation(fields: [recordId], references: [id])
+  requestedBy AdminUser        @relation("RequestedBy", fields: [requestedById], references: [id])
+  approvedBy  AdminUser?       @relation("ApprovedBy", fields: [approvedById], references: [id])
+
+  @@index([recordId])
+  @@index([status])
+  @@map("attendance_corrections")
+}

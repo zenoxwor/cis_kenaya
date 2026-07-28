@@ -9,6 +9,10 @@ out/
 .env.local
 .env.*.local
 
+# Prisma dev database
+prisma/*.db
+prisma/*.db-journal
+
 # OS
 .DS_Store
 Thumbs.db

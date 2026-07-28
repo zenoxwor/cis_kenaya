@@ -32,6 +32,7 @@ interface MockUser {
   username: string;
   password: string;
   role: SessionUser["role"];
+  displayName: string;
 }
 
 /** Hardcoded mock users for development. Add more as needed. */
@@ -41,12 +42,35 @@ const MOCK_USERS: MockUser[] = [
     username: env.MOCK_ADMIN_USERNAME,
     password: env.MOCK_ADMIN_PASSWORD,
     role: "admin",
+    displayName: "Admin User",
   },
   {
     id: "mock-super",
     username: "superadmin",
     password: "super123",
     role: "superadmin",
+    displayName: "Super Admin",
+  },
+  {
+    id: "mock-principal",
+    username: "principal",
+    password: "principal123",
+    role: "principal",
+    displayName: "Mrs. Wanjiku Kamau",
+  },
+  {
+    id: "mock-reception",
+    username: "reception",
+    password: "reception123",
+    role: "reception",
+    displayName: "Reception Desk",
+  },
+  {
+    id: "mock-viewer",
+    username: "viewer",
+    password: "viewer123",
+    role: "viewer",
+    displayName: "View Only",
   },
 ];
 
@@ -58,6 +82,7 @@ async function verifyMock(username: string, password: string): Promise<SessionUs
   return {
     id: match.id,
     username: match.username,
+    displayName: match.displayName,
     role: match.role,
     createdAt: new Date().toISOString(),
   };
