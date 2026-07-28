@@ -4,6 +4,47 @@ import { findMockUserByCredentials } from "@/lib/auth/mock-users";
 import { isSafeInternalPath } from "@/lib/auth/paths";
 import { createActiveSessionCookie, createSessionCookieValue } from "@/lib/auth/session";
 import { logAuditEvent } from "@/lib/observability/audit-stream";
+import { prisma } from "@/lib/db/client";
+import { verifyPassword } from "@/lib/auth/password";
+import { normalizePermissions } from "@/lib/rbac/module-permissions";
+import type { SessionUser } from "@/lib/auth/types";
+
+async function findDatabaseUserByCredentials(username: string, password: string): Promise<SessionUser | null> {
+  const normalized = username.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+
+  const candidate = await prisma.user.findFirst({
+    where: { email: normalized },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      isActive: true,
+      permissions: true,
+      role: {
+        select: {
+          code: true
+        }
+      },
+      passwordHash: true
+    }
+  });
+
+  if (!candidate || !candidate.isActive || !verifyPassword(password, candidate.passwordHash)) {
+    return null;
+  }
+
+  return {
+    id: candidate.id,
+    email: candidate.email,
+    fullName: candidate.fullName,
+    role: candidate.role.code,
+    permissions: normalizePermissions(candidate.role.code, candidate.permissions),
+    isActive: candidate.isActive
+  };
+}
 
 export async function POST(request: Request) {
   const ipAddress = request.headers.get("x-forwarded-for");
@@ -26,9 +67,9 @@ export async function POST(request: Request) {
   const password = String(formData.get("password") ?? "");
   const requestedNext = String(formData.get("next") ?? "/admin");
   const nextPath = isSafeInternalPath(requestedNext) ? requestedNext : "/admin";
-  const user = findMockUserByCredentials(username, password);
+  const user = findMockUserByCredentials(username, password) ?? (await findDatabaseUserByCredentials(username, password));
 
-  if (!user) {
+  if (!user || !user.isActive) {
     logAuditEvent({
       actor: { id: null, role: null, name: username.trim() || null, ipAddress },
       action: "auth.sign_in",

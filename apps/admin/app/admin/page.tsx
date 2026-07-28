@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireCurrentUser } from "@/lib/auth/session";
-import { canAccessRoute } from "@/lib/rbac/permissions";
+import { canAccessRouteForUser } from "@/lib/rbac/permissions";
+import { getModulePermissionForRoute, hasPermission } from "@/lib/rbac/module-permissions";
 import { ROLE, ROLE_LABELS, type AppRole } from "@/lib/rbac/roles";
 
 const roleDashboards = [
@@ -61,7 +62,14 @@ const roleDashboards = [
 
 export default async function AdminDashboardPage() {
   const user = await requireCurrentUser("/admin");
-  const visibleCards = roleDashboards.filter(item => canAccessRoute(user.role, item.href));
+  const visibleCards = roleDashboards.filter(item => {
+    if (!canAccessRouteForUser(user, item.href)) {
+      return false;
+    }
+
+    const requiredModule = getModulePermissionForRoute(item.href);
+    return requiredModule ? hasPermission(user, requiredModule) : true;
+  });
 
   return (
     <section className="space-y-6">

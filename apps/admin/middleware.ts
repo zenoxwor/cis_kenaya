@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { AUTH_COOKIE_NAME } from "@/lib/auth/config";
 import { parseSessionPayload } from "@/lib/auth/cookie-session";
 import { buildSignInPath } from "@/lib/auth/paths";
-import { canAccessRoute } from "@/lib/rbac/permissions";
+import { canAccessRouteForUser } from "@/lib/rbac/permissions";
 import { logAuditEvent } from "@/lib/observability/audit-stream";
 
 export function middleware(request: NextRequest) {
@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!canAccessRoute(session.user.role, pathname)) {
+  if (!canAccessRouteForUser(session.user, pathname)) {
     logAuditEvent({
       actor: {
         id: session.user.id,

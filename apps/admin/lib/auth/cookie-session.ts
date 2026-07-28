@@ -1,5 +1,6 @@
 import { isAppRole } from "@/lib/rbac/roles";
 import type { AuthSessionPayload } from "@/lib/auth/types";
+import { normalizePermissions } from "@/lib/rbac/module-permissions";
 
 export function serializeSessionPayload(payload: AuthSessionPayload) {
   return encodeURIComponent(JSON.stringify(payload));
@@ -32,6 +33,9 @@ export function parseSessionPayload(rawValue: string | undefined) {
       ? user.assignedClassIds.filter(classId => typeof classId === "string")
       : undefined;
 
+    const permissions = normalizePermissions(user.role, user.permissions);
+    const isActive = typeof user.isActive === "boolean" ? user.isActive : true;
+
     return {
       v: 1 as const,
       user: {
@@ -39,6 +43,8 @@ export function parseSessionPayload(rawValue: string | undefined) {
         email: user.email,
         fullName: user.fullName,
         role: user.role,
+        permissions,
+        isActive,
         assignedClassIds
       }
     };

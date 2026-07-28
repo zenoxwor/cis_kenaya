@@ -1,6 +1,6 @@
-import type { AppRole } from "@/lib/rbac/roles";
 import { getVisibleNavigation } from "@/lib/rbac/navigation";
+import type { SessionUser } from "@/lib/auth/types";
 
-export function getAuthorizedNavigation(role: AppRole) {
-  return getVisibleNavigation(role);
+export function getAuthorizedNavigation(user: Pick<SessionUser, "role" | "permissions">) {
+  return getVisibleNavigation(user);
 }

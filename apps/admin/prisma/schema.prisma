@@ -160,6 +160,7 @@ model User {
   fullName     String
   passwordHash String?
   phoneNumber  String?
+  permissions  String[]         @default([])
   isActive     Boolean          @default(true)
   lastLoginAt  DateTime?
   createdAt    DateTime @default(now())

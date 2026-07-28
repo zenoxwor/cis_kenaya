@@ -1,4 +1,5 @@
 import type { AppRole } from "@/lib/rbac/roles";
+import { getModulePermissionForRoute, hasPermission, type ModulePermission } from "@/lib/rbac/module-permissions";
 import { ROLE } from "@/lib/rbac/roles";
 
 export const ACTION_PERMISSIONS = [
@@ -314,4 +315,24 @@ export function canViewNavigation(role: AppRole, navKey: AdminNavKey) {
 export function canPerformAction(role: AppRole, resource: DomainResource, action: ActionPermission) {
   const resourceActions = ROLE_PERMISSION_MATRIX[role].actions[resource];
   return resourceActions ? resourceActions.includes(action) : false;
+}
+
+export function canAccessRouteForUser(
+  user: {
+    role: AppRole;
+    permissions: ModulePermission[];
+    isActive: boolean;
+  },
+  route: string
+) {
+  if (!user.isActive || !canAccessRoute(user.role, route)) {
+    return false;
+  }
+
+  const modulePermission = getModulePermissionForRoute(route);
+  if (!modulePermission) {
+    return true;
+  }
+
+  return hasPermission(user, modulePermission);
 }
