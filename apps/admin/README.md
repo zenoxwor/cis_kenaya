@@ -93,10 +93,22 @@ This folder contains the **separate internal admin surface** built with Next.js 
   - PDF export endpoint hook: `POST /api/reports/export/pdf`
 - Audit controls:
   - Super Admin audit console: `/admin/super-admin/audit`
-  - Mock audit data aligned with `AuditLog` model direction in `lib/audit/*`
+  - Structured event stream with standardized shape: `actor`, `action`, `entity`, `entityId`, `status`, `timestamp`, `metadata`
+  - Action-level event coverage for auth outcomes, RBAC denials, workflow approvals/rejections, attendance mutations, template and trigger updates
+  - Security signal events for repeated failed sign-ins and unusual access-denied spikes
+  - Operations health panel for recent failures/retries and current alert statuses
 - Settings oversight:
   - Super Admin policy/settings console: `/admin/super-admin/settings`
   - Security/session/workflow governance placeholders structured for backend persistence wiring.
+
+## Optional provider hooks (Sentry-compatible pattern)
+
+- Shared observability hooks are under `lib/observability/provider-hooks.ts` and can be wired to any provider with `captureException` and `captureEvent` methods.
+- No provider SDK is required by default; integration is optional.
+- Suggested env vars:
+  - `OBSERVABILITY_PROVIDER_ENABLED`
+  - `OBSERVABILITY_PROVIDER_DSN`
+  - `OBSERVABILITY_RELEASE`
 
 ## Principal staff account management
 
