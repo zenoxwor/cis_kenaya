@@ -17,6 +17,12 @@ const roleDashboards = [
     description: "Platform control, identity governance, and global settings."
   },
   {
+    role: ROLE.SUPER_ADMIN,
+    label: "Backup & Recovery",
+    href: "/admin/operations",
+    description: "Operational resilience, backup history, restore drills, and recovery readiness."
+  },
+  {
     role: ROLE.PRINCIPAL,
     label: "Principal",
     href: "/admin/principal",

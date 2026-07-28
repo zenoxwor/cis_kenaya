@@ -22,6 +22,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Unified trends across enrollment, attendance, finance, exams, and communications."
   },
   {
+    id: "operations_resilience",
+    href: "/admin/operations",
+    label: "Backup & Recovery",
+    description: "Monitor backup coverage, restore drills, and recovery readiness."
+  },
+  {
     id: "super_admin_console",
     href: "/admin/super-admin",
     label: "Super Admin Console",

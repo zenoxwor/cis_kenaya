@@ -35,7 +35,8 @@ export const DOMAIN_RESOURCES = [
   "message_template",
   "attendance_record",
   "attendance_correction",
-  "finance_automation"
+  "finance_automation",
+  "backup_recovery"
 ] as const;
 
 export type DomainResource = (typeof DOMAIN_RESOURCES)[number];
@@ -43,6 +44,7 @@ export type DomainResource = (typeof DOMAIN_RESOURCES)[number];
 export const ADMIN_ROUTE_KEYS = [
   "/admin",
   "/admin/analytics",
+  "/admin/operations",
   "/admin/super-admin",
   "/admin/super-admin/users",
   "/admin/super-admin/audit",
@@ -78,6 +80,7 @@ export type AdminRouteKey = (typeof ADMIN_ROUTE_KEYS)[number];
 export const ADMIN_NAV_KEYS = [
   "dashboard",
   "executive_analytics",
+  "operations_resilience",
   "super_admin_console",
   "principal_dashboard",
   "principal_staff_accounts",
@@ -125,7 +128,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       message_template: ["view", "create", "edit", "approve", "override"],
       attendance_record: ["view", "create", "edit", "approve", "export", "override"],
       attendance_correction: ["view", "create", "edit", "approve", "override"],
-      finance_automation: ["view", "create", "edit", "approve", "export", "override"]
+      finance_automation: ["view", "create", "edit", "approve", "export", "override"],
+      backup_recovery: ["view", "create", "edit", "approve", "export", "override"]
     }
   },
   [ROLE.PRINCIPAL]: {
@@ -133,6 +137,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     routeAccess: [
       "/admin",
       "/admin/analytics",
+      "/admin/operations",
       "/admin/principal",
       "/admin/principal/reports",
       "/admin/principal/analytics",
@@ -158,6 +163,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     navigationVisibility: [
       "dashboard",
       "executive_analytics",
+      "operations_resilience",
       "principal_dashboard",
       "principal_staff_accounts",
       "reception_dashboard",
@@ -186,7 +192,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       communication: ["view", "create", "edit", "export"],
       message_template: ["view", "create", "edit", "approve"],
       attendance_record: ["view", "create", "edit", "approve", "export"],
-      attendance_correction: ["view", "approve"]
+      attendance_correction: ["view", "approve"],
+      backup_recovery: ["view"]
       // `settings` resource intentionally omitted — Super Admin only
     }
   },
