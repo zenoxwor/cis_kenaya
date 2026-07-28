@@ -1,6 +1,7 @@
 import { AuditLogConsole } from "@/components/audit/audit-log-console";
-import { mockAuditLogs } from "@/lib/audit/mock-audit-logs";
+import "@/lib/audit/mock-audit-logs";
+import { getOperationsHealthData, listAuditEvents } from "@/lib/observability/audit-stream";
 
 export default function SuperAdminAuditPage() {
-  return <AuditLogConsole entries={mockAuditLogs} />;
+  return <AuditLogConsole entries={listAuditEvents()} health={getOperationsHealthData()} />;
 }

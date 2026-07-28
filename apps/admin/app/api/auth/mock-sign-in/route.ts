@@ -3,9 +3,21 @@ import { getAuthMode } from "@/lib/auth/config";
 import { findMockUserByCredentials } from "@/lib/auth/mock-users";
 import { isSafeInternalPath } from "@/lib/auth/paths";
 import { createActiveSessionCookie, createSessionCookieValue } from "@/lib/auth/session";
+import { logAuditEvent } from "@/lib/observability/audit-stream";
 
 export async function POST(request: Request) {
+  const ipAddress = request.headers.get("x-forwarded-for");
+
   if (getAuthMode() !== "mock") {
+    logAuditEvent({
+      actor: { id: null, role: null, name: null, ipAddress },
+      action: "auth.sign_in",
+      entity: "Session",
+      entityId: "mock-auth",
+      module: "auth",
+      status: "denied",
+      metadata: { reason: "mock_auth_disabled" }
+    });
     return NextResponse.json({ error: "Mock auth is disabled." }, { status: 403 });
   }
 
@@ -17,6 +29,15 @@ export async function POST(request: Request) {
   const user = findMockUserByCredentials(username, password);
 
   if (!user) {
+    logAuditEvent({
+      actor: { id: null, role: null, name: username.trim() || null, ipAddress },
+      action: "auth.sign_in",
+      entity: "Session",
+      entityId: "mock-auth",
+      module: "auth",
+      status: "failure",
+      metadata: { username: username.trim().toLowerCase() }
+    });
     const failureUrl = new URL(
       `/sign-in?error=invalid_credentials&next=${encodeURIComponent(nextPath)}`,
       request.url
@@ -27,5 +48,14 @@ export async function POST(request: Request) {
   const response = NextResponse.redirect(new URL(nextPath, request.url), 303);
   const sessionCookieValue = createSessionCookieValue(user);
   response.cookies.set(createActiveSessionCookie(sessionCookieValue));
+  logAuditEvent({
+    actor: { id: user.id, role: user.role, name: user.fullName, ipAddress },
+    action: "auth.sign_in",
+    entity: "Session",
+    entityId: user.id,
+    module: "auth",
+    status: "success",
+    metadata: { nextPath }
+  });
   return response;
 }

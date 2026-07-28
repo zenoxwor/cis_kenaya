@@ -5,6 +5,7 @@ import { getAvailableWorkflowActions, applyWorkflowAction } from "@/lib/workflow
 import { createWorkflowRepository } from "@/lib/workflow/repository";
 import type { WorkflowActionId, WorkflowApplicationRecord } from "@/lib/workflow/types";
 import type { AppRole } from "@/lib/rbac/roles";
+import { getErrorMessage } from "@/lib/observability/app-error";
 
 type RoleWorkflowBoardProps = {
   role: AppRole;
@@ -19,11 +20,18 @@ export function RoleWorkflowBoard({ role, heading, subtitle }: RoleWorkflowBoard
 
   useEffect(() => {
     let active = true;
-    repository.list().then(data => {
-      if (active) {
-        setRecords(data);
-      }
-    });
+    repository
+      .list()
+      .then(data => {
+        if (active) {
+          setRecords(data);
+        }
+      })
+      .catch(error => {
+        if (active) {
+          setNotice(getErrorMessage(error, "Failed to load workflow records."));
+        }
+      });
 
     return () => {
       active = false;
@@ -36,9 +44,28 @@ export function RoleWorkflowBoard({ role, heading, subtitle }: RoleWorkflowBoard
     }
 
     repository.save(records).catch(error => {
-      console.warn("Failed to persist workflow records.", error);
+      setNotice(getErrorMessage(error, "Failed to persist workflow records."));
     });
   }, [records, repository]);
+
+  async function logWorkflowEvent(record: WorkflowApplicationRecord, actionId: WorkflowActionId, status: "success" | "failure") {
+    await fetch("/api/audit/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: `workflow.${actionId}`,
+        entity: "Application",
+        entityId: record.applicationNo,
+        module: "admissions",
+        status,
+        metadata: {
+          recordId: record.id,
+          applicationStatus: record.applicationStatus,
+          enrollmentStatus: record.enrollmentStatus
+        }
+      })
+    });
+  }
 
   function handleAction(recordId: string, actionId: WorkflowActionId) {
     setRecords(prev =>
@@ -49,9 +76,15 @@ export function RoleWorkflowBoard({ role, heading, subtitle }: RoleWorkflowBoard
 
         try {
           const updated = applyWorkflowAction(role, actionId, record);
+          void logWorkflowEvent(updated, actionId, "success").catch(error => {
+            setNotice(getErrorMessage(error, "Failed to publish workflow audit event."));
+          });
           setNotice(`${record.applicationNo}: ${actionId.replaceAll("_", " ")} completed.`);
           return updated;
         } catch (error) {
+          void logWorkflowEvent(record, actionId, "failure").catch(logError => {
+            setNotice(getErrorMessage(logError, "Failed to publish workflow audit event."));
+          });
           setNotice(error instanceof Error ? error.message : "Workflow action failed.");
           return record;
         }

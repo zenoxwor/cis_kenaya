@@ -1,5 +1,6 @@
 import { seedWorkflowRecords } from "@/lib/workflow/mock-data";
 import type { WorkflowApplicationRecord } from "@/lib/workflow/types";
+import { AppError } from "@/lib/observability/app-error";
 
 export interface AdmissionsWorkflowRepository {
   list(): Promise<WorkflowApplicationRecord[]>;
@@ -22,8 +23,12 @@ export class BrowserWorkflowRepository implements AdmissionsWorkflowRepository {
     try {
       return JSON.parse(raw) as WorkflowApplicationRecord[];
     } catch (error) {
-      console.warn("Failed to parse workflow records from localStorage.", error);
-      return seedWorkflowRecords;
+      console.error("Failed to parse workflow records from localStorage.", error);
+      throw new AppError("Workflow records are corrupted in local storage.", {
+        code: "WORKFLOW_STORAGE_PARSE_ERROR",
+        statusCode: 500,
+        details: error
+      });
     }
   }
 

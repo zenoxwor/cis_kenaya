@@ -12,8 +12,11 @@ export function TriggerConfigPanel({ config: initial, readOnly = false }: Props)
   const [isPending, startTransition] = useTransition();
   const [config, setConfig] = useState<TriggerConfig>(initial);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleSave() {
+    setSaved(false);
+    setError(null);
     startTransition(async () => {
       try {
         const res = await fetch("/api/communications/triggers", {
@@ -21,9 +24,14 @@ export function TriggerConfigPanel({ config: initial, readOnly = false }: Props)
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(config)
         });
-        if (res.ok) setSaved(true);
-      } catch {
-        // silent fail in mock
+        if (!res.ok) {
+          const payload = (await res.json()) as { error?: { message?: string } };
+          throw new Error(payload.error?.message ?? "Failed to save trigger settings.");
+        }
+        setSaved(true);
+      } catch (caught) {
+        const message = caught instanceof Error ? caught.message : "Failed to save trigger settings.";
+        setError(message);
       }
     });
   }
@@ -130,6 +138,7 @@ export function TriggerConfigPanel({ config: initial, readOnly = false }: Props)
           {saved && (
             <p className="text-sm text-emerald-600">Settings saved.</p>
           )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
       )}
     </div>

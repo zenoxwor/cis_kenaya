@@ -4,6 +4,8 @@ import type { TriggerConfig } from "@/lib/communications/types";
 import { parseSessionPayload } from "@/lib/auth/cookie-session";
 import { AUTH_COOKIE_NAME } from "@/lib/auth/config";
 import { canPerformAction } from "@/lib/rbac/permissions";
+import { AppError, routeErrorResponse } from "@/lib/observability/errors";
+import { logAuditEvent } from "@/lib/observability/audit-stream";
 
 export async function GET() {
   const config = getTriggerConfig();
@@ -11,18 +13,53 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  const rawSession = req.cookies.get(AUTH_COOKIE_NAME)?.value;
-  const session = parseSessionPayload(rawSession);
+  try {
+    const rawSession = req.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const session = parseSessionPayload(rawSession);
+    const ipAddress = req.headers.get("x-forwarded-for");
 
-  if (!session) {
-    return NextResponse.json({ success: false, error: "Unauthenticated" }, { status: 401 });
+    if (!session) {
+      throw new AppError("Unauthenticated", { code: "UNAUTHENTICATED", statusCode: 401 });
+    }
+
+    if (!canPerformAction(session.user.role, "settings", "edit")) {
+      logAuditEvent({
+        actor: {
+          id: session.user.id,
+          role: session.user.role,
+          name: session.user.fullName,
+          ipAddress
+        },
+        action: "rbac.access_denied",
+        entity: "TriggerConfig",
+        entityId: "communications",
+        module: "rbac",
+        status: "denied",
+        metadata: { permission: "settings.edit" }
+      });
+      throw new AppError("Forbidden", { code: "FORBIDDEN", statusCode: 403 });
+    }
+
+    const body = (await req.json()) as Partial<TriggerConfig>;
+    const config = updateTriggerConfig(body);
+
+    logAuditEvent({
+      actor: {
+        id: session.user.id,
+        role: session.user.role,
+        name: session.user.fullName,
+        ipAddress
+      },
+      action: "trigger.config_update",
+      entity: "TriggerConfig",
+      entityId: "communications",
+      module: "communications",
+      status: "success",
+      metadata: body
+    });
+
+    return NextResponse.json({ success: true, config });
+  } catch (error) {
+    return routeErrorResponse(error);
   }
-
-  if (!canPerformAction(session.user.role, "settings", "edit")) {
-    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
-  }
-
-  const body = (await req.json()) as Partial<TriggerConfig>;
-  const config = updateTriggerConfig(body);
-  return NextResponse.json({ success: true, config });
 }
