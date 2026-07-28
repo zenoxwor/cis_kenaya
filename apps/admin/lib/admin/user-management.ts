@@ -1,4 +1,4 @@
-import { randomBytes, scryptSync } from "node:crypto";
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { RoleCode, type User, type Role, type PrismaClient } from "@prisma/client";
 import { ROLE, type AppRole } from "@/lib/rbac/roles";
 import type { ModulePermissionKey } from "@/lib/admin/module-permissions";
@@ -75,6 +75,26 @@ export function hashPassword(rawPassword: string) {
   const salt = randomBytes(16).toString("hex");
   const hash = scryptSync(rawPassword, salt, 64).toString("hex");
   return `scrypt$${salt}$${hash}`;
+}
+
+export function verifyPassword(rawPassword: string, storedPasswordHash: string | null | undefined) {
+  if (!storedPasswordHash) {
+    return false;
+  }
+
+  const [algorithm, salt, expectedHash] = storedPasswordHash.split("$");
+  if (algorithm !== "scrypt" || !salt || !expectedHash) {
+    return false;
+  }
+
+  const computedHash = scryptSync(rawPassword, salt, 64).toString("hex");
+  const expectedHashBuffer = Buffer.from(expectedHash, "hex");
+  const computedHashBuffer = Buffer.from(computedHash, "hex");
+
+  return (
+    expectedHashBuffer.length === computedHashBuffer.length &&
+    timingSafeEqual(computedHashBuffer, expectedHashBuffer)
+  );
 }
 
 export function generateTemporaryPassword() {

@@ -14,6 +14,7 @@ import {
   toManagedUserResponse,
   toRoleCode
 } from "@/lib/admin/user-management";
+import { sendWelcomeEmail } from "@/lib/email/resend";
 
 const createUserSchema = z
   .object({
@@ -125,11 +126,21 @@ export async function POST(request: NextRequest) {
       },
       include: { role: true }
     });
+    const passwordForEmail = passwordResult.generatedTemporaryPassword ?? input.password;
+    const welcomeEmail = passwordForEmail
+      ? await sendWelcomeEmail(
+          createdUser.email,
+          createdUser.fullName,
+          createdUser.email,
+          passwordForEmail
+        )
+      : null;
 
     return NextResponse.json({
       success: true,
       user: toManagedUserResponse(createdUser),
-      generatedTemporaryPassword: passwordResult.generatedTemporaryPassword
+      generatedTemporaryPassword: passwordResult.generatedTemporaryPassword,
+      welcomeEmail
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {

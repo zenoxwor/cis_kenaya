@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const campaign = sendCampaign(body, session.user.id, session.user.fullName);
+    const campaign = await sendCampaign(body, session.user.id, session.user.fullName);
     logAuditEvent({
       actor: {
         id: session.user.id,

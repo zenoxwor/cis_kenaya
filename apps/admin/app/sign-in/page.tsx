@@ -34,7 +34,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
         {error === "invalid_credentials" && (
           <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            Incorrect username or password. Please try again.
+            Incorrect username, email, or password. Please try again.
           </p>
         )}
         {error === "inactive_account" && (
@@ -47,12 +47,12 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           <form action="/api/auth/mock-sign-in" className="mt-6 space-y-4" method="post">
             <input name="next" type="hidden" value={safeNextPath} />
             <label className="block space-y-1 text-sm">
-              <span className="font-medium text-slate-700">Username</span>
+              <span className="font-medium text-slate-700">Username or email</span>
               <input
                 autoComplete="username"
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-brand-500 focus:outline-none"
                 name="username"
-                placeholder="Enter username"
+                placeholder="Enter username or email"
                 required
                 type="text"
               />
@@ -90,7 +90,8 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
         <p className="mt-6 text-xs text-slate-500">
           This mock sign-in path is for development only and stores an HTTP-only cookie session without
-          cryptographic signing. Default dev credentials are username-based (e.g. superadmin/admin123).
+          cryptographic signing. Default dev credentials are username-based (e.g. superadmin/admin123),
+          while managed staff accounts can sign in with their email address and assigned password.
           Replace with signed/JWT or provider sessions before production rollout.
         </p>
       </section>

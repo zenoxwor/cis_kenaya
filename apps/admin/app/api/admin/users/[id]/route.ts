@@ -13,6 +13,7 @@ import {
   hashPassword,
   generateTemporaryPassword
 } from "@/lib/admin/user-management";
+import { sendPasswordResetEmail } from "@/lib/email/resend";
 
 const updateUserSchema = z
   .object({
@@ -109,11 +110,17 @@ export async function PATCH(
       data: updateData,
       include: { role: true }
     });
+    const passwordForEmail = generatedTemporaryPassword ?? input.password ?? null;
+    const passwordResetEmail =
+      input.passwordAction !== "none" && passwordForEmail
+        ? await sendPasswordResetEmail(updatedUser.email, updatedUser.fullName, passwordForEmail)
+        : null;
 
     return NextResponse.json({
       success: true,
       user: toManagedUserResponse(updatedUser),
-      generatedTemporaryPassword
+      generatedTemporaryPassword,
+      passwordResetEmail
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {

@@ -3,7 +3,26 @@ import { getAuthMode } from "@/lib/auth/config";
 import { findMockUserByCredentials } from "@/lib/auth/mock-users";
 import { isSafeInternalPath } from "@/lib/auth/paths";
 import { createActiveSessionCookie, createSessionCookieValue } from "@/lib/auth/session";
+import { toSessionUser, verifyPassword } from "@/lib/admin/user-management";
+import { prisma } from "@/lib/db/client";
 import { logAuditEvent } from "@/lib/observability/audit-stream";
+
+async function findManagedUserByCredentials(username: string, password: string) {
+  const normalizedUsername = username.trim().toLowerCase();
+  if (!normalizedUsername) {
+    return null;
+  }
+
+  const user = await prisma.user.findFirst({
+    where: { email: normalizedUsername },
+    include: { role: true }
+  });
+  if (!user || !user.isActive || !verifyPassword(password, user.passwordHash)) {
+    return null;
+  }
+
+  return toSessionUser(user);
+}
 
 export async function POST(request: Request) {
   const ipAddress = request.headers.get("x-forwarded-for");
@@ -26,7 +45,9 @@ export async function POST(request: Request) {
   const password = String(formData.get("password") ?? "");
   const requestedNext = String(formData.get("next") ?? "/admin");
   const nextPath = isSafeInternalPath(requestedNext) ? requestedNext : "/admin";
-  const user = findMockUserByCredentials(username, password);
+  const user =
+    findMockUserByCredentials(username, password) ??
+    (await findManagedUserByCredentials(username, password));
 
   if (!user) {
     logAuditEvent({

@@ -6,6 +6,7 @@ import type {
   ComposePayload,
   AudienceFilter
 } from "./types";
+import { sendCommunicationEmail } from "@/lib/email/resend";
 import {
   MOCK_TEMPLATES,
   MOCK_CAMPAIGNS,
@@ -96,15 +97,88 @@ export function getCampaign(id: string): MessageCampaign | undefined {
   return campaigns.find(c => c.id === id);
 }
 
+function renderMessageTemplate(template: string, variables: Record<string, string>) {
+  return template.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (match, rawKey: string) => {
+    const key = rawKey.trim();
+    return key in variables ? variables[key]! : match;
+  });
+}
+
+function buildTemplateVariables(
+  guardian: Pick<MockGuardian, "fullName" | "email">,
+  audienceMeta: Record<string, unknown> | null | undefined
+) {
+  const variables: Record<string, string> = {
+    guardianName: guardian.fullName,
+    guardianEmail: guardian.email ?? ""
+  };
+
+  if (audienceMeta) {
+    for (const [key, value] of Object.entries(audienceMeta)) {
+      if (value === null || value === undefined) {
+        continue;
+      }
+
+      variables[key] = String(value);
+    }
+  }
+
+  return variables;
+}
+
+async function sendEmailDelivery(
+  delivery: MessageDelivery,
+  template: MessageTemplate,
+  audienceMeta: Record<string, unknown> | null | undefined
+) {
+  const now = new Date();
+  if (!delivery.guardianEmail) {
+    delivery.status = "FAILED";
+    delivery.errorMessage = "Guardian email is missing.";
+    delivery.sentAt = null;
+    delivery.deliveredAt = null;
+    delivery.updatedAt = now;
+    return false;
+  }
+
+  const variables = buildTemplateVariables(
+    {
+      fullName: delivery.guardianName ?? "Parent / Guardian",
+      email: delivery.guardianEmail ?? null
+    },
+    audienceMeta
+  );
+  const subject = renderMessageTemplate(
+    template.subject ?? "CIS Kenya Admin Communication",
+    variables
+  );
+  const body = renderMessageTemplate(template.body, variables);
+  const result = await sendCommunicationEmail(delivery.guardianEmail, subject, body);
+
+  delivery.updatedAt = now;
+  if (result.sent) {
+    delivery.status = "SENT";
+    delivery.errorMessage = null;
+    delivery.sentAt = now;
+    delivery.deliveredAt = null;
+    return true;
+  }
+
+  delivery.status = "FAILED";
+  delivery.errorMessage = result.errorMessage;
+  delivery.sentAt = null;
+  delivery.deliveredAt = null;
+  return false;
+}
+
 /**
- * Mock send: resolves audience, creates a campaign + deliveries, marks sent.
- * No real SMS/email provider is called — everything is logged to in-memory store.
+ * Mock send: resolves audience, creates a campaign + deliveries, and sends email deliveries through Resend.
  */
-export function sendCampaign(
+export async function sendCampaign(
   payload: ComposePayload,
   sentById: string,
   sentByName: string
-): MessageCampaign {
+): Promise<MessageCampaign> {
   const template = getTemplate(payload.templateId);
   if (!template) throw new Error("Template not found");
 
@@ -137,6 +211,8 @@ export function sendCampaign(
   campaigns.unshift(campaign);
 
   if (!payload.scheduledAt) {
+    const createdDeliveries: MessageDelivery[] = [];
+
     for (const guardian of audience) {
       const channels: Array<"SMS" | "EMAIL"> =
         template.type === "BOTH"
@@ -146,23 +222,39 @@ export function sendCampaign(
           : ["EMAIL"];
 
       for (const channel of channels) {
-        deliveries.push({
+        const delivery: MessageDelivery = {
           id: `del_${Date.now()}_${Math.random().toString(36).slice(2)}`,
           campaignId: campaign.id,
           guardianId: guardian.id,
           channel,
-          status: "SENT",
+          status: channel === "EMAIL" ? "PENDING" : "SENT",
           errorMessage: null,
-          sentAt: new Date(),
+          sentAt: channel === "EMAIL" ? null : new Date(),
           deliveredAt: null,
           createdAt: new Date(),
           updatedAt: new Date(),
           guardianName: guardian.fullName,
           guardianPhone: guardian.phoneNumber,
           guardianEmail: guardian.email ?? undefined
-        });
+        };
+
+        deliveries.push(delivery);
+        createdDeliveries.push(delivery);
       }
     }
+
+    const emailDeliveries = createdDeliveries.filter(delivery => delivery.channel === "EMAIL");
+    const emailResults = await Promise.all(
+      emailDeliveries.map(delivery => sendEmailDelivery(delivery, template, payload.audienceMeta))
+    );
+    const sentEmailCount = emailResults.filter(Boolean).length;
+    const failedEmailCount = emailResults.length - sentEmailCount;
+    const sentSmsCount = createdDeliveries.length - emailDeliveries.length;
+
+    campaign.sentCount = sentSmsCount + sentEmailCount;
+    campaign.failedCount = failedEmailCount;
+    campaign.status = campaign.sentCount > 0 ? "SENT" : failedEmailCount > 0 ? "FAILED" : "SENT";
+    campaign.updatedAt = new Date();
   }
 
   return campaign;
