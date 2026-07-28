@@ -42,6 +42,7 @@ export type DomainResource = (typeof DOMAIN_RESOURCES)[number];
 
 export const ADMIN_ROUTE_KEYS = [
   "/admin",
+  "/admin/analytics",
   "/admin/super-admin",
   "/admin/super-admin/users",
   "/admin/super-admin/audit",
@@ -76,6 +77,7 @@ export type AdminRouteKey = (typeof ADMIN_ROUTE_KEYS)[number];
 
 export const ADMIN_NAV_KEYS = [
   "dashboard",
+  "executive_analytics",
   "super_admin_console",
   "principal_dashboard",
   "principal_staff_accounts",
@@ -127,9 +129,10 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     }
   },
   [ROLE.PRINCIPAL]: {
-    // Full access to every section EXCEPT the Super Admin console (settings, user mgmt, system config)
+    // Full access to core operational modules, excluding Settings and Finance controls.
     routeAccess: [
       "/admin",
+      "/admin/analytics",
       "/admin/principal",
       "/admin/principal/reports",
       "/admin/principal/analytics",
@@ -139,10 +142,6 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/reception/applications",
       "/admin/reception/analytics",
       "/admin/registration",
-      "/admin/finance",
-      "/admin/finance/invoices",
-      "/admin/finance/payments",
-      "/admin/finance/reports",
       "/admin/exams",
       "/admin/exams/marks",
       "/admin/exams/reports",
@@ -158,11 +157,11 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     // super_admin_console intentionally omitted — Settings is Super Admin only
     navigationVisibility: [
       "dashboard",
+      "executive_analytics",
       "principal_dashboard",
       "principal_staff_accounts",
       "reception_dashboard",
       "registration_wizard",
-      "finance_dashboard",
       "exams_suite",
       "communications_center",
       "documents_center",
@@ -177,8 +176,6 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       application: ["view", "create", "edit", "approve", "export"],
       enrollment: ["view", "create", "edit", "approve", "export"],
       student_document: ["view", "approve", "export"],
-      fee_invoice: ["view", "approve", "export"],
-      payment: ["view", "export"],
       exam_term: ["view", "create", "edit", "approve"],
       exam_component: ["view", "create", "edit", "approve"],
       student_mark: ["view", "approve", "export"],
@@ -189,14 +186,14 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       communication: ["view", "create", "edit", "export"],
       message_template: ["view", "create", "edit", "approve"],
       attendance_record: ["view", "create", "edit", "approve", "export"],
-      attendance_correction: ["view", "approve"],
-      finance_automation: ["view"]
+      attendance_correction: ["view", "approve"]
       // `settings` resource intentionally omitted — Super Admin only
     }
   },
   [ROLE.RECEPTION]: {
     routeAccess: [
       "/admin",
+      "/admin/analytics",
       "/admin/admissions",
       "/admin/reception",
       "/admin/reception/applications",
@@ -214,6 +211,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     ],
     navigationVisibility: [
       "dashboard",
+      "executive_analytics",
       "reception_dashboard",
       "registration_wizard",
       "exams_suite",
@@ -242,6 +240,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
   [ROLE.FINANCE]: {
     routeAccess: [
       "/admin",
+      "/admin/analytics",
       "/admin/finance",
       "/admin/finance/invoices",
       "/admin/finance/payments",
@@ -252,6 +251,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     ],
     navigationVisibility: [
       "dashboard",
+      "executive_analytics",
       "finance_dashboard",
       "communications_center"
     ],
@@ -273,20 +273,17 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/exams",
       "/admin/exams/marks",
       "/admin/exams/reports",
-      "/admin/documents",
       "/admin/attendance",
       "/admin/attendance/reports"
     ],
-    navigationVisibility: ["dashboard", "exams_suite", "documents_center", "attendance_module"],
+    navigationVisibility: ["dashboard", "exams_suite", "attendance_module"],
     actions: {
       dashboard: ["view"],
       student: ["view"],
-      student_document: ["view"],
       exam_term: ["view"],
       exam_component: ["view"],
       student_mark: ["view", "create", "edit"],
       report_card: ["view", "export"],
-      report: ["view", "export"],
       attendance_record: ["view", "create", "edit"],
       attendance_correction: ["view", "create"]
     }

@@ -16,6 +16,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Cross-role overview and quick actions."
   },
   {
+    id: "executive_analytics",
+    href: "/admin/analytics",
+    label: "Executive Analytics",
+    description: "Unified trends across enrollment, attendance, finance, exams, and communications."
+  },
+  {
     id: "super_admin_console",
     href: "/admin/super-admin",
     label: "Super Admin Console",
