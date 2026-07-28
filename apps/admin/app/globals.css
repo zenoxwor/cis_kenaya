@@ -18,6 +18,22 @@ a {
   @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm;
 }
 
+/* Wizard step transition animation */
+@keyframes wizardStepIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wizard-step-enter {
+  animation: wizardStepIn 0.35s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
 @media print {
   body {
     @apply bg-white;
