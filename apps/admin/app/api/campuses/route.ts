@@ -1,6 +1,8 @@
 /**
- * GET  /api/classes — list active school classes with campus and student count
- * POST /api/classes — create a new school class (principal+ only)
+ * GET  /api/campuses — list all campuses
+ * POST /api/campuses — create a campus (principal+ only)
+ *
+ * Note: Campus.code is required and unique in the schema.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -19,26 +21,17 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const classes = await db.schoolClass.findMany({
-    where: { isActive: true },
-    orderBy: [{ gradeLevel: "asc" }, { name: "asc" }],
-    select: {
-      id: true,
-      name: true,
-      gradeLevel: true,
-      campusId: true,
-      campus: { select: { name: true } },
-      _count: { select: { students: true } },
-    },
+  const campuses = await db.campus.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, code: true, name: true, isMain: true },
   });
 
-  return NextResponse.json({ classes });
+  return NextResponse.json({ campuses });
 }
 
-const createClassSchema = z.object({
+const createCampusSchema = z.object({
   name: z.string().min(1).max(100),
-  gradeLevel: z.string().min(1).max(50),
-  campusId: z.string().min(1),
+  code: z.string().min(1).max(20),
 });
 
 export async function POST(req: NextRequest) {
@@ -48,7 +41,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const parsed = createClassSchema.safeParse(body);
+  const parsed = createCampusSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Invalid input", details: parsed.error.flatten() },
@@ -56,26 +49,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { name, gradeLevel, campusId } = parsed.data;
+  const { name, code } = parsed.data;
 
   try {
-    const schoolClass = await db.schoolClass.create({
-      data: { name, gradeLevel, campusId },
-      select: {
-        id: true,
-        name: true,
-        gradeLevel: true,
-        campusId: true,
-        campus: { select: { name: true } },
-        _count: { select: { students: true } },
-      },
+    const campus = await db.campus.create({
+      data: { name, code: code.toUpperCase() },
+      select: { id: true, code: true, name: true, isMain: true },
     });
-    return NextResponse.json({ schoolClass }, { status: 201 });
+    return NextResponse.json({ campus }, { status: 201 });
   } catch (err: unknown) {
     const e = err as { code?: string };
     if (e?.code === "P2002") {
       return NextResponse.json(
-        { error: "A class with this name already exists in this campus." },
+        { error: "A campus with this code already exists." },
         { status: 409 }
       );
     }

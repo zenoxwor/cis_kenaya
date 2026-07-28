@@ -85,7 +85,8 @@ export const ADMIN_ROUTE_KEYS = [
   "/admin/communications/settings",
   "/admin/documents",
   "/admin/attendance",
-  "/admin/attendance/reports"
+  "/admin/attendance/reports",
+  "/admin/principal/classes"
 ] as const;
 
 export type AdminRouteKey = (typeof ADMIN_ROUTE_KEYS)[number];
@@ -103,7 +104,8 @@ export const ADMIN_NAV_KEYS = [
   "exams_suite",
   "communications_center",
   "documents_center",
-  "attendance_module"
+  "attendance_module",
+  "classes_management"
 ] as const;
 
 export type AdminNavKey = (typeof ADMIN_NAV_KEYS)[number];
@@ -120,7 +122,8 @@ const NAV_PERMISSION_KEYS: Partial<Record<AdminNavKey, ModulePermissionKey>> = {
   exams_suite: "exams_grading",
   communications_center: "communications_centre",
   documents_center: "document_center",
-  attendance_module: "attendance"
+  attendance_module: "attendance",
+  classes_management: "principal_dashboard"
 };
 
 export type RolePermissionMatrix = {
@@ -192,9 +195,9 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/communications/settings",
       "/admin/documents",
       "/admin/attendance",
-      "/admin/attendance/reports"
+      "/admin/attendance/reports",
+      "/admin/principal/classes"
     ],
-    // super_admin_console intentionally omitted — Settings is Super Admin only
     navigationVisibility: [
       "dashboard",
       "executive_analytics",
@@ -206,7 +209,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "exams_suite",
       "communications_center",
       "documents_center",
-      "attendance_module"
+      "attendance_module",
+      "classes_management"
     ],
     actions: {
       dashboard: ["view"],

@@ -86,6 +86,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     href: "/admin/attendance",
     label: "Attendance",
     description: "Track and manage student attendance records."
+  },
+  {
+    id: "classes_management",
+    href: "/admin/principal/classes",
+    label: "Classes",
+    description: "Manage school classes and campus structure."
   }
 ];
 
