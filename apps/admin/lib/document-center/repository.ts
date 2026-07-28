@@ -196,7 +196,26 @@ export async function listDocumentRecordsForUser(user: SessionUser): Promise<Stu
       ? { student: { schoolClassId: { in: user.assignedClassIds ?? [] } } }
       : undefined;
 
-  const docs = await fetchDocumentsWithJoins(whereClause);
+  const studentWhereClause =
+    user.role === ROLE.TEACHER
+      ? { schoolClassId: { in: user.assignedClassIds ?? [] } }
+      : undefined;
+
+  const [docs, allStudents] = await Promise.all([
+    fetchDocumentsWithJoins(whereClause),
+    prisma.student.findMany({
+      where: studentWhereClause,
+      include: {
+        schoolClass: { select: { id: true, name: true } },
+        studentLinks: {
+          include: {
+            guardian: { select: { fullName: true, phoneNumber: true, email: true } }
+          },
+          orderBy: [{ isPrimary: "desc" }]
+        }
+      }
+    })
+  ]);
 
   const expiredCandidateIds = docs
     .filter(doc => doc.status === "VERIFIED" && doc.expiresAt && doc.expiresAt < new Date())
@@ -207,7 +226,46 @@ export async function listDocumentRecordsForUser(user: SessionUser): Promise<Stu
     ? await fetchDocumentsWithJoins(whereClause)
     : docs;
 
-  return freshDocs.filter(doc => canViewDocument(doc, user)).map(toRecord);
+  const docRecords = freshDocs.filter(doc => canViewDocument(doc, user)).map(toRecord);
+
+  // Find students who have no documents — add a placeholder "missing" row so they appear in the list
+  const studentsWithDocs = new Set(freshDocs.map(doc => doc.studentId));
+  const studentsWithoutDocs = allStudents.filter(s => !studentsWithDocs.has(s.id));
+
+  const placeholderRecords: StudentDocumentRecord[] = studentsWithoutDocs.map(student => {
+    const guardianLink = student.studentLinks[0];
+    return {
+      id: `placeholder-${student.id}`,
+      studentId: student.id,
+      studentName: `${student.firstName} ${student.lastName}`.trim(),
+      classId: student.schoolClassId ?? "unassigned",
+      className: student.schoolClass?.name ?? "Unassigned",
+      guardianName: guardianLink?.guardian.fullName ?? "—",
+      guardianPhone: guardianLink?.guardian.phoneNumber ?? "",
+      guardianEmail: guardianLink?.guardian.email ?? null,
+      category: "identity" as const,
+      documentName: "No documents uploaded yet",
+      fileName: null,
+      storagePath: null,
+      signedUrl: null,
+      status: "missing" as const,
+      uploadedAt: null,
+      verifiedAt: null,
+      rejectedAt: null,
+      expiresAt: null,
+      reminderLeadDays: 30,
+      reminderEnabled: false,
+      nextReminderAt: null,
+      lastReminderAt: null,
+      missingReminderEveryDays: 7,
+      nextMissingReminderAt: null,
+      lastMissingReminderAt: null,
+      lastUpdatedAt: student.createdAt?.toISOString() ?? new Date().toISOString(),
+      timeline: []
+    };
+  });
+
+  return [...docRecords, ...placeholderRecords];
 }
 
 export async function transitionDocumentStatus(input: TransitionInput): Promise<void> {
