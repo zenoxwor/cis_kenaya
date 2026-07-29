@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { hasModulePermission } from "@/lib/admin/module-permissions";
 import { requireRequestUser } from "@/lib/auth/api-authorization";
+import type { SessionUser } from "@/lib/auth/types";
 import {
   DEFAULT_TIMETABLE_COLOR_HEX,
   TIMETABLE_COLOR_HEX_REGEX
 } from "@/lib/reception/timetable-colors";
+import { syncTimetableSnapshotFile } from "@/lib/reception/timetable-snapshot";
 import {
   deleteTimetableEntry,
   listClassTimetable,
@@ -38,6 +40,18 @@ function hasTimetablePermission(modulePermissions: string[] | undefined, role: A
 }
 
 const TIMETABLE_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] as const;
+
+async function syncSnapshotResult(user: SessionUser) {
+  try {
+    const snapshot = await syncTimetableSnapshotFile(user);
+    return { ok: true as const, snapshot };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : "Failed to sync timetable snapshot."
+    };
+  }
+}
 
 export async function GET(request: NextRequest) {
   const auth = requireRequestUser(request);
@@ -97,10 +111,11 @@ export async function POST(request: NextRequest) {
   }
 
   await upsertTimetableEntry(user, parsed.data);
+  const snapshot = await syncSnapshotResult(user);
   const rows = await listClassTimetable(user, parsed.data.classId);
   return NextResponse.json({
     success: true,
-    data: { rows }
+    data: { rows, snapshot }
   });
 }
 
@@ -143,10 +158,11 @@ export async function PATCH(request: NextRequest) {
     endTime: parsed.data.endTime,
     colorHex: parsed.data.colorHex
   });
+  const snapshot = await syncSnapshotResult(user);
   const rows = await listClassTimetable(user, parsed.data.classId);
   return NextResponse.json({
     success: true,
-    data: { rows }
+    data: { rows, snapshot }
   });
 }
 
@@ -173,9 +189,10 @@ export async function DELETE(request: NextRequest) {
   }
 
   await deleteTimetableEntry(user, parsed.data.id);
+  const snapshot = await syncSnapshotResult(user);
   const rows = await listClassTimetable(user, parsed.data.classId);
   return NextResponse.json({
     success: true,
-    data: { rows }
+    data: { rows, snapshot }
   });
 }

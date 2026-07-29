@@ -19,12 +19,27 @@ type TimetablePayload = {
   success: boolean;
   error?: string;
   data?: {
-    rows: ReceptionTimetableEntry[];
+    rows?: ReceptionTimetableEntry[];
+    snapshot?:
+      | {
+          ok: true;
+          snapshot: {
+            bucket: string;
+            jsonPath: string;
+            csvPath: string;
+            rowCount: number;
+            generatedAt: string;
+          };
+        }
+      | {
+          ok: false;
+          error: string;
+        };
   };
 };
 
 type Feedback = {
-  type: "success" | "error";
+  type: "success" | "error" | "warning";
   message: string;
 };
 
@@ -61,6 +76,7 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
   const [rows, setRows] = useState<ReceptionTimetableEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [syncingSnapshot, setSyncingSnapshot] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
 
@@ -95,10 +111,13 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
       body: body ? JSON.stringify(body) : undefined
     });
     const payload = (await response.json()) as TimetablePayload;
-    if (!response.ok || !payload.success || !payload.data) {
+    if (!response.ok || !payload.success || !payload.data || !payload.data.rows) {
       throw new Error(payload.error ?? "Timetable request failed.");
     }
-    return payload.data.rows;
+    return {
+      rows: payload.data.rows,
+      snapshot: payload.data.snapshot
+    };
   }, [selectedClassId]);
 
   const loadRows = useCallback(async () => {
@@ -109,8 +128,8 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
 
     setLoading(true);
     try {
-      const nextRows = await requestRows("GET");
-      setRows(nextRows);
+      const payload = await requestRows("GET");
+      setRows(payload.rows);
     } catch (error) {
       setRows([]);
       setFeedback({
@@ -137,7 +156,7 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
     setSubmitting(true);
     setFeedback(null);
     try {
-      const nextRows = await requestRows("POST", {
+      const payload = await requestRows("POST", {
         classId: selectedClassId,
         dayOfWeek: createDraft.dayOfWeek,
         period: createDraft.period,
@@ -147,9 +166,13 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
         endTime: createDraft.endTime,
         colorHex: normalizeTimetableColorHex(createDraft.colorHex)
       });
-      setRows(nextRows);
+      setRows(payload.rows);
       setCreateDraft(previous => ({ ...previous, subject: "", teacherName: "" }));
-      setFeedback({ type: "success", message: "Timetable slot saved successfully." });
+      setFeedback(
+        payload.snapshot && !payload.snapshot.ok
+          ? { type: "warning", message: `Timetable slot saved, but snapshot sync failed: ${payload.snapshot.error}` }
+          : { type: "success", message: "Timetable slot saved successfully." }
+      );
     } catch (error) {
       setFeedback({
         type: "error",
@@ -167,9 +190,13 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
     setSubmitting(true);
     setFeedback(null);
     try {
-      const nextRows = await requestRows("DELETE", { id: entry.id, classId: selectedClassId });
-      setRows(nextRows);
-      setFeedback({ type: "success", message: "Timetable slot removed." });
+      const payload = await requestRows("DELETE", { id: entry.id, classId: selectedClassId });
+      setRows(payload.rows);
+      setFeedback(
+        payload.snapshot && !payload.snapshot.ok
+          ? { type: "warning", message: `Timetable slot removed, but snapshot sync failed: ${payload.snapshot.error}` }
+          : { type: "success", message: "Timetable slot removed." }
+      );
       if (editDraft?.id === entry.id) {
         setEditDraft(null);
       }
@@ -192,7 +219,7 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
     setSubmitting(true);
     setFeedback(null);
     try {
-      const nextRows = await requestRows("PATCH", {
+      const payload = await requestRows("PATCH", {
         id: editDraft.id,
         classId: selectedClassId,
         subject: editDraft.subject.trim(),
@@ -201,9 +228,13 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
         endTime: editDraft.endTime,
         colorHex: normalizeTimetableColorHex(editDraft.colorHex)
       });
-      setRows(nextRows);
+      setRows(payload.rows);
       setEditDraft(null);
-      setFeedback({ type: "success", message: "Timetable slot updated." });
+      setFeedback(
+        payload.snapshot && !payload.snapshot.ok
+          ? { type: "warning", message: `Timetable slot updated, but snapshot sync failed: ${payload.snapshot.error}` }
+          : { type: "success", message: "Timetable slot updated." }
+      );
     } catch (error) {
       setFeedback({
         type: "error",
@@ -211,6 +242,33 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
       });
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function onSyncSnapshot() {
+    setSyncingSnapshot(true);
+    setFeedback(null);
+    try {
+      const response = await fetch("/api/reception/timetables/snapshot", { method: "POST" });
+      const payload = (await response.json()) as TimetablePayload;
+      if (!response.ok || !payload.success || !payload.data?.snapshot || !payload.data.snapshot.ok) {
+        throw new Error(
+          !payload.success
+            ? (payload.error ?? "Failed to sync timetable snapshot.")
+            : (payload.data?.snapshot && !payload.data.snapshot.ok ? payload.data.snapshot.error : "Failed to sync timetable snapshot.")
+        );
+      }
+      setFeedback({
+        type: "success",
+        message: `Timetable snapshot synced (${payload.data.snapshot.snapshot.rowCount} rows).`
+      });
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "Failed to sync timetable snapshot."
+      });
+    } finally {
+      setSyncingSnapshot(false);
     }
   }
 
@@ -242,13 +300,28 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
           </select>
         </div>
 
+        <div>
+          <button
+            type="button"
+            disabled={syncingSnapshot}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+            onClick={() => {
+              void onSyncSnapshot();
+            }}
+          >
+            {syncingSnapshot ? "Syncing timetable file..." : "Export/Sync timetable file"}
+          </button>
+        </div>
+
         {feedback ? (
           <p
             className={[
               "rounded-lg px-3 py-2 text-sm",
               feedback.type === "success"
                 ? "bg-emerald-50 text-emerald-700"
-                : "bg-rose-50 text-rose-700"
+                : feedback.type === "warning"
+                  ? "bg-amber-50 text-amber-800"
+                  : "bg-rose-50 text-rose-700"
             ].join(" ")}
           >
             {feedback.message}
