@@ -58,8 +58,7 @@ export const DEFAULT_ROLE_MODULE_PERMISSIONS: Record<AppRole, ModulePermissionKe
     "exams_grading",
     "communications_centre",
     "document_center",
-    "attendance",
-    "finance_ops"
+    "attendance"
   ],
   [ROLE.RECEPTION]: [
     "executive_analytics",

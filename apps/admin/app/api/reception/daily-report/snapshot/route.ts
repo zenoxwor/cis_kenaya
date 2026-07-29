@@ -12,15 +12,13 @@ function canWrite(role: string) {
   return (
     role === ROLE.SUPER_ADMIN ||
     role === ROLE.PRINCIPAL ||
-    role === ROLE.RECEPTION ||
-    role === ROLE.FINANCE
+    role === ROLE.RECEPTION
   );
 }
 
 function hasDailyReportPermission(modulePermissions: string[] | undefined, role: AppRole) {
   return (
     hasModulePermission(modulePermissions, role, "reception_admissions") ||
-    hasModulePermission(modulePermissions, role, "finance_ops") ||
     hasModulePermission(modulePermissions, role, "principal_dashboard")
   );
 }
@@ -34,7 +32,7 @@ export async function POST(request: NextRequest) {
     return forbidden();
   }
   if (!canWrite(user.role)) {
-    return forbidden("Role does not have permission to save daily reports.");
+    return forbidden("Only super admin, principal, and reception can save daily reports.");
   }
 
   try {
