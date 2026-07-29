@@ -219,6 +219,7 @@ model User {
   roleId       String
   email        String
   fullName     String
+  teachingSubject String?
   passwordHash String?
   modulePermissions String[]       @default([])
   mustChangePassword Boolean       @default(false)

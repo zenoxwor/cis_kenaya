@@ -20,6 +20,7 @@ const createUserSchema = z
   .object({
     email: z.string().trim().email(),
     fullName: z.string().trim().min(2).max(120),
+    teachingSubject: z.string().trim().max(120).optional(),
     role: z.enum(APP_ROLES),
     modulePermissions: z.array(z.string()).optional(),
     passwordMode: z.enum(["set", "generate"]).default("generate"),
@@ -98,6 +99,8 @@ export async function POST(request: NextRequest) {
   const modulePermissions = input.modulePermissions
     ? normalizePermissionsForRole(role, input.modulePermissions)
     : defaultPermissionsForRole(role);
+  const teachingSubject =
+    role === "TEACHER" ? input.teachingSubject?.trim() || null : null;
   const passwordResult = toCreatePasswordResult(input);
 
   try {
@@ -117,6 +120,7 @@ export async function POST(request: NextRequest) {
         roleId: roleRecord.id,
         email: input.email.trim().toLowerCase(),
         fullName: input.fullName.trim(),
+        teachingSubject,
         isActive: input.isActive,
         modulePermissions,
         passwordHash: passwordResult.passwordHash,

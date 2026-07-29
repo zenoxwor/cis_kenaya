@@ -19,6 +19,7 @@ const updateUserSchema = z
   .object({
     fullName: z.string().trim().min(2).max(120).optional(),
     email: z.string().trim().email().optional(),
+    teachingSubject: z.string().trim().max(120).optional(),
     role: z.enum(APP_ROLES).optional(),
     modulePermissions: z.array(z.string()).optional(),
     isActive: z.boolean().optional(),
@@ -78,6 +79,14 @@ export async function PATCH(
     isActive: input.isActive,
     modulePermissions: resolvedPermissions
   };
+
+  if (resolvedRole === "TEACHER") {
+    if (input.teachingSubject !== undefined || input.role === "TEACHER") {
+      updateData.teachingSubject = input.teachingSubject?.trim() || null;
+    }
+  } else if (input.role && input.role !== "TEACHER") {
+    updateData.teachingSubject = null;
+  }
 
   if (input.role) {
     const roleRecord = await prisma.role.findUnique({

@@ -45,6 +45,7 @@ export type ManagedUserResponse = {
   id: string;
   email: string;
   fullName: string;
+  teachingSubject: string | null;
   role: AppRole;
   isActive: boolean;
   modulePermissions: ModulePermissionKey[];
@@ -163,6 +164,7 @@ export function toManagedUserResponse(user: ManagedUserRecord): ManagedUserRespo
     id: user.id,
     email: user.email,
     fullName: user.fullName,
+    teachingSubject: user.teachingSubject,
     role,
     isActive: user.isActive,
     modulePermissions: normalizePermissionsForRole(role, user.modulePermissions),

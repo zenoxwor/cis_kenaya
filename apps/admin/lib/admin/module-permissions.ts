@@ -18,33 +18,36 @@ export const MODULE_PERMISSION_KEYS = [
 export type ModulePermissionKey = (typeof MODULE_PERMISSION_KEYS)[number];
 
 export const MODULE_PERMISSION_LABELS: Record<ModulePermissionKey, string> = {
-  executive_analytics: "Executive Analytics",
-  backup_recovery: "Backup & Recovery",
-  super_admin_console: "Super Admin Console",
+  executive_analytics: "Executive & Cross-Module Analytics",
+  backup_recovery: "Operations, Backup & Recovery",
+  super_admin_console: "Super Admin Configuration",
   user_governance: "User & Role Governance",
-  principal_dashboard: "Principal Dashboard",
-  reception_admissions: "Reception / Admissions",
-  finance_ops: "Finance Ops",
-  registration_wizard: "Registration Wizard",
-  exams_grading: "Exams & Grading",
+  principal_dashboard: "Principal Dashboard & Timetable Workflow",
+  reception_admissions: "Reception, Visitors & Appointments",
+  finance_ops: "Finance & Billing Operations",
+  registration_wizard: "Registration & Enrollment Wizard",
+  exams_grading: "Exams, Grading & Academic Records",
   communications_centre: "Communications Centre",
-  document_center: "Document Center",
-  attendance: "Attendance"
+  document_center: "Student Document Center",
+  attendance: "Attendance, Staff Check-In & Incidents"
 };
 
 export const MODULE_PERMISSION_DESCRIPTIONS: Record<ModulePermissionKey, string> = {
-  executive_analytics: "View cross-module strategic analytics.",
-  backup_recovery: "Access backup status and recovery actions.",
-  super_admin_console: "Manage system-wide admin governance controls.",
-  user_governance: "Manage admin user identities, roles, and module-level permissions.",
-  principal_dashboard: "Access principal oversight dashboards and reports.",
-  reception_admissions: "Manage admissions and reception workflows.",
-  finance_ops: "Handle finance operations, invoices, and payments.",
-  registration_wizard: "Use the student registration wizard.",
-  exams_grading: "Manage exams, marks, and report cards.",
-  communications_centre: "Send and manage parent communications.",
-  document_center: "Manage student document verification lifecycle.",
-  attendance: "Capture and manage attendance records."
+  executive_analytics: "Review strategic insights across admissions, academics, finance, attendance, and operations.",
+  backup_recovery: "Monitor system operations plus backup and recovery actions.",
+  super_admin_console: "Configure platform-wide settings and sensitive admin controls.",
+  user_governance:
+    "Manage staff accounts, role assignments, and module-level access for active portal workflows.",
+  principal_dashboard:
+    "Access principal oversight views, timetable visibility, and school-level decision dashboards.",
+  reception_admissions:
+    "Run reception workflows including admissions, visitor logging, and appointment coordination.",
+  finance_ops: "Manage invoices, collections, and finance operations.",
+  registration_wizard: "Handle learner onboarding from registration through enrollment steps.",
+  exams_grading: "Manage assessments, grading, and report card outputs.",
+  communications_centre: "Coordinate parent/staff communication campaigns and delivery tracking.",
+  document_center: "Manage document verification, reminders, and compliance tracking.",
+  attendance: "Track learner attendance, staff attendance, and incident-linked attendance follow-up."
 };
 
 export const DEFAULT_ROLE_MODULE_PERMISSIONS: Record<AppRole, ModulePermissionKey[]> = {

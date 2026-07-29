@@ -14,6 +14,7 @@ type ManagedUser = {
   id: string;
   email: string;
   fullName: string;
+  teachingSubject: string | null;
   role: AppRole;
   isActive: boolean;
   modulePermissions: ModulePermissionKey[];
@@ -34,6 +35,7 @@ type UsersApiResponse = {
 type CreateUserPayload = {
   fullName: string;
   email: string;
+  teachingSubject: string;
   role: AppRole;
   isActive: boolean;
   modulePermissions: ModulePermissionKey[];
@@ -44,6 +46,7 @@ type CreateUserPayload = {
 type UpdateUserPayload = {
   fullName: string;
   email: string;
+  teachingSubject: string;
   role: AppRole;
   isActive: boolean;
   modulePermissions: ModulePermissionKey[];
@@ -52,6 +55,7 @@ type UpdateUserPayload = {
 type EditableUserState = {
   fullName: string;
   email: string;
+  teachingSubject: string;
   role: AppRole;
   isActive: boolean;
   modulePermissions: ModulePermissionKey[];
@@ -62,6 +66,7 @@ function createInitialUserPayload(): CreateUserPayload {
   return {
     fullName: "",
     email: "",
+    teachingSubject: "",
     role: "RECEPTION",
     isActive: true,
     modulePermissions: [...DEFAULT_ROLE_MODULE_PERMISSIONS.RECEPTION],
@@ -74,6 +79,7 @@ function toEditableUserState(user: ManagedUser): EditableUserState {
   return {
     fullName: user.fullName,
     email: user.email,
+    teachingSubject: user.teachingSubject ?? "",
     role: user.role,
     isActive: user.isActive,
     modulePermissions: [...user.modulePermissions],
@@ -131,6 +137,8 @@ export function UserManagementConsole({ initialUsers }: { initialUsers: ManagedU
 
     const payload = {
       ...createDraft,
+      teachingSubject:
+        createDraft.role === "TEACHER" ? createDraft.teachingSubject.trim() || undefined : undefined,
       password:
         createDraft.passwordMode === "set" ? createDraft.password?.trim() || undefined : undefined
     };
@@ -177,6 +185,8 @@ export function UserManagementConsole({ initialUsers }: { initialUsers: ManagedU
       body: JSON.stringify({
         fullName: editDraft.fullName,
         email: editDraft.email,
+        teachingSubject:
+          editDraft.role === "TEACHER" ? editDraft.teachingSubject.trim() || undefined : undefined,
         role: editDraft.role,
         isActive: editDraft.isActive,
         modulePermissions: editDraft.modulePermissions,
@@ -315,9 +325,10 @@ export function UserManagementConsole({ initialUsers }: { initialUsers: ManagedU
   return (
     <section className="space-y-6">
       <header className="admin-content-card">
-        <h1 className="text-2xl font-bold text-slate-900">Super Admin User Management</h1>
+        <h1 className="text-2xl font-bold text-slate-900">User & Role Governance</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Create and manage admin users, module permissions, active state, and secure password resets.
+          Manage staff roles and access across timetable, visitor, incidents, appointments, staff attendance,
+          and principal timetable workflows.
         </p>
       </header>
 
@@ -365,6 +376,7 @@ export function UserManagementConsole({ initialUsers }: { initialUsers: ManagedU
                 setCreateDraft(prev => ({
                   ...prev,
                   role,
+                  teachingSubject: role === "TEACHER" ? prev.teachingSubject : "",
                   modulePermissions: [...DEFAULT_ROLE_MODULE_PERMISSIONS[role]]
                 }));
               }}
@@ -389,6 +401,19 @@ export function UserManagementConsole({ initialUsers }: { initialUsers: ManagedU
               <option value="inactive">Inactive</option>
             </select>
           </label>
+          {createDraft.role === "TEACHER" && (
+            <label className="space-y-1 text-sm">
+              <span className="font-medium text-slate-700">Teacher Subject</span>
+              <input
+                className="w-full rounded-lg border border-slate-200 px-3 py-2"
+                maxLength={120}
+                value={createDraft.teachingSubject}
+                onChange={event =>
+                  setCreateDraft(prev => ({ ...prev, teachingSubject: event.target.value }))
+                }
+              />
+            </label>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -501,6 +526,9 @@ export function UserManagementConsole({ initialUsers }: { initialUsers: ManagedU
                     <p className="mt-1 text-xs text-slate-500">
                       {ROLE_LABELS[user.role]} • {user.isActive ? "Active" : "Inactive"}
                     </p>
+                    {user.role === "TEACHER" && user.teachingSubject && (
+                      <p className="mt-1 text-xs text-slate-500">Subject: {user.teachingSubject}</p>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -602,6 +630,7 @@ export function UserManagementConsole({ initialUsers }: { initialUsers: ManagedU
                                 ? {
                                     ...prev,
                                     role,
+                                    teachingSubject: role === "TEACHER" ? prev.teachingSubject : "",
                                     modulePermissions: [...DEFAULT_ROLE_MODULE_PERMISSIONS[role]]
                                   }
                                 : prev
@@ -630,6 +659,21 @@ export function UserManagementConsole({ initialUsers }: { initialUsers: ManagedU
                           <option value="inactive">Inactive</option>
                         </select>
                       </label>
+                      {draft.role === "TEACHER" && (
+                        <label className="space-y-1 text-sm">
+                          <span className="font-medium text-slate-700">Teacher Subject</span>
+                          <input
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2"
+                            maxLength={120}
+                            value={draft.teachingSubject}
+                            onChange={event =>
+                              setEditDraft(prev =>
+                                prev ? { ...prev, teachingSubject: event.target.value } : prev
+                              )
+                            }
+                          />
+                        </label>
+                      )}
                     </div>
 
                     <div className="space-y-2">
