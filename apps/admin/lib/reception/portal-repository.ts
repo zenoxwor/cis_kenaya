@@ -50,7 +50,8 @@ export type ReceptionStaffAttendanceRow = {
   staffName: string;
   staffId: string;
   status: "IN" | "OUT";
-  lastActionTime: string | null;
+  entryTime: string | null;
+  outTime: string | null;
 };
 
 export type ReceptionStudentDocument = {
@@ -170,17 +171,16 @@ export async function listStaffAttendanceRows(user: SessionUser): Promise<Recept
   return staff.map(row => {
     const check = row.staffCheckIns[0];
     const status = check?.status === "PRESENT" ? "IN" : "OUT";
-    const lastActionTime =
-      status === "IN"
-        ? (check?.checkInTime?.toISOString() ?? null)
-        : (check?.checkOutTime?.toISOString() ?? check?.checkInTime?.toISOString() ?? null);
+    const entryTime = check?.checkInTime?.toISOString() ?? null;
+    const outTime = check?.checkOutTime?.toISOString() ?? null;
 
     return {
       userId: row.id,
       staffName: row.fullName,
       staffId: buildStaffId(row),
       status,
-      lastActionTime
+      entryTime,
+      outTime
     };
   });
 }

@@ -103,7 +103,8 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
               <th className="px-3 py-2">Staff Name</th>
               <th className="px-3 py-2">Staff ID</th>
               <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Last Action Time</th>
+              <th className="px-3 py-2">Entry Time</th>
+              <th className="px-3 py-2">Out Time</th>
               <th className="px-3 py-2">Action</th>
             </tr>
           </thead>
@@ -124,7 +125,8 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
                     {row.status}
                   </span>
                 </td>
-                <td className="px-3 py-2">{formatTime(row.lastActionTime)}</td>
+                <td className="px-3 py-2">{formatTime(row.entryTime)}</td>
+                <td className="px-3 py-2">{formatTime(row.outTime)}</td>
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
                     <button
