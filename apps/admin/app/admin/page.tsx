@@ -11,28 +11,10 @@ const roleDashboards = [
     description: "Platform control, identity governance, and global settings."
   },
   {
-    role: ROLE.SUPER_ADMIN,
-    label: "Backup & Recovery",
-    href: "/admin/operations",
-    description: "Operational resilience, backup history, restore drills, and recovery readiness."
-  },
-  {
     role: ROLE.RECEPTION,
     label: "Reception / Admissions",
     href: "/admin/reception",
     description: "Inquiry handling, applicant triage, and registration operations."
-  },
-  {
-    role: ROLE.FINANCE,
-    label: "Finance",
-    href: "/admin/finance",
-    description: "Billing workflows, financial statements, and receivables control."
-  },
-  {
-    role: ROLE.TEACHER,
-    label: "Teacher",
-    href: "/admin/exams/marks",
-    description: "Class marks entry, submission, and report card review."
   },
   {
     role: ROLE.TEACHER,
