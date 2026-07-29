@@ -50,6 +50,8 @@ export type ReceptionStaffAttendanceRow = {
   staffName: string;
   staffId: string;
   status: "IN" | "OUT";
+  entryTime: string | null;
+  outTime: string | null;
   lastActionTime: string | null;
 };
 
@@ -83,6 +85,58 @@ export type ReceptionIncidentLogItem = {
 function startOfTodayUtc() {
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+const CAMPUS_TIME_ZONE = "Africa/Nairobi";
+
+function getCampusDateParts(value: Date) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: CAMPUS_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  });
+  const parts = formatter.formatToParts(value);
+  const part = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find(item => item.type === type)?.value ?? "0");
+  return {
+    year: part("year"),
+    month: part("month"),
+    day: part("day"),
+    hour: part("hour"),
+    minute: part("minute")
+  };
+}
+
+function toCampusTimeOnUtcDate(baseDateUtc: Date, timeValue: string) {
+  const [hourText, minuteText] = timeValue.split(":");
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const year = baseDateUtc.getUTCFullYear();
+  const month = baseDateUtc.getUTCMonth();
+  const day = baseDateUtc.getUTCDate();
+  const desiredAsUtc = Date.UTC(year, month, day, hour, minute, 0, 0);
+  let candidate = new Date(desiredAsUtc);
+
+  for (let index = 0; index < 2; index += 1) {
+    const actual = getCampusDateParts(candidate);
+    const actualAsUtc = Date.UTC(
+      actual.year,
+      actual.month - 1,
+      actual.day,
+      actual.hour,
+      actual.minute,
+      0,
+      0
+    );
+    const delta = desiredAsUtc - actualAsUtc;
+    if (delta === 0) break;
+    candidate = new Date(candidate.getTime() + delta);
+  }
+
+  return candidate;
 }
 
 function endOfTodayUtc() {
@@ -170,16 +224,20 @@ export async function listStaffAttendanceRows(user: SessionUser): Promise<Recept
   return staff.map(row => {
     const check = row.staffCheckIns[0];
     const status = check?.status === "PRESENT" ? "IN" : "OUT";
+    const entryTime = check?.checkInTime?.toISOString() ?? null;
+    const outTime = check?.checkOutTime?.toISOString() ?? null;
     const lastActionTime =
       status === "IN"
-        ? (check?.checkInTime?.toISOString() ?? null)
-        : (check?.checkOutTime?.toISOString() ?? check?.checkInTime?.toISOString() ?? null);
+        ? entryTime
+        : (outTime ?? entryTime);
 
     return {
       userId: row.id,
       staffName: row.fullName,
       staffId: buildStaffId(row),
       status,
+      entryTime,
+      outTime,
       lastActionTime
     };
   });
@@ -236,6 +294,56 @@ export async function markStaffAttendance(
     data: {
       checkOutTime: now,
       status: "DEPARTED"
+    }
+  });
+}
+
+export async function updateStaffAttendanceTimes(
+  user: SessionUser,
+  input: {
+    userId: string;
+    entryTime?: string;
+    outTime?: string;
+  }
+) {
+  const campusId = await resolveCampusId(user.id);
+  const today = startOfTodayUtc();
+  const existing = await prisma.staffCheckIn.findUnique({
+    where: { userId_date: { userId: input.userId, date: today } }
+  });
+
+  const entryFromInput = input.entryTime ? toCampusTimeOnUtcDate(today, input.entryTime) : null;
+  const outFromInput = input.outTime ? toCampusTimeOnUtcDate(today, input.outTime) : null;
+
+  const effectiveEntry = entryFromInput ?? existing?.checkInTime ?? outFromInput ?? new Date();
+  const effectiveOut = input.outTime ? outFromInput : (existing?.checkOutTime ?? null);
+
+  if (effectiveOut && effectiveOut.getTime() < effectiveEntry.getTime()) {
+    throw new Error("Out time cannot be earlier than entry time.");
+  }
+
+  const status = effectiveOut ? "DEPARTED" : "PRESENT";
+
+  if (!existing) {
+    await prisma.staffCheckIn.create({
+      data: {
+        campusId,
+        userId: input.userId,
+        date: today,
+        checkInTime: effectiveEntry,
+        checkOutTime: effectiveOut,
+        status
+      }
+    });
+    return;
+  }
+
+  await prisma.staffCheckIn.update({
+    where: { id: existing.id },
+    data: {
+      checkInTime: effectiveEntry,
+      checkOutTime: effectiveOut,
+      status
     }
   });
 }

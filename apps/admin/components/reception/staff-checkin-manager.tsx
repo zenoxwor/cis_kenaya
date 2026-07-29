@@ -17,16 +17,44 @@ type ApiResponse = {
   error?: string;
 };
 
+const CAMPUS_TIME_ZONE = "Africa/Nairobi";
+
 function formatTime(value: string | null) {
   if (!value) return "—";
-  return new Date(value).toLocaleTimeString("en-KE");
+  return new Date(value).toLocaleTimeString("en-KE", {
+    timeZone: CAMPUS_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function toTimeInputValue(value: string | null) {
+  if (!value) return "";
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: CAMPUS_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).formatToParts(new Date(value));
+  const hour = parts.find(part => part.type === "hour")?.value ?? "00";
+  const minute = parts.find(part => part.type === "minute")?.value ?? "00";
+  return `${hour}:${minute}`;
 }
 
 export function StaffCheckinManager({ initialRows, savedReports }: Props) {
   const [rows, setRows] = useState(initialRows);
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [draftEntryTime, setDraftEntryTime] = useState("");
+  const [draftOutTime, setDraftOutTime] = useState("");
   const [savingReport, setSavingReport] = useState(false);
   const [reportToast, setReportToast] = useState<{ message: string; ok: boolean } | null>(null);
+  const [attendanceToast, setAttendanceToast] = useState<{ message: string; ok: boolean } | null>(null);
+
+  function showAttendanceToast(message: string, ok: boolean) {
+    setAttendanceToast({ message, ok });
+    setTimeout(() => setAttendanceToast(null), 4000);
+  }
 
   async function saveDailyReport() {
     setSavingReport(true);
@@ -45,23 +73,74 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
     setSavingReport(false);
   }
 
-  async function refresh() {
-    const response = await fetch("/api/reception/staff-attendance");
-    const payload = (await response.json()) as ApiResponse;
-    if (payload.success && payload.data) {
+  async function mark(userId: string, action: "clockIn" | "clockOut") {
+    setBusyUserId(userId);
+    try {
+      const response = await fetch("/api/reception/staff-attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, action })
+      });
+      const payload = (await response.json()) as ApiResponse;
+      if (!payload.success || !payload.data) {
+        showAttendanceToast(payload.error ?? "Failed to update attendance.", false);
+        return;
+      }
       setRows(payload.data.rows);
+      showAttendanceToast("Attendance updated.", true);
+    } catch {
+      showAttendanceToast("Network error — attendance not updated.", false);
+    } finally {
+      setBusyUserId(null);
     }
   }
 
-  async function mark(userId: string, action: "clockIn" | "clockOut") {
+  function startEditing(row: ReceptionStaffAttendanceRow) {
+    setEditingUserId(row.userId);
+    setDraftEntryTime(toTimeInputValue(row.entryTime));
+    setDraftOutTime(toTimeInputValue(row.outTime));
+  }
+
+  function cancelEditing() {
+    setEditingUserId(null);
+    setDraftEntryTime("");
+    setDraftOutTime("");
+  }
+
+  async function saveEditedTimes(userId: string) {
+    if (!draftEntryTime && !draftOutTime) {
+      showAttendanceToast("Set entry time or out time before saving.", false);
+      return;
+    }
+    if (draftEntryTime && draftOutTime && draftOutTime < draftEntryTime) {
+      showAttendanceToast("Out time cannot be earlier than entry time.", false);
+      return;
+    }
+
     setBusyUserId(userId);
-    await fetch("/api/reception/staff-attendance", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, action })
-    });
-    await refresh();
-    setBusyUserId(null);
+    try {
+      const response = await fetch("/api/reception/staff-attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          entryTime: draftEntryTime || undefined,
+          outTime: draftOutTime || undefined
+        })
+      });
+      const payload = (await response.json()) as ApiResponse;
+      if (!payload.success || !payload.data) {
+        showAttendanceToast(payload.error ?? "Failed to save times.", false);
+        return;
+      }
+      setRows(payload.data.rows);
+      cancelEditing();
+      showAttendanceToast("Entry and out times saved.", true);
+    } catch {
+      showAttendanceToast("Network error — times not saved.", false);
+    } finally {
+      setBusyUserId(null);
+    }
   }
 
   return (
@@ -76,6 +155,18 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
           ].join(" ")}
         >
           {reportToast.message}
+        </div>
+      )}
+      {attendanceToast && (
+        <div
+          className={[
+            "fixed right-4 top-20 z-50 rounded-lg border px-4 py-3 text-sm font-medium shadow-lg",
+            attendanceToast.ok
+              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+              : "border-red-300 bg-red-50 text-red-800"
+          ].join(" ")}
+        >
+          {attendanceToast.message}
         </div>
       )}
 
@@ -103,54 +194,115 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
               <th className="px-3 py-2">Staff Name</th>
               <th className="px-3 py-2">Staff ID</th>
               <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Entry Time</th>
+              <th className="px-3 py-2">Out Time</th>
               <th className="px-3 py-2">Last Action Time</th>
               <th className="px-3 py-2">Action</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map(row => (
-              <tr key={row.userId} className="border-t border-slate-100">
-                <td className="px-3 py-2 font-medium text-slate-900">{row.staffName}</td>
-                <td className="px-3 py-2">{row.staffId}</td>
-                <td className="px-3 py-2">
-                  <span
-                    className={[
-                      "rounded-full px-2 py-0.5 text-xs font-semibold",
-                      row.status === "IN"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-red-100 text-red-700"
-                    ].join(" ")}
-                  >
-                    {row.status}
-                  </span>
-                </td>
-                <td className="px-3 py-2">{formatTime(row.lastActionTime)}</td>
-                <td className="px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={busyUserId === row.userId || row.status === "IN"}
-                      className="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-                      onClick={() => {
-                        void mark(row.userId, "clockIn");
-                      }}
+            {rows.map(row => {
+              const isEditing = editingUserId === row.userId;
+              const isBusy = busyUserId === row.userId;
+              return (
+                <tr key={row.userId} className="border-t border-slate-100">
+                  <td className="px-3 py-2 font-medium text-slate-900">{row.staffName}</td>
+                  <td className="px-3 py-2">{row.staffId}</td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={[
+                        "rounded-full px-2 py-0.5 text-xs font-semibold",
+                        row.status === "IN"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-red-100 text-red-700"
+                      ].join(" ")}
                     >
-                      Clock In
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busyUserId === row.userId || row.status === "OUT"}
-                      className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                      onClick={() => {
-                        void mark(row.userId, "clockOut");
-                      }}
-                    >
-                      Clock Out
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      {row.status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2">
+                    {isEditing ? (
+                      <input
+                        type="time"
+                        value={draftEntryTime}
+                        onChange={event => setDraftEntryTime(event.target.value)}
+                        className="w-28 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                      />
+                    ) : (
+                      formatTime(row.entryTime)
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    {isEditing ? (
+                      <input
+                        type="time"
+                        value={draftOutTime}
+                        onChange={event => setDraftOutTime(event.target.value)}
+                        className="w-28 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                      />
+                    ) : (
+                      formatTime(row.outTime)
+                    )}
+                  </td>
+                  <td className="px-3 py-2">{formatTime(row.lastActionTime)}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={isBusy || row.status === "IN" || isEditing}
+                        className="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={() => {
+                          void mark(row.userId, "clockIn");
+                        }}
+                      >
+                        Clock In
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy || row.status === "OUT" || isEditing}
+                        className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={() => {
+                          void mark(row.userId, "clockOut");
+                        }}
+                      >
+                        Clock Out
+                      </button>
+                      {isEditing ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            onClick={() => {
+                              void saveEditedTimes(row.userId);
+                            }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            onClick={cancelEditing}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isBusy || (editingUserId !== null && !isEditing)}
+                          className="rounded-lg border border-indigo-300 px-3 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => startEditing(row)}
+                        >
+                          Edit Times
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

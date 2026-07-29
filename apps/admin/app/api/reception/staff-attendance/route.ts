@@ -4,7 +4,8 @@ import { hasModulePermission } from "@/lib/admin/module-permissions";
 import { requireRequestUser } from "@/lib/auth/api-authorization";
 import {
   listStaffAttendanceRows,
-  markStaffAttendance
+  markStaffAttendance,
+  updateStaffAttendanceTimes
 } from "@/lib/reception/portal-repository";
 import { ROLE } from "@/lib/rbac/roles";
 
@@ -23,6 +24,8 @@ function canRead(role: string) {
 function canWrite(role: string) {
   return role === ROLE.SUPER_ADMIN || role === ROLE.RECEPTION;
 }
+
+const timeValueSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:mm format.");
 
 export async function GET(request: NextRequest) {
   const auth = requireRequestUser(request);
@@ -55,17 +58,47 @@ export async function POST(request: NextRequest) {
     return forbidden("Only reception and super admin can update staff attendance.");
   }
 
-  const parsed = z
+  const payload = await request.json();
+  const markParsed = z
     .object({
       userId: z.string().min(1),
       action: z.enum(["clockIn", "clockOut"])
     })
-    .safeParse(await request.json());
-  if (!parsed.success) {
+    .safeParse(payload);
+
+  if (markParsed.success) {
+    await markStaffAttendance(user, markParsed.data);
+    const rows = await listStaffAttendanceRows(user);
+    return NextResponse.json({
+      success: true,
+      data: { rows }
+    });
+  }
+
+  const adjustParsed = z
+    .object({
+      userId: z.string().min(1),
+      entryTime: timeValueSchema.optional(),
+      outTime: timeValueSchema.optional()
+    })
+    .refine(data => Boolean(data.entryTime || data.outTime), {
+      message: "Provide at least one of entryTime or outTime."
+    })
+    .safeParse(payload);
+
+  if (!adjustParsed.success) {
     return badRequest("Invalid attendance payload.");
   }
 
-  await markStaffAttendance(user, parsed.data);
+  try {
+    await updateStaffAttendanceTimes(user, adjustParsed.data);
+  } catch (error) {
+    if (error instanceof Error) {
+      return badRequest(error.message);
+    }
+    throw error;
+  }
+
   const rows = await listStaffAttendanceRows(user);
   return NextResponse.json({
     success: true,
