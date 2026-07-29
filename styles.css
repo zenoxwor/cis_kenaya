@@ -18,7 +18,8 @@ a{color:inherit;text-decoration:none}
 .site-header{background:var(--white);border-bottom:1px solid rgba(0,0,0,0.06);position:sticky;top:0;z-index:90}
 .header-inner{max-width:1200px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
 .logo{display:flex;align-items:center;gap:12px}
-.header-shield{width:44px;height:52px;background:linear-gradient(180deg,var(--gold),var(--gold-2));clip-path:polygon(50% 100%,0 75%,0 0,100% 0,100% 75%)}
+.brand-logo{display:block;object-fit:contain;object-position:center;flex-shrink:0}
+.header-logo{width:48px;height:48px}
 .logo-text{font-weight:700;color:var(--black)}
 .main-nav{display:none;gap:18px;align-items:center}
 .main-nav a{padding:8px 10px;border-radius:8px;font-weight:600;color:var(--black)}
@@ -172,19 +173,28 @@ a{color:inherit;text-decoration:none}
 
 /* Contact */
 .contact-section{padding:60px 24px;background:linear-gradient(180deg,transparent,rgba(197,160,40,0.02))}
-.contact-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.contact-inner{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+.contact-info{max-width:640px}
 .map-embed-wrapper{
   display:flex;
   flex-direction:column;
-  border-radius:14px;
+  width:100%;
+  border-radius:16px;
   overflow:hidden;
-  box-shadow:0 14px 28px rgba(197,160,40,0.22);
-  border:2px solid rgba(197,160,40,0.18)
+  box-shadow:0 16px 34px rgba(17,17,17,0.16);
+  border:1px solid rgba(17,17,17,0.08);
+  background:var(--white)
+}
+.map-embed-wrapper::before{
+  content:"";
+  display:block;
+  height:8px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-2))
 }
 .map-iframe{
   display:block;
   width:100%;
-  height:320px;
+  height:460px;
   border:0
 }
 .map-open-link{
@@ -223,7 +233,7 @@ a{color:inherit;text-decoration:none}
 /* Footer */
 .site-footer{background:var(--black);color:var(--white);padding:40px 24px}
 .footer-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;justify-content:space-between}
-.footer-shield{width:32px;height:40px;background:linear-gradient(180deg,var(--gold),var(--gold-2));clip-path:polygon(50% 100%,0 75%,0 0,100% 0,100% 75%);display:inline-block}
+.footer-logo{width:42px;height:42px}
 .footer-brand{display:flex;align-items:center;gap:10px}
 
 /* Header responsiveness: switch to hamburger before links overflow */
@@ -240,8 +250,9 @@ a{color:inherit;text-decoration:none}
   .programs-grid{grid-template-columns:repeat(2,1fr);gap:20px}
   .facilities-grid{grid-template-columns:repeat(2,1fr);gap:16px}
   .admissions-grid{grid-template-columns:1fr}
-  .contact-inner{grid-template-columns:1fr}
+  .contact-inner{gap:20px}
   .section-header h2{font-size:2.2rem}
+  .map-iframe{height:360px}
 }
 
 @media(max-width:480px){
@@ -250,7 +261,9 @@ a{color:inherit;text-decoration:none}
   .facilities-section{padding:50px 20px}
   .admissions-section{padding:50px 20px}
   .contact-section{padding:50px 20px}
-  .map-iframe{height:260px}
+  .header-logo{width:42px;height:42px}
+  .footer-logo{width:38px;height:38px}
+  .map-iframe{height:300px}
   .programs-grid{grid-template-columns:1fr;gap:16px}
   .facilities-grid{grid-template-columns:1fr;gap:12px}
   .program-image{height:250px}

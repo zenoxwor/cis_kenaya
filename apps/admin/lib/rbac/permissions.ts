@@ -56,6 +56,7 @@ export const ADMIN_ROUTE_KEYS = [
   "/admin/super-admin/audit",
   "/admin/super-admin/settings",
   "/admin/principal",
+  "/admin/principal/timetables",
   "/admin/principal/reports",
   "/admin/principal/analytics",
   "/admin/admissions",
@@ -98,7 +99,9 @@ export const ADMIN_NAV_KEYS = [
   "executive_analytics",
   "operations_resilience",
   "super_admin_console",
+  "user_governance",
   "principal_dashboard",
+  "principal_timetable_management",
   "reception_dashboard",
   "reception_pre_registrations",
   "reception_timetables",
@@ -120,7 +123,9 @@ const NAV_PERMISSION_KEYS: Partial<Record<AdminNavKey, ModulePermissionKey>> = {
   executive_analytics: "executive_analytics",
   operations_resilience: "backup_recovery",
   super_admin_console: "super_admin_console",
+  user_governance: "user_governance",
   principal_dashboard: "principal_dashboard",
+  principal_timetable_management: "principal_dashboard",
   reception_dashboard: "reception_admissions",
   reception_pre_registrations: "reception_admissions",
   reception_timetables: "reception_admissions",
@@ -142,10 +147,17 @@ export type RolePermissionMatrix = {
   actions: Partial<Record<DomainResource, ActionPermission[]>>;
 };
 
+const HIDDEN_ADMIN_NAV_KEYS: AdminNavKey[] = [
+  "operations_resilience",
+  "finance_dashboard",
+  "classes_management",
+  "exams_suite"
+];
+
 export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
   [ROLE.SUPER_ADMIN]: {
     routeAccess: [...ADMIN_ROUTE_KEYS],
-    navigationVisibility: [...ADMIN_NAV_KEYS],
+    navigationVisibility: ADMIN_NAV_KEYS.filter(key => !HIDDEN_ADMIN_NAV_KEYS.includes(key)),
     actions: {
       dashboard: ["view", "override"],
       user: ["view", "create", "edit", "approve", "override"],
@@ -213,17 +225,15 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     navigationVisibility: [
       "dashboard",
       "executive_analytics",
-      "operations_resilience",
       "principal_dashboard",
+      "principal_timetable_management",
       "reception_dashboard",
       "reception_pre_registrations",
       "reception_timetables",
       "registration_wizard",
-      "exams_suite",
       "communications_center",
       "documents_center",
-      "attendance_module",
-      "classes_management"
+      "attendance_module"
     ],
     actions: {
       dashboard: ["view"],
@@ -300,7 +310,6 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     navigationVisibility: [
       "dashboard",
       "executive_analytics",
-      "finance_dashboard",
       "communications_center"
     ],
     actions: {
@@ -324,7 +333,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/attendance",
       "/admin/attendance/reports"
     ],
-    navigationVisibility: ["dashboard", "exams_suite", "attendance_module"],
+    navigationVisibility: ["dashboard", "attendance_module"],
     actions: {
       dashboard: ["view"],
       student: ["view"],
