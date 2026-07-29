@@ -13,7 +13,7 @@ export function RoleDashboard({ data }: RoleDashboardProps) {
         <p className="mt-2 text-slate-600">{data.subtitle}</p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {data.kpis.map(kpi => (
           <article key={kpi.label} className="admin-content-card">
             <p className="text-sm text-slate-600">{kpi.label}</p>

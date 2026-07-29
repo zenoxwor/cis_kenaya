@@ -26,8 +26,24 @@ export function AdminShell({ children, navItems, user }: AdminShellProps) {
           </div>
 
           {mobileOpen && (
-            <div className="fixed inset-0 z-40 bg-slate-900/40 md:hidden">
-              <div className="h-full w-[280px] bg-white">
+            <div
+              className="fixed inset-0 z-40 bg-slate-900/40 md:hidden"
+              onClick={() => setMobileOpen(false)}
+            >
+              <div
+                className="relative h-full w-[280px] bg-white"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex h-16 items-center justify-end border-b border-slate-200 px-4">
+                  <button
+                    type="button"
+                    aria-label="Close menu"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
                 <Sidebar
                   items={navItems}
                   collapsed={false}

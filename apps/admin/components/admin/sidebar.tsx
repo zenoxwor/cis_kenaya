@@ -39,7 +39,7 @@ export function Sidebar({ items, collapsed, onNavigate }: SidebarProps) {
             <Link
               key={item.href}
               className={[
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors",
                 active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"
               ].join(" ")}
               href={item.href}
