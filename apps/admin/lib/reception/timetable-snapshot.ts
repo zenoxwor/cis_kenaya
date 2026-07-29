@@ -146,11 +146,14 @@ export async function syncTimetableSnapshotFile(
     rows
   };
   const csvPayload = toCsv(rows);
+  const encoder = new TextEncoder();
+  const jsonBytes = encoder.encode(JSON.stringify(jsonPayload, null, 2));
+  const csvBytes = encoder.encode(csvPayload);
 
   const [jsonUpload, csvUpload] = await Promise.all([
     supabase.storage.from(TIMETABLE_SNAPSHOT_BUCKET).upload(
       TIMETABLE_JSON_PATH,
-      Buffer.from(JSON.stringify(jsonPayload, null, 2), "utf-8"),
+      jsonBytes,
       {
         contentType: "application/json",
         upsert: true
@@ -158,7 +161,7 @@ export async function syncTimetableSnapshotFile(
     ),
     supabase.storage.from(TIMETABLE_SNAPSHOT_BUCKET).upload(
       TIMETABLE_CSV_PATH,
-      Buffer.from(csvPayload, "utf-8"),
+      csvBytes,
       {
         contentType: "text/csv",
         upsert: true

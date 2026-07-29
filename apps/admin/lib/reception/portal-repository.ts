@@ -2,6 +2,7 @@ import { Prisma, RoleCode, type TimetableDayOfWeek } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import type { SessionUser } from "@/lib/auth/types";
 import { normalizeTimetableColorHex } from "@/lib/reception/timetable-colors";
+import { ROLE } from "@/lib/rbac/roles";
 
 export const RECEPTION_TIMETABLE_GRADES = [
   "Nursery",
@@ -244,6 +245,46 @@ export async function listTimetableGradeOptions(user: SessionUser): Promise<Rece
   const classes = await prisma.schoolClass.findMany({
     where: {
       campusId,
+      gradeLevel: { in: [...RECEPTION_TIMETABLE_GRADES] }
+    },
+    orderBy: [{ gradeLevel: "asc" }, { name: "asc" }],
+    select: {
+      id: true,
+      gradeLevel: true,
+      isActive: true
+    }
+  });
+
+  const canManageTimetables = user.role === ROLE.SUPER_ADMIN || user.role === ROLE.PRINCIPAL;
+  if (canManageTimetables) {
+    for (const gradeLevel of RECEPTION_TIMETABLE_GRADES) {
+      const gradeRows = classes.filter(row => row.gradeLevel === gradeLevel);
+      const activeRow = gradeRows.find(row => row.isActive);
+      if (activeRow) continue;
+
+      const existingRow = gradeRows[0];
+      if (existingRow) {
+        await prisma.schoolClass.update({
+          where: { id: existingRow.id },
+          data: { isActive: true }
+        });
+        continue;
+      }
+
+      await prisma.schoolClass.create({
+        data: {
+          campusId,
+          name: gradeLevel,
+          gradeLevel,
+          isActive: true
+        }
+      });
+    }
+  }
+
+  const activeClasses = await prisma.schoolClass.findMany({
+    where: {
+      campusId,
       isActive: true,
       gradeLevel: { in: [...RECEPTION_TIMETABLE_GRADES] }
     },
@@ -255,7 +296,7 @@ export async function listTimetableGradeOptions(user: SessionUser): Promise<Rece
   });
 
   const classByGrade = new Map<string, string>();
-  for (const row of classes) {
+  for (const row of activeClasses) {
     if (!classByGrade.has(row.gradeLevel)) {
       classByGrade.set(row.gradeLevel, row.id);
     }
