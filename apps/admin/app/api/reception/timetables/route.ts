@@ -3,6 +3,10 @@ import { z } from "zod";
 import { hasModulePermission } from "@/lib/admin/module-permissions";
 import { requireRequestUser } from "@/lib/auth/api-authorization";
 import {
+  DEFAULT_TIMETABLE_COLOR_HEX,
+  TIMETABLE_COLOR_HEX_REGEX
+} from "@/lib/reception/timetable-colors";
+import {
   deleteTimetableEntry,
   listClassTimetable,
   updateTimetableEntry,
@@ -32,6 +36,8 @@ function hasTimetablePermission(modulePermissions: string[] | undefined, role: A
     hasModulePermission(modulePermissions, role, "principal_dashboard")
   );
 }
+
+const TIMETABLE_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] as const;
 
 export async function GET(request: NextRequest) {
   const auth = requireRequestUser(request);
@@ -72,12 +78,18 @@ export async function POST(request: NextRequest) {
   const parsed = z
     .object({
       classId: z.string().min(1),
-      dayOfWeek: z.enum(["MON", "TUE", "WED", "THU", "FRI"]),
+      dayOfWeek: z.enum(TIMETABLE_DAYS),
       period: z.number().int().min(1).max(8),
       subject: z.string().min(1),
       teacherName: z.string().min(1),
       startTime: z.string().min(1),
-      endTime: z.string().min(1)
+      endTime: z.string().min(1),
+      colorHex: z
+        .string()
+        .regex(TIMETABLE_COLOR_HEX_REGEX, "colorHex must be a #RRGGBB hex color.")
+        .transform(value => value.toUpperCase())
+        .optional()
+        .default(DEFAULT_TIMETABLE_COLOR_HEX)
     })
     .safeParse(await request.json());
   if (!parsed.success) {
@@ -111,7 +123,12 @@ export async function PATCH(request: NextRequest) {
       subject: z.string().min(1).optional(),
       teacherName: z.string().min(1).optional(),
       startTime: z.string().min(1).optional(),
-      endTime: z.string().min(1).optional()
+      endTime: z.string().min(1).optional(),
+      colorHex: z
+        .string()
+        .regex(TIMETABLE_COLOR_HEX_REGEX, "colorHex must be a #RRGGBB hex color.")
+        .transform(value => value.toUpperCase())
+        .optional()
     })
     .safeParse(await request.json());
   if (!parsed.success) {
@@ -123,7 +140,8 @@ export async function PATCH(request: NextRequest) {
     subject: parsed.data.subject,
     teacherName: parsed.data.teacherName,
     startTime: parsed.data.startTime,
-    endTime: parsed.data.endTime
+    endTime: parsed.data.endTime,
+    colorHex: parsed.data.colorHex
   });
   const rows = await listClassTimetable(user, parsed.data.classId);
   return NextResponse.json({

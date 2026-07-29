@@ -1,6 +1,7 @@
 import { RoleCode, type TimetableDayOfWeek } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import type { SessionUser } from "@/lib/auth/types";
+import { normalizeTimetableColorHex } from "@/lib/reception/timetable-colors";
 
 export const RECEPTION_TIMETABLE_GRADES = [
   "Nursery",
@@ -33,6 +34,7 @@ export type ReceptionTimetableEntry = {
   teacherName: string;
   startTime: string;
   endTime: string;
+  colorHex: string;
 };
 
 export type ReceptionStaffAttendanceRow = {
@@ -276,7 +278,8 @@ export async function listClassTimetable(
     subject: item.subject,
     teacherName: item.teacherName,
     startTime: item.startTime,
-    endTime: item.endTime
+    endTime: item.endTime,
+    colorHex: normalizeTimetableColorHex(item.colorHex)
   }));
 }
 
@@ -290,6 +293,7 @@ export async function upsertTimetableEntry(
     teacherName: string;
     startTime: string;
     endTime: string;
+    colorHex: string;
   }
 ) {
   const campusId = await resolveCampusId(user.id);
@@ -309,13 +313,15 @@ export async function upsertTimetableEntry(
       subject: input.subject,
       teacherName: input.teacherName,
       startTime: input.startTime,
-      endTime: input.endTime
+      endTime: input.endTime,
+      colorHex: input.colorHex
     },
     update: {
       subject: input.subject,
       teacherName: input.teacherName,
       startTime: input.startTime,
-      endTime: input.endTime
+      endTime: input.endTime,
+      colorHex: input.colorHex
     }
   });
 }
@@ -328,6 +334,7 @@ export async function updateTimetableEntry(
     teacherName?: string;
     startTime?: string;
     endTime?: string;
+    colorHex?: string;
   }
 ) {
   const campusId = await resolveCampusId(user.id);
@@ -337,7 +344,8 @@ export async function updateTimetableEntry(
       subject: input.subject,
       teacherName: input.teacherName,
       startTime: input.startTime,
-      endTime: input.endTime
+      endTime: input.endTime,
+      colorHex: input.colorHex
     }
   });
 }

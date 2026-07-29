@@ -5,6 +5,11 @@ import type {
   ReceptionTimetableEntry,
   ReceptionTimetableGradeOption
 } from "@/lib/reception/portal-repository";
+import {
+  DEFAULT_TIMETABLE_COLOR_HEX,
+  getTimetableTextColor,
+  normalizeTimetableColorHex
+} from "@/lib/reception/timetable-colors";
 
 type Props = {
   gradeOptions: ReceptionTimetableGradeOption[];
@@ -32,15 +37,18 @@ type EditDraft = {
   teacherName: string;
   startTime: string;
   endTime: string;
+  colorHex: string;
 };
 
-const DAYS: Array<ReceptionTimetableEntry["dayOfWeek"]> = ["MON", "TUE", "WED", "THU", "FRI"];
+const DAYS: Array<ReceptionTimetableEntry["dayOfWeek"]> = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const DAY_LABELS: Record<ReceptionTimetableEntry["dayOfWeek"], string> = {
   MON: "Monday",
   TUE: "Tuesday",
   WED: "Wednesday",
   THU: "Thursday",
-  FRI: "Friday"
+  FRI: "Friday",
+  SAT: "Saturday",
+  SUN: "Sunday"
 };
 const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -62,7 +70,8 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
     subject: "",
     teacherName: "",
     startTime: "08:00",
-    endTime: "08:40"
+    endTime: "08:40",
+    colorHex: DEFAULT_TIMETABLE_COLOR_HEX
   });
 
   const selectedClassId = useMemo(
@@ -135,7 +144,8 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
         subject: createDraft.subject.trim(),
         teacherName: createDraft.teacherName.trim(),
         startTime: createDraft.startTime,
-        endTime: createDraft.endTime
+        endTime: createDraft.endTime,
+        colorHex: normalizeTimetableColorHex(createDraft.colorHex)
       });
       setRows(nextRows);
       setCreateDraft(previous => ({ ...previous, subject: "", teacherName: "" }));
@@ -188,7 +198,8 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
         subject: editDraft.subject.trim(),
         teacherName: editDraft.teacherName.trim(),
         startTime: editDraft.startTime,
-        endTime: editDraft.endTime
+        endTime: editDraft.endTime,
+        colorHex: normalizeTimetableColorHex(editDraft.colorHex)
       });
       setRows(nextRows);
       setEditDraft(null);
@@ -338,6 +349,24 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
               />
             </div>
 
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="create-color">
+                Slot color
+              </label>
+              <input
+                id="create-color"
+                type="color"
+                className="h-10 w-full rounded-lg border border-slate-200 px-1 py-1"
+                value={createDraft.colorHex}
+                onChange={event =>
+                  setCreateDraft(previous => ({
+                    ...previous,
+                    colorHex: event.target.value.toUpperCase()
+                  }))
+                }
+              />
+            </div>
+
             <div className="xl:col-span-2">
               <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="create-subject">
                 Subject
@@ -408,28 +437,44 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
                       <td className="px-3 py-2 font-semibold text-slate-800">{period}</td>
                       {DAYS.map(day => {
                         const entry = grid.get(`${day}-${period}`);
+                        const textColor = entry ? getTimetableTextColor(entry.colorHex) : "#334155";
+                        const borderColor = textColor === "#0F172A" ? "#94A3B8" : "#E2E8F0";
                         return (
                           <td key={`${day}-${period}`} className="px-3 py-2 text-slate-700">
                             {entry ? (
-                              <div className="space-y-2 rounded-md border border-slate-200 p-2">
+                              <div
+                                className="space-y-2 rounded-md border p-2"
+                                style={{
+                                  backgroundColor: entry.colorHex,
+                                  borderColor,
+                                  color: textColor
+                                }}
+                              >
                                 <div>
                                   <p className="font-semibold">{entry.subject}</p>
-                                  <p className="text-xs text-slate-500">{entry.teacherName}</p>
-                                  <p className="text-xs text-slate-500">
+                                  <p className="text-xs" style={{ color: "inherit", opacity: 0.9 }}>
+                                    {entry.teacherName}
+                                  </p>
+                                  <p className="text-xs" style={{ color: "inherit", opacity: 0.9 }}>
                                     {entry.startTime} - {entry.endTime}
                                   </p>
                                 </div>
                                 <div className="flex gap-2">
                                   <button
                                     type="button"
-                                    className="rounded border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                                    onClick={() => setEditDraft({ ...entry })}
+                                    className="rounded border border-slate-500/60 bg-white/75 px-2 py-1 text-xs font-medium text-slate-800 hover:bg-white"
+                                    onClick={() =>
+                                      setEditDraft({
+                                        ...entry,
+                                        colorHex: normalizeTimetableColorHex(entry.colorHex)
+                                      })
+                                    }
                                   >
                                     Edit
                                   </button>
                                   <button
                                     type="button"
-                                    className="rounded border border-rose-300 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50"
+                                    className="rounded border border-rose-400 bg-white/75 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-white"
                                     disabled={submitting}
                                     onClick={() => void onDeleteEntry(entry)}
                                   >
@@ -561,6 +606,28 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
                   required
                 />
               </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="edit-color">
+                  Slot color
+                </label>
+                <input
+                  id="edit-color"
+                  type="color"
+                  className="h-10 w-full rounded-lg border border-slate-200 px-1 py-1"
+                  value={editDraft.colorHex}
+                  onChange={event =>
+                    setEditDraft(previous =>
+                      previous
+                        ? {
+                            ...previous,
+                            colorHex: event.target.value.toUpperCase()
+                          }
+                        : previous
+                    )
+                  }
+                />
+              </div>
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
@@ -584,7 +651,8 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
                     subject: editDraft.subject,
                     teacherName: editDraft.teacherName,
                     startTime: editDraft.startTime,
-                    endTime: editDraft.endTime
+                    endTime: editDraft.endTime,
+                    colorHex: editDraft.colorHex
                   })
                 }
               >

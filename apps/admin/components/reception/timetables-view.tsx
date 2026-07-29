@@ -5,6 +5,7 @@ import type {
   ReceptionTimetableEntry,
   ReceptionTimetableGradeOption
 } from "@/lib/reception/portal-repository";
+import { getTimetableTextColor } from "@/lib/reception/timetable-colors";
 
 type Props = {
   gradeOptions: ReceptionTimetableGradeOption[];
@@ -17,13 +18,15 @@ type TimetableResponse = {
   };
 };
 
-const DAYS: Array<ReceptionTimetableEntry["dayOfWeek"]> = ["MON", "TUE", "WED", "THU", "FRI"];
+const DAYS: Array<ReceptionTimetableEntry["dayOfWeek"]> = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const DAY_LABELS: Record<ReceptionTimetableEntry["dayOfWeek"], string> = {
   MON: "Monday",
   TUE: "Tuesday",
   WED: "Wednesday",
   THU: "Thursday",
-  FRI: "Friday"
+  FRI: "Friday",
+  SAT: "Saturday",
+  SUN: "Sunday"
 };
 const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -127,13 +130,24 @@ export function TimetablesView({ gradeOptions }: Props) {
                   <td className="px-3 py-2 font-semibold text-slate-800">{period}</td>
                   {DAYS.map(day => {
                     const entry = grid.get(`${day}-${period}`);
+                    const textColor = entry ? getTimetableTextColor(entry.colorHex) : "#334155";
+                    const borderColor = textColor === "#0F172A" ? "#94A3B8" : "#E2E8F0";
                     return (
                       <td key={`${day}-${period}`} className="px-3 py-2 text-slate-700">
                         {entry ? (
-                          <div>
+                          <div
+                            className="rounded-md border p-2"
+                            style={{
+                              backgroundColor: entry.colorHex,
+                              borderColor,
+                              color: textColor
+                            }}
+                          >
                             <p className="font-semibold">{entry.subject}</p>
-                            <p className="text-xs text-slate-500">{entry.teacherName}</p>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs" style={{ color: "inherit", opacity: 0.9 }}>
+                              {entry.teacherName}
+                            </p>
+                            <p className="text-xs" style={{ color: "inherit", opacity: 0.9 }}>
                               {entry.startTime} - {entry.endTime}
                             </p>
                           </div>

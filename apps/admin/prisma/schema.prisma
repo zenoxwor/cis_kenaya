@@ -12,6 +12,7 @@ model Timetable {
   teacherName String
   startTime   String
   endTime     String
+  colorHex    String             @default("#E2E8F0")
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
@@ -163,6 +164,8 @@ enum TimetableDayOfWeek {
   WED
   THU
   FRI
+  SAT
+  SUN
 }
 
 model Campus {
