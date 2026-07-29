@@ -28,6 +28,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Manage admin identities, module-level permissions, active status, and password resets."
   },
   {
+    id: "principal_timetable_management",
+    href: "/admin/principal/timetables",
+    label: "Timetable Management",
+    description: "Create, update, and remove class timetable slots."
+  },
+  {
     id: "reception_dashboard",
     href: "/admin/reception",
     label: "Reception / Admissions",

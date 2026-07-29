@@ -8,7 +8,7 @@ import {
   updateTimetableEntry,
   upsertTimetableEntry
 } from "@/lib/reception/portal-repository";
-import { ROLE } from "@/lib/rbac/roles";
+import { ROLE, type AppRole } from "@/lib/rbac/roles";
 
 function forbidden(message = "Forbidden") {
   return NextResponse.json({ success: false, error: message }, { status: 403 });
@@ -26,12 +26,19 @@ function canWrite(role: string) {
   return role === ROLE.SUPER_ADMIN || role === ROLE.PRINCIPAL;
 }
 
+function hasTimetablePermission(modulePermissions: string[] | undefined, role: AppRole) {
+  return (
+    hasModulePermission(modulePermissions, role, "reception_admissions") ||
+    hasModulePermission(modulePermissions, role, "principal_dashboard")
+  );
+}
+
 export async function GET(request: NextRequest) {
   const auth = requireRequestUser(request);
   if (!auth.ok) return auth.response;
   const { user } = auth;
 
-  if (!hasModulePermission(user.modulePermissions, user.role, "reception_admissions")) {
+  if (!hasTimetablePermission(user.modulePermissions, user.role)) {
     return forbidden();
   }
   if (!canRead(user.role)) {
@@ -55,7 +62,7 @@ export async function POST(request: NextRequest) {
   if (!auth.ok) return auth.response;
   const { user } = auth;
 
-  if (!hasModulePermission(user.modulePermissions, user.role, "reception_admissions")) {
+  if (!hasTimetablePermission(user.modulePermissions, user.role)) {
     return forbidden();
   }
   if (!canWrite(user.role)) {
@@ -90,7 +97,7 @@ export async function PATCH(request: NextRequest) {
   if (!auth.ok) return auth.response;
   const { user } = auth;
 
-  if (!hasModulePermission(user.modulePermissions, user.role, "reception_admissions")) {
+  if (!hasTimetablePermission(user.modulePermissions, user.role)) {
     return forbidden();
   }
   if (!canWrite(user.role)) {
@@ -130,7 +137,7 @@ export async function DELETE(request: NextRequest) {
   if (!auth.ok) return auth.response;
   const { user } = auth;
 
-  if (!hasModulePermission(user.modulePermissions, user.role, "reception_admissions")) {
+  if (!hasTimetablePermission(user.modulePermissions, user.role)) {
     return forbidden();
   }
   if (!canWrite(user.role)) {
