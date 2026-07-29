@@ -152,7 +152,7 @@ export async function syncTimetableSnapshotFile(
       TIMETABLE_JSON_PATH,
       Buffer.from(JSON.stringify(jsonPayload, null, 2), "utf-8"),
       {
-        contentType: "application/json; charset=utf-8",
+        contentType: "application/json",
         upsert: true
       }
     ),
@@ -160,7 +160,7 @@ export async function syncTimetableSnapshotFile(
       TIMETABLE_CSV_PATH,
       Buffer.from(csvPayload, "utf-8"),
       {
-        contentType: "text/csv; charset=utf-8",
+        contentType: "text/csv",
         upsert: true
       }
     )
