@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import type { ReceptionStaffAttendanceRow } from "@/lib/reception/portal-repository";
+import type { ListDailyReportsResult } from "@/lib/reception/daily-report-snapshot";
 
 type Props = {
   initialRows: ReceptionStaffAttendanceRow[];
+  savedReports: ListDailyReportsResult;
 };
 
 type ApiResponse = {
@@ -20,7 +22,7 @@ function formatTime(value: string | null) {
   return new Date(value).toLocaleTimeString("en-KE");
 }
 
-export function StaffCheckinManager({ initialRows }: Props) {
+export function StaffCheckinManager({ initialRows, savedReports }: Props) {
   const [rows, setRows] = useState(initialRows);
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
   const [savingReport, setSavingReport] = useState(false);
@@ -151,6 +153,64 @@ export function StaffCheckinManager({ initialRows }: Props) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="admin-content-card space-y-3">
+        <h2 className="text-lg font-semibold text-slate-900">Saved Daily Reports</h2>
+        {savedReports.error ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {savedReports.error}
+          </p>
+        ) : savedReports.reports.length === 0 ? (
+          <p className="text-sm text-slate-500">No saved reports yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-slate-50 text-slate-700">
+                <tr>
+                  <th className="px-3 py-2">Report Date</th>
+                  <th className="px-3 py-2">JSON</th>
+                  <th className="px-3 py-2">CSV</th>
+                </tr>
+              </thead>
+              <tbody>
+                {savedReports.reports.map(report => (
+                  <tr key={report.date} className="border-t border-slate-100">
+                    <td className="px-3 py-2 font-medium text-slate-900">{report.date}</td>
+                    <td className="px-3 py-2">
+                      {report.jsonUrl ? (
+                        <a
+                          href={report.jsonUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:underline"
+                        >
+                          Download JSON
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      {report.csvUrl ? (
+                        <a
+                          href={report.csvUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:underline"
+                        >
+                          Download CSV
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </section>
   );
