@@ -40,6 +40,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Application pipeline and registration intake."
   },
   {
+    id: "reception_check_in",
+    href: "/admin/reception/check-in",
+    label: "Staff Daily Attendance Tracker",
+    description: "Track daily staff attendance check-ins."
+  },
+  {
     id: "reception_pre_registrations",
     href: "/admin/reception/pre-registrations",
     label: "Pre-Registrations",

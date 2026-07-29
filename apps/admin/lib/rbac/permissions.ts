@@ -103,6 +103,7 @@ export const ADMIN_NAV_KEYS = [
   "principal_dashboard",
   "principal_timetable_management",
   "reception_dashboard",
+  "reception_check_in",
   "reception_pre_registrations",
   "reception_timetables",
   "registration_wizard",
@@ -127,6 +128,7 @@ const NAV_PERMISSION_KEYS: Partial<Record<AdminNavKey, ModulePermissionKey>> = {
   principal_dashboard: "principal_dashboard",
   principal_timetable_management: "principal_dashboard",
   reception_dashboard: "reception_admissions",
+  reception_check_in: "reception_admissions",
   reception_pre_registrations: "reception_admissions",
   reception_timetables: "reception_admissions",
   registration_wizard: "registration_wizard",
@@ -228,6 +230,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "principal_dashboard",
       "principal_timetable_management",
       "reception_dashboard",
+      "reception_check_in",
       "reception_pre_registrations",
       "reception_timetables",
       "registration_wizard",
@@ -276,6 +279,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/reception/pre-registrations"
     ],
     navigationVisibility: [
+      "reception_check_in",
       "reception_pre_registrations",
       "reception_timetables",
       "reception_visitors",
