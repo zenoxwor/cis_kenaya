@@ -1,4 +1,4 @@
-import { RoleCode, type TimetableDayOfWeek } from "@prisma/client";
+import { Prisma, RoleCode, type TimetableDayOfWeek } from "@prisma/client";
 import { prisma } from "@/lib/db/client";
 import type { SessionUser } from "@/lib/auth/types";
 import { normalizeTimetableColorHex } from "@/lib/reception/timetable-colors";
@@ -35,6 +35,13 @@ export type ReceptionTimetableEntry = {
   startTime: string;
   endTime: string;
   colorHex: string;
+};
+
+export type BulkTimetableSeedResult = {
+  classesProcessed: number;
+  slotsCreated: number;
+  slotsUpdated: number;
+  slotsUnchanged: number;
 };
 
 export type ReceptionStaffAttendanceRow = {
@@ -324,6 +331,161 @@ export async function upsertTimetableEntry(
       colorHex: input.colorHex
     }
   });
+}
+
+const DEFAULT_TIMETABLE_DAYS: TimetableDayOfWeek[] = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+const DEFAULT_TIMETABLE_PERIODS = [
+  { period: 1, startTime: "08:00", endTime: "08:45" },
+  { period: 2, startTime: "08:50", endTime: "09:35" },
+  { period: 3, startTime: "09:50", endTime: "10:35" },
+  { period: 4, startTime: "10:40", endTime: "11:25" },
+  { period: 5, startTime: "11:40", endTime: "12:25" },
+  { period: 6, startTime: "12:30", endTime: "13:15" },
+  { period: 7, startTime: "13:20", endTime: "14:05" },
+  { period: 8, startTime: "14:10", endTime: "14:55" }
+] as const;
+
+const DEFAULT_TIMETABLE_TEACHER_NAME = "TBD";
+const DEFAULT_TIMETABLE_COLOR_HEX = "#E2E8F0";
+
+type TimetableSeedSlot = {
+  subject: string;
+  teacherName: string;
+  startTime: string;
+  endTime: string;
+  colorHex: string;
+};
+
+function toTimetableSlotKey(classId: string, dayOfWeek: TimetableDayOfWeek, period: number) {
+  return `${classId}:${dayOfWeek}:${period}`;
+}
+
+function isSameTimetableSlot(
+  existing: {
+    subject: string;
+    teacherName: string;
+    startTime: string;
+    endTime: string;
+    colorHex: string;
+  },
+  incoming: TimetableSeedSlot
+) {
+  return (
+    existing.subject === incoming.subject &&
+    existing.teacherName === incoming.teacherName &&
+    existing.startTime === incoming.startTime &&
+    existing.endTime === incoming.endTime &&
+    normalizeTimetableColorHex(existing.colorHex) === incoming.colorHex
+  );
+}
+
+export async function seedDefaultTimetableForActiveClasses(
+  user: SessionUser
+): Promise<BulkTimetableSeedResult> {
+  const campusId = await resolveCampusId(user.id);
+  const activeClasses = await prisma.schoolClass.findMany({
+    where: { campusId, isActive: true },
+    select: { id: true }
+  });
+
+  const classIds = activeClasses.map(item => item.id);
+  if (classIds.length === 0) {
+    return {
+      classesProcessed: 0,
+      slotsCreated: 0,
+      slotsUpdated: 0,
+      slotsUnchanged: 0
+    };
+  }
+
+  const existingRows = await prisma.timetable.findMany({
+    where: {
+      campusId,
+      classId: { in: classIds }
+    },
+    select: {
+      id: true,
+      classId: true,
+      dayOfWeek: true,
+      period: true,
+      subject: true,
+      teacherName: true,
+      startTime: true,
+      endTime: true,
+      colorHex: true
+    }
+  });
+
+  const existingBySlot = new Map(
+    existingRows.map(row => [toTimetableSlotKey(row.classId, row.dayOfWeek, row.period), row])
+  );
+
+  const creates: Prisma.TimetableCreateManyInput[] = [];
+  const updates: Array<{ id: string; data: TimetableSeedSlot }> = [];
+  let slotsUnchanged = 0;
+
+  for (const classId of classIds) {
+    for (const dayOfWeek of DEFAULT_TIMETABLE_DAYS) {
+      for (const periodSlot of DEFAULT_TIMETABLE_PERIODS) {
+        const desiredSlot: TimetableSeedSlot = {
+          subject: `Period ${periodSlot.period} Subject`,
+          teacherName: DEFAULT_TIMETABLE_TEACHER_NAME,
+          startTime: periodSlot.startTime,
+          endTime: periodSlot.endTime,
+          colorHex: DEFAULT_TIMETABLE_COLOR_HEX
+        };
+        const existing = existingBySlot.get(toTimetableSlotKey(classId, dayOfWeek, periodSlot.period));
+
+        if (!existing) {
+          creates.push({
+            campusId,
+            classId,
+            dayOfWeek,
+            period: periodSlot.period,
+            subject: desiredSlot.subject,
+            teacherName: desiredSlot.teacherName,
+            startTime: desiredSlot.startTime,
+            endTime: desiredSlot.endTime,
+            colorHex: desiredSlot.colorHex
+          });
+          continue;
+        }
+
+        if (isSameTimetableSlot(existing, desiredSlot)) {
+          slotsUnchanged += 1;
+          continue;
+        }
+
+        updates.push({
+          id: existing.id,
+          data: desiredSlot
+        });
+      }
+    }
+  }
+
+  if (creates.length > 0) {
+    await prisma.timetable.createMany({ data: creates });
+  }
+
+  if (updates.length > 0) {
+    await prisma.$transaction(
+      updates.map(update =>
+        prisma.timetable.update({
+          where: { id: update.id },
+          data: update.data
+        })
+      )
+    );
+  }
+
+  return {
+    classesProcessed: classIds.length,
+    slotsCreated: creates.length,
+    slotsUpdated: updates.length,
+    slotsUnchanged
+  };
 }
 
 export async function updateTimetableEntry(

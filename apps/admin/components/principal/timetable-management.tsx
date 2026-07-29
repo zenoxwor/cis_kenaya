@@ -20,6 +20,12 @@ type TimetablePayload = {
   error?: string;
   data?: {
     rows?: ReceptionTimetableEntry[];
+    seedResult?: {
+      classesProcessed: number;
+      slotsCreated: number;
+      slotsUpdated: number;
+      slotsUnchanged: number;
+    };
     snapshot?:
       | {
           ok: true;
@@ -77,6 +83,7 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [syncingSnapshot, setSyncingSnapshot] = useState(false);
+  const [seedingAll, setSeedingAll] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
 
@@ -272,6 +279,48 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
     }
   }
 
+  async function onSeedAllClasses() {
+    if (
+      !window.confirm(
+        "Apply the default 7-day, 8-period timetable template to all active classes in this campus?"
+      )
+    ) {
+      return;
+    }
+
+    setSeedingAll(true);
+    setFeedback(null);
+    try {
+      const response = await fetch("/api/reception/timetables/seed-all", { method: "POST" });
+      const payload = (await response.json()) as TimetablePayload;
+      if (!response.ok || !payload.success || !payload.data?.seedResult) {
+        throw new Error(payload.error ?? "Failed to apply the default timetable template.");
+      }
+
+      await loadRows();
+      const summary = payload.data.seedResult;
+      const countMessage = `Processed ${summary.classesProcessed} active classes. Created ${summary.slotsCreated} slots, updated ${summary.slotsUpdated}, unchanged ${summary.slotsUnchanged}.`;
+      setFeedback(
+        payload.data.snapshot && !payload.data.snapshot.ok
+          ? {
+              type: "warning",
+              message: `${countMessage} Snapshot sync failed: ${payload.data.snapshot.error}`
+            }
+          : {
+              type: "success",
+              message: countMessage
+            }
+      );
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "Failed to apply the default timetable template."
+      });
+    } finally {
+      setSeedingAll(false);
+    }
+  }
+
   return (
     <section className="space-y-4">
       <header className="admin-content-card space-y-3">
@@ -298,6 +347,19 @@ export function PrincipalTimetableManagement({ gradeOptions }: Props) {
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <button
+            type="button"
+            disabled={seedingAll}
+            className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-70"
+            onClick={() => {
+              void onSeedAllClasses();
+            }}
+          >
+            {seedingAll ? "Applying template..." : "Apply Default Timetable to All Classes"}
+          </button>
         </div>
 
         <div>
