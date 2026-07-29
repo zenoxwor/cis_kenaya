@@ -22,12 +22,31 @@ export function IncidentsManager({ initialRows }: Props) {
   const [rows, setRows] = useState(initialRows);
   const [submitting, setSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [savingReport, setSavingReport] = useState(false);
+  const [reportToast, setReportToast] = useState<{ message: string; ok: boolean } | null>(null);
   const [form, setForm] = useState({
     incidentType: "Complaint" as (typeof INCIDENT_TYPES)[number],
     personName: "",
     description: "",
     priority: "Medium" as (typeof PRIORITY_LEVELS)[number]
   });
+
+  async function saveDailyReport() {
+    setSavingReport(true);
+    try {
+      const response = await fetch("/api/reception/daily-report/snapshot", { method: "POST" });
+      const payload = (await response.json()) as { success: boolean; error?: string };
+      setReportToast({
+        message: payload.success ? "Daily report saved successfully." : (payload.error ?? "Failed to save report."),
+        ok: payload.success
+      });
+      setTimeout(() => setReportToast(null), 4000);
+    } catch {
+      setReportToast({ message: "Network error — report not saved.", ok: false });
+      setTimeout(() => setReportToast(null), 4000);
+    }
+    setSavingReport(false);
+  }
 
   async function refresh() {
     const response = await fetch("/api/reception/incidents");
@@ -70,11 +89,34 @@ export function IncidentsManager({ initialRows }: Props) {
 
   return (
     <section className="space-y-4">
-      <header className="admin-content-card">
-        <h1 className="text-2xl font-bold text-slate-900">Incident &amp; Complaint Logging</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Log front-desk incidents and route them directly to the Principal.
-        </p>
+      {reportToast && (
+        <div
+          className={[
+            "fixed right-4 top-4 z-50 rounded-lg border px-4 py-3 text-sm font-medium shadow-lg",
+            reportToast.ok
+              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+              : "border-red-300 bg-red-50 text-red-800"
+          ].join(" ")}
+        >
+          {reportToast.message}
+        </div>
+      )}
+
+      <header className="admin-content-card flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Incident &amp; Complaint Logging</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Log front-desk incidents and route them directly to the Principal.
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={savingReport}
+          className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          onClick={() => { void saveDailyReport(); }}
+        >
+          {savingReport ? "Saving…" : "Save Daily Report"}
+        </button>
       </header>
 
       {toastMessage && (

@@ -19,7 +19,7 @@ type UploadedDocumentMeta = {
   storagePath: string;
 };
 
-function parseUploadedDocuments(value: Prisma.JsonValue | null): UploadedDocumentMeta[] {
+function parseUploadedDocuments(value: unknown | null): UploadedDocumentMeta[] {
   if (!Array.isArray(value)) return [];
   const parsed: UploadedDocumentMeta[] = [];
   for (const item of value) {

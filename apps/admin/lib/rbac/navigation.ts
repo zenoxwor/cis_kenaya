@@ -68,6 +68,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     href: "/admin/reception/appointments",
     label: "Appointments",
     description: "Coordinate parent, guardian, and school office appointments."
+  },
+  {
+    id: "finance_daily_reports",
+    href: "/admin/finance/daily-reports",
+    label: "Daily Reports",
+    description: "View and download daily reception operation reports for finance review."
   }
 ];
 

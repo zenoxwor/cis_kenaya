@@ -78,6 +78,7 @@ export const ADMIN_ROUTE_KEYS = [
   "/admin/finance/invoices",
   "/admin/finance/payments",
   "/admin/finance/reports",
+  "/admin/finance/daily-reports",
   "/admin/exams",
   "/admin/exams/marks",
   "/admin/exams/reports",
@@ -110,6 +111,7 @@ export const ADMIN_NAV_KEYS = [
   "reception_incidents",
   "reception_appointments",
   "finance_dashboard",
+  "finance_daily_reports",
   "exams_suite",
   "documents_center",
   "attendance_module",
@@ -134,6 +136,7 @@ const NAV_PERMISSION_KEYS: Partial<Record<AdminNavKey, ModulePermissionKey>> = {
   reception_incidents: "reception_admissions",
   reception_appointments: "reception_admissions",
   finance_dashboard: "finance_ops",
+  finance_daily_reports: "finance_ops",
   exams_suite: "exams_grading",
   documents_center: "document_center",
   attendance_module: "attendance",
@@ -220,7 +223,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/documents",
       "/admin/attendance",
       "/admin/attendance/reports",
-      "/admin/principal/classes"
+      "/admin/principal/classes",
+      "/admin/finance/daily-reports"
     ],
     navigationVisibility: [
       "dashboard",
@@ -233,7 +237,8 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "registration_wizard",
       "communications_center",
       "documents_center",
-      "attendance_module"
+      "attendance_module",
+      "finance_daily_reports"
     ],
     actions: {
       dashboard: ["view"],
@@ -303,6 +308,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
       "/admin/finance/invoices",
       "/admin/finance/payments",
       "/admin/finance/reports",
+      "/admin/finance/daily-reports",
       "/admin/communications",
       "/admin/communications/compose",
       "/admin/communications/history"
@@ -310,6 +316,7 @@ export const ROLE_PERMISSION_MATRIX: Record<AppRole, RolePermissionMatrix> = {
     navigationVisibility: [
       "dashboard",
       "executive_analytics",
+      "finance_daily_reports",
       "communications_center"
     ],
     actions: {
