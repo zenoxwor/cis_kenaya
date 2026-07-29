@@ -28,6 +28,12 @@ export const ADMIN_NAV_ITEMS: NavigationItem[] = [
     description: "Identity, governance, and global controls."
   },
   {
+    id: "user_governance",
+    href: "/admin/super-admin/users",
+    label: "User & Role Governance",
+    description: "Manage admin identities, module-level permissions, active status, and password resets."
+  },
+  {
     id: "reception_dashboard",
     href: "/admin/reception",
     label: "Reception / Admissions",
