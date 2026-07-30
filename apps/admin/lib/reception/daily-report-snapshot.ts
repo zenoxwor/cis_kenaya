@@ -302,66 +302,11 @@ async function uploadWithMimeFallback(
   throw new Error(`Failed to upload daily report ${label}: ${primary.error.message}`);
 }
 
-const SIGNED_URL_EXPIRY_SECONDS = 60 * 60; // 1 hour
-
 export type SavedDailyReport = {
   date: string;
-  jsonUrl: string | null;
-  csvUrl: string | null;
+  jsonUrl: string;
+  csvUrl: string;
 };
-
-export type ListDailyReportsResult = {
-  reports: SavedDailyReport[];
-  error: string | null;
-};
-
-export async function listDailyReports(): Promise<ListDailyReportsResult> {
-  const supabase = getSupabaseStorageClient();
-  if (!supabase) {
-    return { reports: [], error: "Supabase storage is not configured." };
-  }
-
-  const { data: files, error } = await supabase.storage
-    .from(DAILY_REPORT_BUCKET)
-    .list(DAILY_REPORT_PREFIX, { sortBy: { column: "name", order: "desc" } });
-
-  if (error) {
-    return { reports: [], error: `Failed to load saved reports: ${error.message}` };
-  }
-
-  if (!files || files.length === 0) {
-    return { reports: [], error: null };
-  }
-
-  // Group by date — find unique YYYY-MM-DD values
-  const dates = Array.from(
-    new Set(
-      files
-        .map(f => f.name.replace(/\.(json|csv)$/, ""))
-        .filter(name => /^\d{4}-\d{2}-\d{2}$/.test(name))
-    )
-  ).sort((a, b) => b.localeCompare(a)); // newest first
-
-  const reports = await Promise.all(
-    dates.map(async (date): Promise<SavedDailyReport> => {
-      const [jsonResult, csvResult] = await Promise.all([
-        supabase.storage
-          .from(DAILY_REPORT_BUCKET)
-          .createSignedUrl(`${DAILY_REPORT_PREFIX}/${date}.json`, SIGNED_URL_EXPIRY_SECONDS),
-        supabase.storage
-          .from(DAILY_REPORT_BUCKET)
-          .createSignedUrl(`${DAILY_REPORT_PREFIX}/${date}.csv`, SIGNED_URL_EXPIRY_SECONDS)
-      ]);
-      return {
-        date,
-        jsonUrl: jsonResult.data?.signedUrl ?? null,
-        csvUrl: csvResult.data?.signedUrl ?? null
-      };
-    })
-  );
-
-  return { reports, error: null };
-}
 
 export async function syncDailyReportSnapshot(user: SessionUser): Promise<DailyReportSyncResult> {
   const supabase = getSupabaseStorageClient();
@@ -399,4 +344,36 @@ export async function syncDailyReportSnapshot(user: SessionUser): Promise<DailyR
       staffAttendance: snapshot.staffAttendance.length
     }
   };
+}
+
+export async function listDailyReports(): Promise<{ reports?: SavedDailyReport[]; error?: string }> {
+  const supabase = getSupabaseStorageClient();
+  if (!supabase) return { error: "Supabase storage is not configured." };
+
+  const { data, error } = await supabase.storage
+    .from(DAILY_REPORT_BUCKET)
+    .list(DAILY_REPORT_PREFIX, { limit: 100, sortBy: { column: "name", order: "desc" } });
+
+  if (error) return { error: error.message };
+  if (!data) return { reports: [] };
+
+  const jsonFiles = data.filter(f => f.name.endsWith(".json"));
+
+  const reports: SavedDailyReport[] = [];
+  for (const file of jsonFiles) {
+    const date = file.name.replace(".json", "");
+    const jsonPath = `${DAILY_REPORT_PREFIX}/${file.name}`;
+    const csvPath = `${DAILY_REPORT_PREFIX}/${date}.csv`;
+
+    const [{ data: jsonSigned }, { data: csvSigned }] = await Promise.all([
+      supabase.storage.from(DAILY_REPORT_BUCKET).createSignedUrl(jsonPath, 3600),
+      supabase.storage.from(DAILY_REPORT_BUCKET).createSignedUrl(csvPath, 3600)
+    ]);
+
+    if (jsonSigned && csvSigned) {
+      reports.push({ date, jsonUrl: jsonSigned.signedUrl, csvUrl: csvSigned.signedUrl });
+    }
+  }
+
+  return { reports };
 }
