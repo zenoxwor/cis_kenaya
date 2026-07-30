@@ -86,6 +86,16 @@ function todayDateString() {
   return `${y}-${m}-${d}`;
 }
 
+function formatReadableDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleString("en-KE", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true
+    });
+  } catch { return iso ?? ""; }
+}
+
 function toCsvCell(value: string | number | null | undefined) {
   if (value === null || value === undefined) return "";
   const text = String(value);
@@ -96,43 +106,47 @@ function toCsvCell(value: string | number | null | undefined) {
 function buildCsv(snapshot: DailyReportSnapshot): string {
   const sections: string[] = [];
 
-  // Visitors / Gate Passes
-  const visitorHeader = ["passNumber", "visitorName", "visitorId", "hostName", "purpose", "entryTime", "exitTime", "status"].join(",");
+  const reportDate = new Date(snapshot.generatedAt).toLocaleDateString("en-KE", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric"
+  });
+
+  const fileHeader = [
+    `Capital International School - Daily Reception Report`,
+    `Date: ${reportDate}`,
+    `Generated At: ${formatReadableDate(snapshot.generatedAt)}`,
+    ``
+  ].join("\n");
+
+  const visitorHeader = ["Pass Number","Visitor Name","Visitor ID","Staff Member / Host","Purpose of Visit","Entry Time","Exit Time","Status"].join(",");
   const visitorRows = snapshot.visitors.map(v =>
-    [v.passNumber, v.visitorName, v.visitorId, v.hostName, v.purpose, v.entryTime, v.exitTime ?? "", v.status]
-      .map(toCsvCell)
-      .join(",")
+    [v.passNumber, v.visitorName, v.visitorId, v.hostName, v.purpose,
+      formatReadableDate(v.entryTime), formatReadableDate(v.exitTime), v.status]
+      .map(toCsvCell).join(",")
   );
-  sections.push(["## Visitors / Gate Passes", visitorHeader, ...visitorRows].join("\n"));
+  sections.push(["=== VISITORS & GATE PASSES ===", visitorHeader, ...visitorRows].join("\n"));
 
-  // Incidents
-  const incidentHeader = ["id", "title", "severity", "status", "reportedBy", "studentName", "createdAt"].join(",");
+  const incidentHeader = ["Incident Type","Severity","Status","Reported By","Student Name","Reported At"].join(",");
   const incidentRows = snapshot.incidents.map(i =>
-    [i.id, i.title, i.severity, i.status, i.reportedBy, i.studentName ?? "", i.createdAt]
-      .map(toCsvCell)
-      .join(",")
+    [i.title, i.severity, i.status, i.reportedBy, i.studentName ?? "", formatReadableDate(i.createdAt)]
+      .map(toCsvCell).join(",")
   );
-  sections.push(["## Incidents", incidentHeader, ...incidentRows].join("\n"));
+  sections.push(["=== INCIDENTS ===", incidentHeader, ...incidentRows].join("\n"));
 
-  // Appointments
-  const appointmentHeader = ["id", "title", "hostName", "visitorName", "scheduledAt", "status"].join(",");
+  const appointmentHeader = ["Appointment Title","Staff Member / Host","Visitor Name","Scheduled At","Status"].join(",");
   const appointmentRows = snapshot.appointments.map(a =>
-    [a.id, a.title, a.hostName, a.visitorName, a.scheduledAt, a.status]
-      .map(toCsvCell)
-      .join(",")
+    [a.title, a.hostName, a.visitorName, formatReadableDate(a.scheduledAt), a.status]
+      .map(toCsvCell).join(",")
   );
-  sections.push(["## Appointments", appointmentHeader, ...appointmentRows].join("\n"));
+  sections.push(["=== APPOINTMENTS ===", appointmentHeader, ...appointmentRows].join("\n"));
 
-  // Staff Attendance
-  const attendanceHeader = ["userId", "staffName", "checkIn", "checkOut", "status"].join(",");
+  const attendanceHeader = ["Staff Name","Check-In Time","Check-Out Time","Status"].join(",");
   const attendanceRows = snapshot.staffAttendance.map(s =>
-    [s.userId, s.staffName, s.checkIn ?? "", s.checkOut ?? "", s.status]
-      .map(toCsvCell)
-      .join(",")
+    [s.staffName, formatReadableDate(s.checkIn), formatReadableDate(s.checkOut), s.status]
+      .map(toCsvCell).join(",")
   );
-  sections.push(["## Staff Attendance", attendanceHeader, ...attendanceRows].join("\n"));
+  sections.push(["=== STAFF ATTENDANCE ===", attendanceHeader, ...attendanceRows].join("\n"));
 
-  return sections.join("\n\n") + "\n";
+  return fileHeader + sections.join("\n\n") + "\n";
 }
 
 async function resolveCampusId(userId: string) {
@@ -323,7 +337,43 @@ export async function syncDailyReportSnapshot(user: SessionUser): Promise<DailyR
   const csvPath = `${DAILY_REPORT_PREFIX}/${snapshot.date}.csv`;
 
   const encoder = new TextEncoder();
-  const jsonBytes = encoder.encode(JSON.stringify(snapshot, null, 2));
+  const friendlyJson = {
+    "Report Title": "Capital International School - Daily Reception Report",
+    "Date": new Date(snapshot.generatedAt).toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
+    "Generated At": formatReadableDate(snapshot.generatedAt),
+    "Visitors & Gate Passes": snapshot.visitors.map(v => ({
+      "Pass Number": v.passNumber,
+      "Visitor Name": v.visitorName,
+      "Visitor ID": v.visitorId,
+      "Staff Member / Host": v.hostName,
+      "Purpose of Visit": v.purpose,
+      "Entry Time": formatReadableDate(v.entryTime),
+      "Exit Time": formatReadableDate(v.exitTime),
+      "Status": v.status
+    })),
+    "Incidents": snapshot.incidents.map(i => ({
+      "Incident Type": i.title,
+      "Severity": i.severity,
+      "Status": i.status,
+      "Reported By": i.reportedBy,
+      "Student Name": i.studentName ?? "",
+      "Reported At": formatReadableDate(i.createdAt)
+    })),
+    "Appointments": snapshot.appointments.map(a => ({
+      "Appointment Title": a.title,
+      "Staff Member / Host": a.hostName,
+      "Visitor Name": a.visitorName,
+      "Scheduled At": formatReadableDate(a.scheduledAt),
+      "Status": a.status
+    })),
+    "Staff Attendance": snapshot.staffAttendance.map(s => ({
+      "Staff Name": s.staffName,
+      "Check-In Time": formatReadableDate(s.checkIn),
+      "Check-Out Time": formatReadableDate(s.checkOut),
+      "Status": s.status
+    }))
+  };
+  const jsonBytes = encoder.encode(JSON.stringify(friendlyJson, null, 2));
   const csvBytes = encoder.encode(buildCsv(snapshot));
 
   await Promise.all([
