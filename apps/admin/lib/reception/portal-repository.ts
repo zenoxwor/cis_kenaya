@@ -50,8 +50,8 @@ export type ReceptionStaffAttendanceRow = {
   staffName: string;
   staffId: string;
   status: "IN" | "OUT";
-  entryTime: string | null;
-  outTime: string | null;
+  entryTime?: string | null;
+  outTime?: string | null;
   lastActionTime: string | null;
 };
 

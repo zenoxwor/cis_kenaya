@@ -93,46 +93,147 @@ function toCsvCell(value: string | number | null | undefined) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+const KENYA_TIME_ZONE = "Africa/Nairobi";
+
+function formatDisplayDateTime(value: string | null | undefined) {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat("en-KE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: KENYA_TIME_ZONE
+  }).format(parsed);
+}
+
+function formatDisplayLongDate(value: string) {
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat("en-KE", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: KENYA_TIME_ZONE
+  }).format(parsed);
+}
+
 function buildCsv(snapshot: DailyReportSnapshot): string {
-  const sections: string[] = [];
+  const lines: string[] = [
+    "Capital International School - Daily Reception Report",
+    `Date: ${formatDisplayLongDate(snapshot.date)}`,
+    `Generated At: ${formatDisplayDateTime(snapshot.generatedAt)}`,
+    ""
+  ];
 
-  // Visitors / Gate Passes
-  const visitorHeader = ["passNumber", "visitorName", "visitorId", "hostName", "purpose", "entryTime", "exitTime", "status"].join(",");
-  const visitorRows = snapshot.visitors.map(v =>
-    [v.passNumber, v.visitorName, v.visitorId, v.hostName, v.purpose, v.entryTime, v.exitTime ?? "", v.status]
-      .map(toCsvCell)
-      .join(",")
-  );
-  sections.push(["## Visitors / Gate Passes", visitorHeader, ...visitorRows].join("\n"));
+  const sections = [
+    {
+      title: "=== VISITORS & GATE PASSES ===",
+      header: ["Pass Number", "Visitor Name", "Visitor ID", "Staff Member / Host", "Purpose of Visit", "Entry Time", "Exit Time", "Status"],
+      rows: snapshot.visitors.map(v => [
+        v.passNumber,
+        v.visitorName,
+        v.visitorId,
+        v.hostName,
+        v.purpose,
+        formatDisplayDateTime(v.entryTime),
+        formatDisplayDateTime(v.exitTime),
+        v.status
+      ])
+    },
+    {
+      title: "=== INCIDENTS ===",
+      header: ["Record ID", "Incident Type", "Severity", "Status", "Reported By", "Student Name", "Reported At"],
+      rows: snapshot.incidents.map(i => [
+        i.id,
+        i.title,
+        i.severity,
+        i.status,
+        i.reportedBy,
+        i.studentName ?? "",
+        formatDisplayDateTime(i.createdAt)
+      ])
+    },
+    {
+      title: "=== APPOINTMENTS ===",
+      header: ["Record ID", "Appointment Title", "Staff Member / Host", "Visitor Name", "Scheduled At", "Status"],
+      rows: snapshot.appointments.map(a => [
+        a.id,
+        a.title,
+        a.hostName,
+        a.visitorName,
+        formatDisplayDateTime(a.scheduledAt),
+        a.status
+      ])
+    },
+    {
+      title: "=== STAFF ATTENDANCE ===",
+      header: ["Staff ID", "Staff Name", "Check-In Time", "Check-Out Time", "Status"],
+      rows: snapshot.staffAttendance.map(s => [
+        s.userId,
+        s.staffName,
+        formatDisplayDateTime(s.checkIn),
+        formatDisplayDateTime(s.checkOut),
+        s.status
+      ])
+    }
+  ];
 
-  // Incidents
-  const incidentHeader = ["id", "title", "severity", "status", "reportedBy", "studentName", "createdAt"].join(",");
-  const incidentRows = snapshot.incidents.map(i =>
-    [i.id, i.title, i.severity, i.status, i.reportedBy, i.studentName ?? "", i.createdAt]
-      .map(toCsvCell)
-      .join(",")
-  );
-  sections.push(["## Incidents", incidentHeader, ...incidentRows].join("\n"));
+  for (const section of sections) {
+    lines.push(section.title);
+    lines.push(section.header.map(toCsvCell).join(","));
+    for (const row of section.rows) {
+      lines.push(row.map(cell => toCsvCell(cell)).join(","));
+    }
+    lines.push("");
+  }
 
-  // Appointments
-  const appointmentHeader = ["id", "title", "hostName", "visitorName", "scheduledAt", "status"].join(",");
-  const appointmentRows = snapshot.appointments.map(a =>
-    [a.id, a.title, a.hostName, a.visitorName, a.scheduledAt, a.status]
-      .map(toCsvCell)
-      .join(",")
-  );
-  sections.push(["## Appointments", appointmentHeader, ...appointmentRows].join("\n"));
+  return `${lines.join("\n").trimEnd()}\n`;
+}
 
-  // Staff Attendance
-  const attendanceHeader = ["userId", "staffName", "checkIn", "checkOut", "status"].join(",");
-  const attendanceRows = snapshot.staffAttendance.map(s =>
-    [s.userId, s.staffName, s.checkIn ?? "", s.checkOut ?? "", s.status]
-      .map(toCsvCell)
-      .join(",")
-  );
-  sections.push(["## Staff Attendance", attendanceHeader, ...attendanceRows].join("\n"));
-
-  return sections.join("\n\n") + "\n";
+function buildReadableJsonReport(snapshot: DailyReportSnapshot) {
+  return {
+    "Report Title": "Capital International School - Daily Reception Report",
+    Date: formatDisplayLongDate(snapshot.date),
+    "Generated At": formatDisplayDateTime(snapshot.generatedAt),
+    "Visitors & Gate Passes": snapshot.visitors.map(v => ({
+      "Pass Number": v.passNumber,
+      "Visitor Name": v.visitorName,
+      "Visitor ID": v.visitorId,
+      "Staff Member / Host": v.hostName,
+      "Purpose of Visit": v.purpose,
+      "Entry Time": formatDisplayDateTime(v.entryTime),
+      "Exit Time": formatDisplayDateTime(v.exitTime),
+      Status: v.status
+    })),
+    Incidents: snapshot.incidents.map(i => ({
+      "Record ID": i.id,
+      "Incident Type": i.title,
+      Severity: i.severity,
+      Status: i.status,
+      "Reported By": i.reportedBy,
+      "Student Name": i.studentName ?? "",
+      "Reported At": formatDisplayDateTime(i.createdAt)
+    })),
+    Appointments: snapshot.appointments.map(a => ({
+      "Record ID": a.id,
+      "Appointment Title": a.title,
+      "Staff Member / Host": a.hostName,
+      "Visitor Name": a.visitorName,
+      "Scheduled At": formatDisplayDateTime(a.scheduledAt),
+      Status: a.status
+    })),
+    "Staff Attendance": snapshot.staffAttendance.map(s => ({
+      "Staff ID": s.userId,
+      "Staff Name": s.staffName,
+      "Check-In Time": formatDisplayDateTime(s.checkIn),
+      "Check-Out Time": formatDisplayDateTime(s.checkOut),
+      Status: s.status
+    }))
+  };
 }
 
 async function resolveCampusId(userId: string) {
@@ -302,66 +403,11 @@ async function uploadWithMimeFallback(
   throw new Error(`Failed to upload daily report ${label}: ${primary.error.message}`);
 }
 
-const SIGNED_URL_EXPIRY_SECONDS = 60 * 60; // 1 hour
-
 export type SavedDailyReport = {
   date: string;
-  jsonUrl: string | null;
-  csvUrl: string | null;
+  jsonUrl: string;
+  csvUrl: string;
 };
-
-export type ListDailyReportsResult = {
-  reports: SavedDailyReport[];
-  error: string | null;
-};
-
-export async function listDailyReports(): Promise<ListDailyReportsResult> {
-  const supabase = getSupabaseStorageClient();
-  if (!supabase) {
-    return { reports: [], error: "Supabase storage is not configured." };
-  }
-
-  const { data: files, error } = await supabase.storage
-    .from(DAILY_REPORT_BUCKET)
-    .list(DAILY_REPORT_PREFIX, { sortBy: { column: "name", order: "desc" } });
-
-  if (error) {
-    return { reports: [], error: `Failed to load saved reports: ${error.message}` };
-  }
-
-  if (!files || files.length === 0) {
-    return { reports: [], error: null };
-  }
-
-  // Group by date — find unique YYYY-MM-DD values
-  const dates = Array.from(
-    new Set(
-      files
-        .map(f => f.name.replace(/\.(json|csv)$/, ""))
-        .filter(name => /^\d{4}-\d{2}-\d{2}$/.test(name))
-    )
-  ).sort((a, b) => b.localeCompare(a)); // newest first
-
-  const reports = await Promise.all(
-    dates.map(async (date): Promise<SavedDailyReport> => {
-      const [jsonResult, csvResult] = await Promise.all([
-        supabase.storage
-          .from(DAILY_REPORT_BUCKET)
-          .createSignedUrl(`${DAILY_REPORT_PREFIX}/${date}.json`, SIGNED_URL_EXPIRY_SECONDS),
-        supabase.storage
-          .from(DAILY_REPORT_BUCKET)
-          .createSignedUrl(`${DAILY_REPORT_PREFIX}/${date}.csv`, SIGNED_URL_EXPIRY_SECONDS)
-      ]);
-      return {
-        date,
-        jsonUrl: jsonResult.data?.signedUrl ?? null,
-        csvUrl: csvResult.data?.signedUrl ?? null
-      };
-    })
-  );
-
-  return { reports, error: null };
-}
 
 export async function syncDailyReportSnapshot(user: SessionUser): Promise<DailyReportSyncResult> {
   const supabase = getSupabaseStorageClient();
@@ -378,7 +424,7 @@ export async function syncDailyReportSnapshot(user: SessionUser): Promise<DailyR
   const csvPath = `${DAILY_REPORT_PREFIX}/${snapshot.date}.csv`;
 
   const encoder = new TextEncoder();
-  const jsonBytes = encoder.encode(JSON.stringify(snapshot, null, 2));
+  const jsonBytes = encoder.encode(JSON.stringify(buildReadableJsonReport(snapshot), null, 2));
   const csvBytes = encoder.encode(buildCsv(snapshot));
 
   await Promise.all([
@@ -399,4 +445,36 @@ export async function syncDailyReportSnapshot(user: SessionUser): Promise<DailyR
       staffAttendance: snapshot.staffAttendance.length
     }
   };
+}
+
+export async function listDailyReports(): Promise<{ reports?: SavedDailyReport[]; error?: string }> {
+  const supabase = getSupabaseStorageClient();
+  if (!supabase) return { error: "Supabase storage is not configured." };
+
+  const { data, error } = await supabase.storage
+    .from(DAILY_REPORT_BUCKET)
+    .list(DAILY_REPORT_PREFIX, { limit: 100, sortBy: { column: "name", order: "desc" } });
+
+  if (error) return { error: error.message };
+  if (!data) return { reports: [] };
+
+  const jsonFiles = data.filter(f => f.name.endsWith(".json"));
+
+  const reports: SavedDailyReport[] = [];
+  for (const file of jsonFiles) {
+    const date = file.name.replace(".json", "");
+    const jsonPath = `${DAILY_REPORT_PREFIX}/${file.name}`;
+    const csvPath = `${DAILY_REPORT_PREFIX}/${date}.csv`;
+
+    const [{ data: jsonSigned }, { data: csvSigned }] = await Promise.all([
+      supabase.storage.from(DAILY_REPORT_BUCKET).createSignedUrl(jsonPath, 3600),
+      supabase.storage.from(DAILY_REPORT_BUCKET).createSignedUrl(csvPath, 3600)
+    ]);
+
+    if (jsonSigned && csvSigned) {
+      reports.push({ date, jsonUrl: jsonSigned.signedUrl, csvUrl: csvSigned.signedUrl });
+    }
+  }
+
+  return { reports };
 }
