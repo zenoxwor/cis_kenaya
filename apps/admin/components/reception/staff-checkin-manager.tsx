@@ -13,6 +13,7 @@ type ApiResponse = {
   success: boolean;
   data?: {
     rows: ReceptionStaffAttendanceRow[];
+    row?: ReceptionStaffAttendanceRow;
   };
   error?: string;
 };
@@ -22,11 +23,23 @@ function formatTime(value: string | null) {
   return new Date(value).toLocaleTimeString("en-KE");
 }
 
+function toInputTime(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
 export function StaffCheckinManager({ initialRows, savedReports }: Props) {
   const [rows, setRows] = useState(initialRows);
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
   const [savingReport, setSavingReport] = useState(false);
   const [reportToast, setReportToast] = useState<{ message: string; ok: boolean } | null>(null);
+  const [attendanceToast, setAttendanceToast] = useState<{ message: string; ok: boolean } | null>(null);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editingEntryTime, setEditingEntryTime] = useState("");
+  const [editingOutTime, setEditingOutTime] = useState("");
 
   async function saveDailyReport() {
     setSavingReport(true);
@@ -55,13 +68,68 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
 
   async function mark(userId: string, action: "clockIn" | "clockOut") {
     setBusyUserId(userId);
-    await fetch("/api/reception/staff-attendance", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, action })
-    });
-    await refresh();
-    setBusyUserId(null);
+    try {
+      await fetch("/api/reception/staff-attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, action })
+      });
+      await refresh();
+    } finally {
+      setBusyUserId(null);
+    }
+  }
+
+  function beginEdit(row: ReceptionStaffAttendanceRow) {
+    setEditingUserId(row.userId);
+    setEditingEntryTime(toInputTime(row.entryTime));
+    setEditingOutTime(toInputTime(row.outTime));
+  }
+
+  function cancelEdit() {
+    setEditingUserId(null);
+    setEditingEntryTime("");
+    setEditingOutTime("");
+  }
+
+  async function saveEditedTimes(userId: string) {
+    if (!editingEntryTime && !editingOutTime) {
+      setAttendanceToast({ message: "Set Entry Time or Out Time before saving.", ok: false });
+      setTimeout(() => setAttendanceToast(null), 4000);
+      return;
+    }
+
+    setBusyUserId(userId);
+    try {
+      const response = await fetch("/api/reception/staff-attendance", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          entryTime: editingEntryTime || undefined,
+          outTime: editingOutTime || undefined
+        })
+      });
+      const payload = (await response.json()) as ApiResponse;
+      if (!response.ok || !payload.success) {
+        setAttendanceToast({
+          message: payload.error ?? "Failed to update attendance times.",
+          ok: false
+        });
+        setTimeout(() => setAttendanceToast(null), 4000);
+        return;
+      }
+
+      await refresh();
+      cancelEdit();
+      setAttendanceToast({ message: "Attendance times updated.", ok: true });
+      setTimeout(() => setAttendanceToast(null), 4000);
+    } catch {
+      setAttendanceToast({ message: "Network error — update failed.", ok: false });
+      setTimeout(() => setAttendanceToast(null), 4000);
+    } finally {
+      setBusyUserId(null);
+    }
   }
 
   return (
@@ -76,6 +144,18 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
           ].join(" ")}
         >
           {reportToast.message}
+        </div>
+      )}
+      {attendanceToast && (
+        <div
+          className={[
+            "fixed right-4 top-20 z-50 rounded-lg border px-4 py-3 text-sm font-medium shadow-lg",
+            attendanceToast.ok
+              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+              : "border-red-300 bg-red-50 text-red-800"
+          ].join(" ")}
+        >
+          {attendanceToast.message}
         </div>
       )}
 
@@ -103,6 +183,8 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
               <th className="px-3 py-2">Staff Name</th>
               <th className="px-3 py-2">Staff ID</th>
               <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Entry Time</th>
+              <th className="px-3 py-2">Out Time</th>
               <th className="px-3 py-2">Last Action Time</th>
               <th className="px-3 py-2">Action</th>
             </tr>
@@ -124,12 +206,14 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
                     {row.status}
                   </span>
                 </td>
+                <td className="px-3 py-2">{formatTime(row.entryTime)}</td>
+                <td className="px-3 py-2">{formatTime(row.outTime)}</td>
                 <td className="px-3 py-2">{formatTime(row.lastActionTime)}</td>
                 <td className="px-3 py-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      disabled={busyUserId === row.userId || row.status === "IN"}
+                      disabled={busyUserId === row.userId || row.status === "IN" || editingUserId === row.userId}
                       className="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                       onClick={() => {
                         void mark(row.userId, "clockIn");
@@ -139,7 +223,7 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
                     </button>
                     <button
                       type="button"
-                      disabled={busyUserId === row.userId || row.status === "OUT"}
+                      disabled={busyUserId === row.userId || row.status === "OUT" || editingUserId === row.userId}
                       className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                       onClick={() => {
                         void mark(row.userId, "clockOut");
@@ -147,7 +231,57 @@ export function StaffCheckinManager({ initialRows, savedReports }: Props) {
                     >
                       Clock Out
                     </button>
+                    <button
+                      type="button"
+                      disabled={busyUserId === row.userId}
+                      className="rounded-lg bg-slate-700 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={() => {
+                        beginEdit(row);
+                      }}
+                    >
+                      Edit
+                    </button>
                   </div>
+                  {editingUserId === row.userId && (
+                    <div className="mt-3 flex flex-wrap items-end gap-2">
+                      <label className="flex flex-col text-xs text-slate-600">
+                        Entry Time
+                        <input
+                          type="time"
+                          value={editingEntryTime}
+                          onChange={event => setEditingEntryTime(event.target.value)}
+                          className="mt-1 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                        />
+                      </label>
+                      <label className="flex flex-col text-xs text-slate-600">
+                        Out Time
+                        <input
+                          type="time"
+                          value={editingOutTime}
+                          onChange={event => setEditingOutTime(event.target.value)}
+                          className="mt-1 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-900"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        disabled={busyUserId === row.userId}
+                        className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={() => {
+                          void saveEditedTimes(row.userId);
+                        }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyUserId === row.userId}
+                        className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={cancelEdit}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

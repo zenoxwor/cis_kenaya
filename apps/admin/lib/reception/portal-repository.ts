@@ -50,6 +50,8 @@ export type ReceptionStaffAttendanceRow = {
   staffName: string;
   staffId: string;
   status: "IN" | "OUT";
+  entryTime: string | null;
+  outTime: string | null;
   lastActionTime: string | null;
 };
 
@@ -121,6 +123,29 @@ function buildStaffId(user: { id: string; nationalId: string | null }) {
   return `STF-${user.id.slice(-6).toUpperCase()}`;
 }
 
+function buildAttendanceDateTime(baseDate: Date, time: string) {
+  const [hoursText, minutesText] = time.split(":");
+  const hours = Number.parseInt(hoursText ?? "", 10);
+  const minutes = Number.parseInt(minutesText ?? "", 10);
+  if (
+    !Number.isInteger(hours) ||
+    !Number.isInteger(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    throw new Error("Invalid time value.");
+  }
+
+  const year = baseDate.getUTCFullYear();
+  const month = String(baseDate.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(baseDate.getUTCDate()).padStart(2, "0");
+  const hh = String(hours).padStart(2, "0");
+  const mm = String(minutes).padStart(2, "0");
+  return new Date(`${year}-${month}-${day}T${hh}:${mm}:00+03:00`);
+}
+
 async function resolveCampusId(userId: string) {
   const dbUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -170,16 +195,20 @@ export async function listStaffAttendanceRows(user: SessionUser): Promise<Recept
   return staff.map(row => {
     const check = row.staffCheckIns[0];
     const status = check?.status === "PRESENT" ? "IN" : "OUT";
+    const entryTime = check?.checkInTime?.toISOString() ?? null;
+    const outTime = check?.checkOutTime?.toISOString() ?? null;
     const lastActionTime =
       status === "IN"
-        ? (check?.checkInTime?.toISOString() ?? null)
-        : (check?.checkOutTime?.toISOString() ?? check?.checkInTime?.toISOString() ?? null);
+        ? entryTime
+        : (outTime ?? entryTime);
 
     return {
       userId: row.id,
       staffName: row.fullName,
       staffId: buildStaffId(row),
       status,
+      entryTime,
+      outTime,
       lastActionTime
     };
   });
@@ -239,6 +268,45 @@ export async function markStaffAttendance(
     }
   });
 }
+
+export async function updateStaffCheckInTimes(
+  userId: string,
+  campusId: string,
+  entryTime?: string,
+  outTime?: string
+) {
+  const today = startOfTodayUtc();
+  const existing = await prisma.staffCheckIn.findFirst({
+    where: {
+      userId,
+      campusId,
+      date: today
+    }
+  });
+
+  if (!existing) {
+    throw new Error("No attendance record found for this staff member today.");
+  }
+
+  const data: Prisma.StaffCheckInUpdateInput = {};
+  if (entryTime) {
+    data.checkInTime = buildAttendanceDateTime(existing.date, entryTime);
+  }
+  if (outTime) {
+    data.checkOutTime = buildAttendanceDateTime(existing.date, outTime);
+  }
+
+  const nextCheckOutTime =
+    (data.checkOutTime instanceof Date ? data.checkOutTime : undefined) ?? existing.checkOutTime;
+  data.status = nextCheckOutTime ? "DEPARTED" : "PRESENT";
+
+  return prisma.staffCheckIn.update({
+    where: { id: existing.id },
+    data
+  });
+}
+
+export { resolveCampusId };
 
 export async function listTimetableGradeOptions(user: SessionUser): Promise<ReceptionTimetableGradeOption[]> {
   const campusId = await resolveCampusId(user.id);
